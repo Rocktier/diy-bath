@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>浴室柜草图 · 风格对比</title>
+<style>
+  :root{
+    --bg:#0f1113; --card:#181b1e; --line:#2a2f34; --fg:#e8e6e3; --dim:#8b9299; --acc:#c9a227;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 "PingFang SC","Microsoft YaHei",system-ui,sans-serif;padding:40px 32px 80px}
+  header{max-width:1180px;margin:0 auto 34px}
+  h1{font-size:26px;margin:0 0 8px;font-weight:600;letter-spacing:.02em}
+  .sub{color:var(--dim);font-size:14px;margin:0}
+  .specbar{max-width:1180px;margin:22px auto 0;border:1px solid var(--line);border-radius:10px;
+           padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px 28px;font-size:13px;color:var(--dim)}
+  .specbar b{color:var(--fg);font-weight:500}
+  .grid{max-width:1180px;margin:0 auto;display:grid;gap:26px}
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+  .card > .hd{display:flex;align-items:baseline;gap:12px;padding:16px 20px 14px;border-bottom:1px solid var(--line)}
+  .hd h2{font-size:17px;margin:0;font-weight:600}
+  .hd .n{color:var(--acc);font-size:13px;font-family:ui-monospace,monospace}
+  .hd .d{color:var(--dim);font-size:13px}
+  .views{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:0}
+  .vw{padding:14px;border-right:1px solid var(--line);min-width:0}
+  .vw:last-child{border-right:0}
+  .vw .t{font-size:12px;color:var(--dim);letter-spacing:.08em;margin-bottom:8px;text-transform:uppercase}
+  .vw svg{width:100%;height:auto;display:block;border-radius:6px}
+  @media(max-width:980px){.views{grid-template-columns:1fr}.vw{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>浴室柜草图 · 风格对比</h1>
+  <p class="sub">同一份参数，用 5 种风格渲染。每个风格都出了正视图 / 俯视图 / 剖面三张。</p>
+  <div class="specbar">
+    <span><b>台面</b> 1200 × 500 × 20</span>
+    <span><b>挡水</b> 高 90 厚 18</span>
+    <span><b>柜体</b> 1180 × 680 落地，踢脚 90 内缩 60</span>
+    <span><b>布局</b> 上二抽（通长对分）+ 下双开对门</span>
+    <span><b>台上盆</b> 620 × 380</span>
+    <span><b>镜柜</b> 高 780，柜下灯带</span>
+    <span><b>把手</b> 抽屉横长条 / 门竖长条</span>
+  </div>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+/* ===================== 参数模型（单位 mm） ===================== */
+const P = (()=>{
+  const p = {};
+  p.topW=1200; p.topD=500; p.ctT=20;          // 台面
+  p.bsH=90; p.bsT=18;                          // 挡水
+  p.carcX=10; p.carcW=1180;                    // 柜体
+  p.side=18; p.gapF=2; p.gapC=3;
+  p.toeH=90; p.toeIn=60;
+  p.mirrorH=780; p.mirrorGap=30;
+  p.drBandH=180;                               // 上部抽屉带高
+  p.drN=2;
+  p.doorN=2;
+  p.basinW=620; p.basinD=380; p.basinH=110;   // 台上盆
+  p.basinBack=90;                              // 盆后沿距墙
+  // ---- 派生 ----
+  p.toeInset = p.carcX + p.toeIn;
+  p.carcBottom = 0;                            // 稍后算
+  p.ctY = 0; p.carcY = 0; p.floorY = 0; p.bsY = 0; p.mirrorY = 0;
+  p.drBandY = 0; p.doorBandY = 0; p.doorBandH = 0;
+  p.faceX0 = p.carcX + p.gapF, p.faceX1 = p.carcX + p.carcW - p.gapF;
+  (function derive(){
+    p.floorY    = 1750;
+    p.carcBottom= p.floorY - p.toeH;   // 1660
+    p.carcY     = p.carcBottom - 680;  // 980
+    p.ctY       = p.carcY - p.ctT;     // 960
+    p.bsY       = p.ctY - p.bsH;       // 870
+    p.mirrorY   = p.bsY - p.mirrorGap - p.mirrorH; // 60
+    p.drBandY   = p.carcY;
+    p.doorBandY = p.drBandY + p.drBandH + p.gapC;
+    p.doorBandH = p.carcBottom - p.doorBandY;
+  })();
+  return p;
+})();
+
+/* 分区计算：返回抽屉面 / 门面矩形 */
+function bands(){
+  const p=P, out={drawers:[],doors:[]};
+  const w = (p.faceX1-p.faceX0-p.gapC*(p.drN-1))/p.drN;
+  for(let i=0;i<p.drN;i++){
+    out.drawers.push({x:p.faceX0+i*(w+p.gapC), y:p.drBandY+p.gapF, w, h:p.drBandH-p.gapF*2});
+  }
+  const dw=(p.faceX1-p.faceX0-p.gapC*(p.doorN-1))/p.doorN;
+  for(let i=0;i<p.doorN;i++){
+    out.doors.push({x:p.faceX0+i*(dw+p.gapC), y:p.doorBandY+p.gapF, w:dw, h:p.doorBandH-p.gapF*2});
+  }
+  return out;
+}
+
+/* ===================== SVG 工具 ===================== */
+const R=(x,y,w,h,f,o={})=>{const a=[`x="${x}"`,`y="${y}"`,`width="${w}"`,`height="${h}"`];
+  if(f&&f!=='none')a.push(`fill="${f}"`); if(o.stroke)a.push(`stroke="${o.stroke}" stroke-width="${o.sw||1}"`);
+  if(o.rx)a.push(`rx="${o.rx}"`); if(o.op!=null)a.push(`opacity="${o.op}"`);
+  if(o.filter)a.push(`filter="${o.filter}"`); if(o.stroke_dash)a.push(`stroke-dasharray="${o.stroke_dash}"`);
+  return `<rect ${a.join(' ')}/>`};
+const L=(x1,y1,x2,y2,s,o={})=>{const a=[`x1="${x1}"`,`y1="${y1}"`,`x2="${x2}"`,`y2="${y2}"`,
+  `stroke="${s}"`,`stroke-width="${o.sw||1}"`,`fill="none"`];
+  if(o.cap)a.push(`stroke-linecap="${o.cap}"`); if(o.dash)a.push(`stroke-dasharray="${o.dash}"`);
+  if(o.op!=null)a.push(`opacity="${o.op}"`); return `<line ${a.join(' ')}/>`};
+const P_=(d,s,o={})=>{const a=[`d="${d}"`,`stroke="${s}"`,`stroke-width="${o.sw||1}"`,`fill="${o.fill||'none'}"`];
+  if(o.linejoin)a.push(`stroke-linejoin="${o.linejoin}"`); if(o.op!=null)a.push(`opacity="${o.op}"`);
+  if(o.cap)a.push(`stroke-linecap="${o.cap}"`); return `<path ${a.join(' ')}/>`};
+const C=(cx,cy,r,s,o={})=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${o.fill||'none'}" stroke="${s}" stroke-width="${o.sw||1}"${o.op!=null?` opacity="${o.op}"`:''}/>`;
+const T=(x,y,t,o={})=>`<text x="${x}" y="${y}" fill="${o.fill}" font-size="${o.size||26}" font-family="${o.fam||'ui-sans-serif,system-ui,sans-serif'}" text-anchor="${o.anchor||'middle'}" dominant-baseline="${o.baseline||'auto'}"${o.op!=null?` opacity="${o.op}"`:''}>${t}</text>`;
+
+/* 尺寸标注（工程线稿） */
+function dimH(x1,x2,y,label,s){
+  return L(x1,y,x2,y,s,{sw:0.8})+R(x1-3,y-3,6,6,s)+R(x2-3,y-3,6,6,s)+
+    T((x1+x2)/2,y-12,label,{fill:s,size:26});
+}
+function dimV(y1,y2,x,label,s){
+  return L(x,y1,x,y2,s,{sw:0.8})+R(x-3,y1-3,6,6,s)+R(x-3,y2-3,6,6,s)+
+    T(x-14,(y1+y2)/2,label,{fill:s,size:26});
+}
+
+/* ===================== 纹理 / 滤镜 ===================== */
+function defs(vbKey){
+  return `<defs>
+  <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#d8d8d8"/><stop offset=".35" stop-color="#f2f2f2"/>
+    <stop offset=".7" stop-color="#9d9d9d"/><stop offset="1" stop-color="#c4c4c4"/></linearGradient>
+  <pattern id="wood" width="180" height="20" patternUnits="userSpaceOnUse">
+    <rect width="180" height="20" fill="#b98a54"/>
+    <path d="M0 4 Q45 1 90 4 T180 4 M0 11 Q45 14 90 11 T180 11 M0 17 Q45 15 90 17 T180 17"
+          stroke="#8f6437" stroke-width="1.1" fill="none" opacity=".55"/>
+  </pattern>
+  <pattern id="woodV" width="20" height="180" patternUnits="userSpaceOnUse">
+    <rect width="20" height="180" fill="#b98a54"/>
+    <path d="M4 0 Q1 45 4 90 T4 180 M11 0 Q14 45 11 90 T11 180 M17 0 Q15 45 17 90 T17 180"
+          stroke="#8f6437" stroke-width="1.1" fill="none" opacity=".55"/>
+  </pattern>
+  <filter id="stone" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="4" seed="7" result="n"/>
+    <feColorMatrix in="n" type="saturate" values="0" result="g"/>
+    <feComponentTransfer in="g" result="t"><feFuncA type="linear" slope=".22"/></feComponentTransfer>
+    <feComposite in="t" in2="SourceGraphic" operator="over"/>
+  </filter>
+  <filter id="marble" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.022" numOctaves="5" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="26" xChannelSelector="R" yChannelSelector="G" result="dm"/>
+    <feGaussianBlur in="dm" stdDeviation="0.6"/>
+  </filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity=".16"/>
+  </filter>
+  <filter id="glow" x="-40%" y="-400%" width="180%" height="900%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <radialGradient id="ledglow"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".85"/>
+    <stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>
+  </linearGradient>
+</defs>`;
+}
+
+/* ===================== 正视图 ===================== */
+function front(S){
+  const p=P, b=bands(), o=[];
+  const st=S.stroke, sw=S.sw;
+
+  // 墙 / 地
+  if(S.wall) o.push(R(-400,-400,2200,2400,S.wall));
+  o.push(L(-300,p.floorY,1500,p.floorY,S.floor,{sw:sw*1.4}));
+
+  // 镜柜
+  o.push(R(p.carcX,p.mirrorY,p.carcW,p.mirrorH,S.mirror,{rx:4,stroke:st,sw}));
+  o.push(R(p.carcX+22,p.mirrorY+22,p.carcW-44,p.mirrorH-44,S.mirrorIn,{rx:3}));
+  // 镜前灯 / 柜下灯带
+  if(S.led){
+    o.push(`<rect x="${p.carcX+16}" y="${p.mirrorY+p.mirrorH-4}" width="${p.carcW-32}" height="10"
+      fill="#ffe0b0" filter="url(#glow)"/>`);
+  }
+  // 挡水
+  o.push(R(p.carcX,p.bsY,p.carcW,p.bsH,S.bs,{stroke:st,sw}));
+  // 柜体（落地，含踢脚）
+  const filt=S.shadow?' filter="url(#soft)"':'';
+  o.push(`<g${filt}>`);
+  o.push(R(p.toeInset,p.carcBottom,p.carcW-2*p.toeIn,p.toeH,S.toe));
+  o.push(R(p.carcX,p.carcY,p.carcW,p.carcBottom-p.carcY,S.carc,{stroke:st,sw}));
+  // 抽屉面
+  for(const d of b.drawers) o.push(R(d.x,d.y,d.w,d.h,S.face,{stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  // 门板
+  for(const d of b.doors)  o.push(R(d.x,d.y,d.w,d.h,S.face2||S.face,{stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  // 把手
+  const hw=260, hh=15;
+  for(const d of b.drawers){
+    const cx=d.x+d.w/2, hy=d.y+d.h-hh-34;
+    o.push(R(cx-hw/2,hy,hw,hh,S.handle,{rx:hh/2,stroke:st,sw:sw*0.7}));
+  }
+  for(const d of b.doors){
+    // 双开门把手统一靠中缝一侧
+    const hx = (d.x < p.carcX+p.carcW/2) ? d.x+d.w-64 : d.x+49;
+    const hy=d.y+d.h/2-130;
+    o.push(R(hx,hy,15,260,S.handle,{rx:7.5,stroke:st,sw:sw*0.7}));
+  }
+  o.push(`</g>`);
+
+  // 台面（与柜体对中）
+  const ox = p.carcX + p.carcW/2 - p.topW/2;
+  o.push(R(ox, p.ctY, p.topW, p.ctT, S.top,{stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  // 龙头
+  const fx=p.carcX+p.carcW/2;
+  o.push(R(fx-22,p.ctY-150,44,150,S.handle,{rx:10,stroke:st,sw:sw*0.8}));
+  o.push(R(fx-14,p.ctY-176,110,30,S.handle,{rx:14,stroke:st,sw:sw*0.8}));
+  // 台上盆
+  const bw=p.basinW, bh=p.basinH, bx=fx-bw/2, by=p.ctY-bh+8;
+  o.push(R(bx,by,bw,bh,S.basin,{rx:34,stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  o.push(`<ellipse cx="${fx}" cy="${by+26}" rx="${bw/2-30}" ry="${bh/2-16}" fill="${S.basinIn}" stroke="${st}" stroke-width="${sw*0.7}"/>`);
+
+  // 尺寸标注
+  if(S.dim){
+    o.push(dimH(ox, ox+p.topW, p.floorY+110, p.topW+' 台面', st));
+    o.push(dimV(p.ctY,p.floorY,p.carcX+p.carcW+80, (p.floorY-p.ctY)+' 台面高', st));
+    o.push(dimV(p.carcY,p.carcBottom,p.carcX+p.carcW+230, (p.carcBottom-p.carcY)+' 柜体高', st));
+    o.push(dimV(p.mirrorY,p.bsY,p.carcX-80, '镜柜/挡水', st));
+  }
+  return svgTag('-170 20 1680 1910', o.join(''));
+}
+
+/* ===================== 俯视图 ===================== */
+function planView(S){
+  const p=P, o=[];
+  const st=S.stroke, sw=S.sw;
+  const W=p.topW, ox=(p.carcX+p.carcW/2-W/2);
+  if(S.wall) o.push(R(-400,-600,2400,2400,S.wall));
+  // 墙线
+  o.push(L(ox-60,0,ox+W+60,0,S.floor,{sw:sw*1.4}));
+  // 镜柜（虚线，墙外）
+  o.push(R(p.carcX,-190,p.carcW,180,'none',{stroke:st,sw,stroke_dash:'14 10',op:.55}));
+  // 台面
+  o.push(R(ox,0,W,p.topD,S.top,{stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  // 挡水
+  o.push(R(ox,0,W,p.bsT,S.bs,{stroke:st,sw}));
+  // 柜体轮廓（虚线）
+  o.push(R(ox+p.topW/2-p.carcW/2,p.bsT,p.carcW,p.topD-p.bsT-20,'none',
+           {stroke:st,sw:sw*.9,stroke_dash:'16 11',op:.6}));
+  // 抽屉分隔线（虚线）
+  const b=bands();
+  for(const d of b.drawers){
+    o.push(L(ox+d.x-10+d.w/2, p.bsT+6, ox+d.x-10+d.w/2, p.topD-26, st,{sw:sw*.8,dash:'12 9',op:.5}));
+  }
+  // 台上盆
+  const bx=ox+W/2-p.basinW/2, by=p.basinBack;
+  o.push(R(bx,by,p.basinW,p.basinD,S.basin,{rx:44,stroke:st,sw,filter:S.shadow?'url(#soft)':''}));
+  o.push(R(bx+24,by+22,p.basinW-48,p.basinD-44,S.basinIn,{rx:34,stroke:st,sw:sw*.7}));
+  // 龙头
+  o.push(C(ox+W/2, p.basinBack/2+8, 26, st,{fill:S.handle,sw}));
+  o.push(R(ox+W/2-9,p.basinBack/2+8,18,p.basinBack-(p.basinBack/2+8)-30,S.handle,{stroke:st,sw:sw*.7}));
+  // 排水孔
+  o.push(C(ox+W/2, by+p.basinD/2, 20, st,{fill:'none',sw:sw*.8,op:.7}));
+  // 地面材质暗示
+  o.push(L(ox, p.topD, ox+W, p.topD, st,{sw:sw*1.2}));
+
+  if(S.dim){
+    o.push(dimV(0,p.topD,ox-70, p.topD+' 深', st));
+    o.push(dimH(ox,ox+W,p.topD+90, p.topW+' 宽', st));
+  }
+  return svgTag('-160 -240 1560 900', o.join(''));
+}
+
+/* ===================== 剖面图（沿宽度剖，看柜内） ===================== */
+function section(S){
+  const p=P, o=[];
+  const st=S.stroke, sw=S.sw;
+  const D=p.topD, H=p.floorY;
+  if(S.wall) o.push(R(-600,-200,2400,2400,S.wall));
+  // 墙
+  o.push(R(-40,0,40,H,S.wallT||'#e2ddd6',{stroke:st,sw}));
+  // 地面
+  o.push(L(-300,H,900,H,S.floor,{sw:sw*1.4}));
+  // 柜体轮廓
+  const interior=()=>`M ${p.side} ${p.carcY} L ${D-2*p.toeIn/2-20} ${p.carcY} L ${D-2*p.toeIn/2-20} ${p.carcBottom} L ${p.side} ${p.carcBottom} Z`;
+  o.push(R(p.side,p.carcY,D-p.side-p.toeIn/2-20,p.carcBottom-p.carcY,S.carcIn||'none',{stroke:st,sw}));
+  // 背板 / 侧板剖面
+  o.push(R(0,p.carcY,p.side,p.carcBottom-p.carcY,S.carc,{stroke:st,sw}));
+  o.push(R(0,p.carcBottom-p.side,D-p.toeIn/2-20,p.side,S.carc,{stroke:st,sw}));
+  // 抽屉箱 ×2（带滑轨）
+  const boxY=[p.carcY+20, p.carcY+20+165], bh=140;
+  for(const by of boxY){
+    o.push(R(p.side+2,by,bh-4,140,S.drawerIn||'none',{stroke:st,sw:sw*.9,op:.95}));
+    // 抽屉箱底 + 侧
+    o.push(R(p.side+8,by+bh-18,D-p.toeIn/2-40,18,S.carc,{stroke:st,sw:sw*.8}));
+    o.push(R(p.side+8,by,18,bh-18,S.carc,{stroke:st,sw:sw*.8}));
+    o.push(R(D-p.toeIn/2-58,by,18,bh-18,S.carc,{stroke:st,sw:sw*.8}));
+    // 滑轨
+    o.push(R(p.side+26,by+bh-46,90,14,S.rail||'#8d8d8d',{stroke:st,sw:sw*.6}));
+    o.push(R(p.side+26,by+14,90,14,S.rail||'#8d8d8d',{stroke:st,sw:sw*.6}));
+  }
+  // 层板
+  o.push(R(p.side,p.carcY+20+165+bh+10, D-p.side-p.toeIn/2-20, 18, S.carc,{stroke:st,sw}));
+  // 门板（剖到的边）
+  o.push(R(D-p.toeIn/2-20,p.carcY,20,p.carcBottom-p.carcY,S.face2||S.face,{stroke:st,sw}));
+  // 台面
+  o.push(R(0,p.ctY,D,p.ctT,S.top,{stroke:st,sw}));
+  // 挡水
+  o.push(R(0,p.bsY,p.bsT,p.bsH,S.bs,{stroke:st,sw}));
+  // 台上盆剖面
+  const bx0=p.basinBack, bx1=p.basinBack+p.basinD, ty=p.ctY-p.basinH+8, tw=18;
+  o.push(P_(`M ${bx0} ${p.ctY} L ${bx0+tw*2} ${ty} L ${bx1-tw*2} ${ty} L ${bx1} ${p.ctY} Z`, st,
+          {fill:S.basin,sw,linejoin:'round'}));
+  o.push(P_(`M ${bx0+tw*2} ${p.ctY} L ${bx0+tw*2+tw} ${ty+tw} L ${bx1-tw*2-tw} ${ty+tw} L ${bx1-tw} ${p.ctY} Z`,
+          st,{fill:S.basinIn,sw,linejoin:'round'}));
+  // 排水
+  o.push(L(bx0+tw*2, p.ctY-tw, bx1-tw*2, p.ctY-tw, st,{sw:sw*.7,dash:'8 6',op:.6}));
+  // 龙头剖面
+  o.push(R(24,p.ctY-176,26,176,S.handle,{stroke:st,sw:sw*.8}));
+  o.push(R(24,p.ctY-190,120,26,S.handle,{stroke:st,sw:sw*.8,rx:12}));
+
+  // 标注尺寸
+  if(S.dim){
+    o.push(dimH(0,D,p.floorY+90, p.topD+' 台面进深', st));
+    o.push(dimV(p.ctY,p.floorY,-90, (p.floorY-p.ctY)+'', st));
+    o.push(T(D/2,p.carcY-40,'剖面 1-1',{fill:st,size:24,op:.7}));
+  }
+  return svgTag('-150 -20 900 1980', o.join(''));
+}
+
+function svgTag(vb,inner){
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${defs()}${inner}</svg>`;
+}
+
+/* ===================== 5 种风格 ===================== */
+const STYLES=[
+ { n:'①', name:'工程线稿', desc:'白底黑线 + 关键尺寸标注，最像施工图，打印和微信里都看得清',
+   S:{stroke:'#1c1c1c',sw:1,dim:true,shadow:false,led:false,
+      wall:null,floor:'#1c1c1c',wallT:'#fff',
+      mirror:'#fff',mirrorIn:'#fafafa',bs:'#fff',top:'#fff',basin:'#fff',basinIn:'#fff',
+      carc:'#fff',face:'#fff',face2:'#fff',handle:'#fff',toe:'#fff',carcIn:'none'}},
+
+ { n:'②', name:'SketchUp 白模', desc:'你们现在收到的 SketchUp 图长这样：白面黑边、平色无阴影，最"素"',
+   S:{stroke:'#000000',sw:1,dim:false,shadow:false,led:false,
+      wall:'#f4f4f2',floor:'#9a9a9a',wallT:'#e6e6e2',
+      mirror:'#ffffff',mirrorIn:'#f0f0ee',bs:'#e9e9e7',top:'#dcdcda',basin:'#fbfbfa',basinIn:'#e6e6e4',
+      carc:'#d2d2d0',face:'#f4f4f3',face2:'#eeeeed',handle:'#c6c6c4',toe:'#c2c2c0',
+      carcIn:'none',rail:'#a9a9a7'}},
+
+ { n:'③', name:'现代材质图', desc:'木纹门板 + 岩板台面 + 金属拉手 + 柔和投影，客户看了容易点头',
+   S:{stroke:'#5a4a3a',sw:1,dim:false,shadow:true,led:true,wood:'url(#wood)',woodV:'url(#woodV)',
+      wall:'#f3efe9',floor:'#cfc7bb',wallT:'#e6e0d6',
+      mirror:'#c8bcae',mirrorIn:'#dfe3e6',bs:'#eae3d8',top:'#f2f1ee',basin:'#ffffff',basinIn:'#ececeb',
+      carc:'url(#wood)',face:'url(#woodV)',face2:'url(#woodV)',handle:'url(#metal)',toe:'#8a6a45',
+      carcIn:'#efe7db',drawerIn:'#f6f0e6',rail:'#9a9a9a'}},
+
+ { n:'④', name:'莫兰迪插画风', desc:'低饱和配色、扁平无描边，像设计手账里那种效果图',
+   S:{stroke:'#8b8b8b',sw:0.6,dim:false,shadow:false,led:false,
+      wall:'#f2ece4',floor:'#ded5c8',wallT:'#ece5da',
+      mirror:'#c9ccc9',mirrorIn:'#e3e6e5',bs:'#ddd2c2',top:'#e6ddd0',basin:'#f4f1ec',basinIn:'#e9e4dc',
+      carc:'#a3b0a6',face:'#aebbb0',face2:'#aebbb0',handle:'#7d8a80',toe:'#96a399',
+      carcIn:'#c6cfc5',drawerIn:'#dde3dc',rail:'#a5b0a6'}},
+
+ { n:'⑤', name:'哑光深色高级感', desc:'深灰柜体 + 大理石纹台面 + 暖光灯带，适合轻奢/高端客户',
+   S:{stroke:'#1a1a1c',sw:1,dim:false,shadow:true,led:true,
+      wall:'#26262a',floor:'#131315',wallT:'#2e2e33',
+      mirror:'#3a3a40',mirrorIn:'#5c6470',bs:'#303034',top:'#e8e6e1',basin:'#f4f3f1',basinIn:'#e4e2de',
+      carc:'#232326',face:'#2c2c30',face2:'#2c2c30',handle:'url(#metal)',toe:'#1a1a1c',
+      carcIn:'#2a2a2e',drawerIn:'#3a3a40',rail:'#6b6b70'}}
+];
+
+const grid=document.getElementById('grid');
+for(const st of STYLES){
+  const d=document.createElement('div'); d.className='card';
+  d.innerHTML=`<div class="hd"><span class="n">${st.n}</span><h2>${st.name}</h2><span class="d">${st.desc}</span></div>
+   <div class="views">
+     <div class="vw"><div class="t">正视图</div>${front(st.S)}</div>
+     <div class="vw"><div class="t">俯视图</div>${planView(st.S)}</div>
+     <div class="vw"><div class="t">剖面图 1-1</div>${section(st.S)}</div>
+   </div>`;
+  grid.appendChild(d);
+}
+</script>
+</body>
+</html>
