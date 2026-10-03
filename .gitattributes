@@ -1,0 +1,17 @@
+# 仓库内统一存 LF，避免两台机器配置不同时产生整文件 diff
+* text=auto eol=lf
+
+# 批处理必须是 CRLF，否则 Windows 双击不执行
+*.bat text eol=crlf
+
+# 二进制文件不做换行符转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.exe binary
+*.dll binary
+*.pdf binary
+*.zip binary
