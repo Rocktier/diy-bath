@@ -1,29 +1,23 @@
 @echo off
-rem 浴室柜画图工具 —— 双击即开独立窗口（无地址栏、无标签页）
-rem 用 Windows 自带的 Edge 的 --app 模式，不需要安装任何东西。
-setlocal
-set "ROOT=%~dp0"
-set "URL=file:///%ROOT%index.html"
-set "URL=%URL:\=/%"
+rem ============================================================
+rem  Bathroom Vanity Drawer - launcher
+rem
+rem  Rules for this file, learned the hard way:
+rem    - ASCII only, NO UTF-8 BOM, CRLF line endings.
+rem      cmd reads .bat in the ANSI code page; a BOM breaks the very
+rem      first line and non-ASCII comments get mangled.
+rem    - No "pause" anywhere. A pause on a branch that can be taken
+rem      by accident hangs the window forever with no explanation.
+rem      Error messages go through launch.ps1 as a MessageBox.
+rem    - No "for" loops. "if not defined" inside a parenthesised
+rem      block is evaluated at parse time and silently takes the
+rem      wrong branch, which is how the old launcher got stuck.
+rem
+rem  All real work lives in launch.ps1: percent-encoding a file://
+rem  URL that contains Chinese characters, and --no-first-run for a
+rem  fresh Edge profile. cmd can do neither. Getting either wrong
+rem  looks identical from outside: double-click, nothing happens.
+rem ============================================================
 
-set "EDGE="
-for %%P in (
-  "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
-  "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
-  "%LocalAppData%\Microsoft\Edge\Application\msedge.exe"
-) do (
-  if not defined EDGE if exist %%~P set "EDGE=%%~P"
-)
-
-if not defined EDGE (
-  echo.
-  echo   找不到 Microsoft Edge。
-  echo   请先安装 Edge，或直接双击 index.html 用浏览器打开。
-  echo.
-  pause
-  exit /b 1
-)
-
-rem 固定的 user-data-dir，这样反复双击不会每次新建一份配置
-start "" "%EDGE%" --app="%URL%" --window-size=1680,1000 --user-data-dir="%TEMP%\diy-bath-profile"
+start "" "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0launch.ps1"
 exit /b 0
