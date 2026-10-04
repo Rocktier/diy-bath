@@ -24,14 +24,17 @@ export function parts(spec) {
   out.push({ kind: 'sidePanel', x: 0, y: L.baseY, z: 0, w: SP, h: cabinet.height, d: D });
 
   const ctW = W + 2 * top.overhang;
+  // overhang=0 时 `-top.overhang` 会算出 -0。数值上等价，但会一路渗到
+  // SVG 里变成 x="-0"，也会让严格相等的断言误判，所以在源头归一。
+  const ctX = top.overhang > 0 ? -top.overhang : 0;
   out.push({
     kind: 'top',
-    x: -top.overhang, y: L.carcassTopY, z: 0,
+    x: ctX, y: L.carcassTopY, z: 0,
     w: ctW, h: top.thickness, d: D + top.overhang,
   });
   out.push({
     kind: 'backsplash',
-    x: -top.overhang, y: L.ctTopY, z: 0,
+    x: ctX, y: L.ctTopY, z: 0,
     w: ctW, h: top.backsplash.height, d: top.backsplash.thickness,
   });
 

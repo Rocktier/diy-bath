@@ -3,3 +3,6 @@ dist/
 target/
 tmp/
 *.log
+coverage/
+dist/
+src-tauri/target/

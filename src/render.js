@@ -37,7 +37,10 @@ function num(v, label) {
   if (typeof v !== 'number' || !Number.isFinite(v)) {
     throw new Error(`${label} 不是有限数：${v}`);
   }
-  return Math.round(v * 1000) / 1000;
+  const r = Math.round(v * 1000) / 1000;
+  // 把 -0 归一成 0。`-top.overhang` 在 overhang=0 时会算出 -0，
+  // 直接写进 SVG 会变成 x="-0"，能渲染但很难看。
+  return r === 0 ? 0 : r;
 }
 
 function resolve(key) {

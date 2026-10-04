@@ -59,6 +59,19 @@ test('viewBox 里出现 NaN 也抛错', () => {
   eq(threw, true);
 });
 
+test('负零被归一成 0，SVG 里不会出现 x="-0"', () => {
+  const svg = renderSVG([{ shape: 'rect', part: 'top', x: -0, y: 0, w: 10, h: 10, fill: 'top' }], [0, 0, 10, 10]);
+  eq(svg.includes('"-0"'), false, `SVG 不该含 -0：${svg.slice(0, 200)}`);
+  eq(svg.includes('x="0"'), true);
+});
+
+test('overhang=0 时台面左边界是 0 而不是 -0', () => {
+  const out = drawAll(makeSpec({ cabinet: { width: 1180, depth: 500 }, top: { overhang: 0 } }));
+  eq(out.front.svg.includes('"-0"'), false);
+  eq(out.plan.svg.includes('"-0"'), false);
+  eq(out.section.svg.includes('"-0"'), false);
+});
+
 test('fill:null 不填色，stroke 不为 null 时描边', () => {
   const svg = renderSVG([{ shape: 'rect', part: 'carcass', x: 0, y: 0, w: 10, h: 10, fill: null, stroke: 'stroke' }], [0, 0, 10, 10]);
   eq(svg.includes('fill="none"'), true);
