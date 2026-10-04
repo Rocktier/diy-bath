@@ -1,0 +1,30 @@
+[package]
+name = "diy-bath"
+version = "0.2.0"
+description = "定制浴室柜 2D 草图生成器"
+authors = ["Rocktier"]
+license = ""
+repository = "https://github.com/Rocktier/diy-bath"
+edition = "2024"
+rust-version = "1.90"
+
+[lib]
+name = "diy_bath_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 发布构建里去掉调试符号，安装包能小一大截。
+# 需要排查崩溃时改成 ["debug-1"] 或直接去掉。
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

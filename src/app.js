@@ -1,11 +1,57 @@
 import { makeSpec, clone, PRESETS } from './spec.js';
 import { drawAll } from './render.js';
+import Panzoom from 'panzoom';
+import { get as idbGet, set as idbSet, clear as idbClear } from 'idb-keyval';
 
 const $ = (s) => document.querySelector(s);
 
 let spec = makeSpec();
 let lastDraw = null;
 let currentPreset = null;
+
+/* ---------------------------------------------------------------- 缩放 / 平移 */
+/* 之前 SVG 按宽度自适应，1500 宽的柜子加上文字标注后，缝宽、把手这些
+   细节在屏幕上只剩几个像素，导购员没法指给客户看。
+   panzoom 负责滚轮缩放 + 拖拽平移；导出走的是原始 SVG 字符串，
+   ��缩放完全无关，导出结果始终是 1:1。 */
+
+const ZOOM_STEP = 1.25;
+const zoomers = new Map();
+
+function attachZoom(svg, key) {
+  const pz = Panzoom(svg, {
+    maxScale: 12,
+    minScale: 0.2,
+    step: 0.3,
+    contain: 'outside',
+    animate: false,
+  });
+  svg.addEventListener('panzoomstart', () => svg.classList.add('panning'));
+  svg.addEventListener('panzoomend', () => svg.classList.remove('panning'));
+  pz.addEventListener('zoom', () => syncZoomLabel());
+  zoomers.set(key, pz);
+  syncZoomLabel();
+}
+
+function currentScale() {
+  for (const pz of zoomers.values()) return pz.getScale();
+  return 1;
+}
+
+function syncZoomLabel() {
+  const el = $('#zoomLabel');
+  if (el) el.textContent = `${Math.round(currentScale() * 100)}%`;
+}
+
+function zoomBy(factor) {
+  for (const pz of zoomers.values()) pz.zoomBy(factor, { animate: true });
+  syncZoomLabel();
+}
+
+function zoomReset() {
+  for (const pz of zoomers.values()) pz.reset({ animate: true });
+  syncZoomLabel();
+}
 
 /* ---------------------------------------------------------------- 表单 schema */
 /* get/set 用路径读写 spec。kind: num | text | enum | bool
@@ -278,7 +324,7 @@ function buildPresets() {
       currentPreset = p.id;
       markPresets();
       rebuild();
-      pushHistory();
+      scheduleHistory();
     });
     bar.append(b);
   }
@@ -287,7 +333,7 @@ function buildPresets() {
 function touched() {
   currentPreset = null;
   markPresets();
-  pushHistory();
+  scheduleHistory();
 }
 
 function markPresets() {
@@ -303,6 +349,7 @@ const VIEW_LABEL = { front: '正视图', plan: '俯视图', section: '剖面图 
 function redraw() {
   const pv = $('#preview');
   pv.innerHTML = '';
+  zoomers.clear();
 
   let out;
   try {
@@ -320,12 +367,17 @@ function redraw() {
     const fig = document.createElement('figure');
     const cap = document.createElement('figcaption');
     cap.textContent = VIEW_LABEL[key];
-    fig.append(cap);
-    fig.insertAdjacentHTML('beforeend', out[key].svg);
+    const wrap = document.createElement('div');
+    wrap.className = 'zoomwrap';
+    fig.append(cap, wrap);
+    wrap.insertAdjacentHTML('beforeend', out[key].svg);
     pv.append(fig);
+    const svg = wrap.querySelector('svg');
+    if (svg) attachZoom(svg, key);
     n++;
   }
   if (!n) pv.append(errBox('三个视图都被隐藏了，请在「显示」里至少打开一个。'));
+  syncZoomLabel();
 }
 
 function errBox(msg) {
@@ -385,56 +437,64 @@ $('#btnPng').addEventListener('click', () => {
 });
 
 /* ---------------------------------------------------------------- 历史 */
+/* 用 IndexedDB（idb-keyval）而不是 localStorage：
+   localStorage 上限约 5MB，而且整个是同步的。
+   一旦历史里存缩略图，localStorage 立刻就不够用了。 */
 
 const HIST_KEY = 'diy-bath:history';
 const HIST_MAX = 100;
 
-function loadHistory() {
+async function loadHistory() {
   try {
-    const raw = localStorage.getItem(HIST_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const raw = await idbGet(HIST_KEY);
+    return Array.isArray(raw) ? raw : [];
   } catch {
     return [];
   }
 }
 
-function saveHistory(list) {
+/** 真正落库。同一份参数不重复记。 */
+async function pushHistory() {
+  const list = await loadHistory();
+  const sig = JSON.stringify(spec);
+  if (list.length && list[0].sig === sig) return;
+  list.unshift({ at: Date.now(), name: spec.name, sig, spec: clone(spec) });
   try {
-    localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, HIST_MAX)));
+    await idbSet(HIST_KEY, list.slice(0, HIST_MAX));
   } catch {
     /* 存不下就算了，不影响画图 */
   }
+  renderHistory();
 }
 
 let histTimer = null;
-function pushHistory() {
+/** 参数改动很频繁（拖数字就是连着几十次），防抖后再落库。 */
+function scheduleHistory() {
   clearTimeout(histTimer);
-  histTimer = setTimeout(() => {
-    const list = loadHistory();
-    const sig = JSON.stringify(spec);
-    if (list.length && list[0].sig === sig) return;
-    list.unshift({ at: Date.now(), name: spec.name, sig, spec: clone(spec) });
-    saveHistory(list);
-    renderHistory();
-  }, 800);
+  histTimer = setTimeout(() => { void pushHistory(); }, 800);
 }
 
-function renderHistory() {
+function fmtTime(t) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
+}
+
+async function renderHistory() {
   const sel = $('#hist');
+  if (!sel) return;
+  const list = await loadHistory();
   sel.innerHTML = '<option value="">— 历史方案 —</option>';
-  loadHistory().forEach((h, i) => {
+  list.forEach((h, i) => {
     const o = document.createElement('option');
-    const t = new Date(h.at);
-    const p = String(h.name || '').padEnd(16, '　').slice(0, 16);
-    const stamp = `${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')} ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+    const nm = String(h.name || '').padEnd(16, '　').slice(0, 16);
     o.value = String(i);
-    o.textContent = `${p} ${stamp}`;
+    o.textContent = `${nm} ${fmtTime(new Date(h.at))}`;
     sel.append(o);
   });
 }
 
-$('#hist').addEventListener('change', (e) => {
-  const h = loadHistory()[Number(e.target.value)];
+$('#hist').addEventListener('change', async (e) => {
+  const h = (await loadHistory())[Number(e.target.value)];
   if (!h) return;
   spec = makeSpec(h.spec);
   currentPreset = null;
@@ -448,3 +508,12 @@ buildPresets();
 markPresets();
 renderHistory();
 rebuild();
+
+// 缩放控件
+$('#zoomIn').addEventListener('click', () => zoomBy(ZOOM_STEP));
+$('#zoomOut').addEventListener('click', () => zoomBy(1 / ZOOM_STEP));
+$('#zoomFit').addEventListener('click', () => zoomReset());
+$('#zoom100').addEventListener('click', () => {
+  for (const pz of zoomers.values()) pz.zoomTo(1, { animate: true });
+  syncZoomLabel();
+});

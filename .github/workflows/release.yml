@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 tag，例如 v0.2.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 构建并发布 Windows 安装包
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: 校验 Cargo.lock
+        working-directory: src-tauri
+        run: cargo metadata --locked --format-version 1 > $null
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: release
+
+      - run: npm ci
+
+      - name: 放行必要的安装脚本
+        run: |
+          npm install-scripts approve esbuild || true
+          npm rebuild esbuild
+
+      - name: 发版前跑测试
+        run: npm run test:coverage
+
+      # 版本号统一从 tag 取。这里显式改 package.json 与 Cargo.toml，
+      # 而 tauri.conf.json 的版本由 tauri-action 的 tag_name 注入。
+      # 三处都要改，否则 exe 里的版本和页面显示的对不上。
+      - name: 同步版本号到 tag
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $env:GITHUB_REF -replace '^refs/tags/v', ''
+          } else {
+            $env:INPUT_TAG -replace '^v', ''
+          }
+          if (-not $tag) { throw '取不到版本号' }
+          if ($tag -notmatch '^\d+\.\d+\.\d+$') { throw "版本号格式不对: $tag" }
+          Write-Host "版本: $tag"
+
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          $pkg.version = $tag
+          $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -Encoding utf8
+
+          $cargoPath = 'src-tauri/Cargo.toml'
+          $cargo = Get-Content $cargoPath -Raw
+          $cargo = $cargo -replace '(?m)^version = ".*"$', "version = `"$tag`""
+          Set-Content $cargoPath -Value $cargo -Encoding utf8
+
+          # Cargo.lock 里本包的版本也要跟上，否则上面的 --locked 校验会失败
+          $lockPath = 'src-tauri/Cargo.lock'
+          if (Test-Path $lockPath) {
+            $lock = Get-Content $lockPath -Raw
+            $lock = $lock -replace '(?m)^version = ".*"$', "version = `"$tag`""
+            Set-Content $lockPath -Value $lock -Encoding utf8
+          }
+
+      - name: 校验版本号已同步
+        run: node scripts/check-version.mjs
+
+      # 刻意不签名。SmartScreen 的警告只针对未签名程序，不影响使用；
+      # 证书要花钱（OV 约 2000-5000 元/年），且 CI 里不该放私钥。
+      # 面向公众分发时在这里加 tauri-action 的 signing 配置 +
+      # GitHub Secrets 里的证书与密码。
+      - name: 构建安装包
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          release_name: 浴室柜画图工具 ${{ github.event.inputs.tag || github.ref_name }}
+          release_body: 见 CHANGELOG.md
+          release_draft: true
+          args: --bundles nsis
+
+      # 产物已经由 tauri-action 上传到 Release draft 了。
+      # 这里再收一份到 artifact，方便不翻 Release 页面也能取。
+      - name: 收集产物
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          Get-ChildItem 'src-tauri/target/release/bundle/nsis/*.exe' |
+            Copy-Item -Destination out/
+          Copy-Item 'src-tauri/target/release/diy-bath.exe' out/
+          Get-ChildItem out | ForEach-Object {
+            Write-Host "$($_.Name)  $([math]::Round($_.Length/1MB,2)) MB"
+          }
+
+      - name: 上传产物到 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diy-bath-${{ github.event.inputs.tag || github.ref_name }}
+          path: out/*
+          retention-days: 30
+
+      - name: 写回版本号与标签
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          draft: true

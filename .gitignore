@@ -1,8 +1,11 @@
 ﻿node_modules/
-dist/
-target/
 tmp/
 *.log
 coverage/
 dist/
 src-tauri/target/
+
+# 代码签名证书绝不能进仓库
+*.pfx
+*.p12
+*.cer
