@@ -1,63 +1,83 @@
-test:
-  name: 测试与构建校验
-  runs-on: windows-latest
-  steps:
-    - uses: actions/checkout@v4
+name: CI
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 22
-        cache: npm
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
-    - uses: dtolnay/rust-toolchain@stable
+# 同一分支的新 push 取消旧任务，避免排队
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
-      # Cargo.lock 已提交，所以可以用 --locked：
-      # 依赖被篡改或 lock 不同步时直接失败，而不是悄悄拉新版本。
-    - name: 校验 Cargo.lock 未被改动
-      working-directory: src-tauri
-      run: cargo metadata --locked --format-version 1 > $null
+jobs:
+  verify:
+    name: 测试与构建校验
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: src-tauri -> target
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-    - run: npm ci
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Cargo.lock 已提交，用 --locked 校验：
+      # 依赖被篡改或 lock 与 Cargo.toml 不同步时直接失败，而不是悄悄拉新版本。
+      - name: 校验 Cargo.lock 未被改动
+        working-directory: src-tauri
+        run: cargo metadata --locked --format-version 1 > $null
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
 
       # npm 11 会拦 esbuild 的 postinstall，不放行 vitest 跑不起来
-    - name: 放行必要的安装脚本
-      run: |
-        npm install-scripts approve esbuild || true
-        npm rebuild esbuild
+      - name: 放行必要的安装脚本
+        run: |
+          npm install-scripts approve esbuild || true
+          npm rebuild esbuild
 
-    - name: 版本号一致性
-      run: node scripts/check-version.mjs
+      # GitHub 的 YAML 语法错误只会报「0 秒 failure + 无日志」，看不出原因。
+        # 本地/这里先拦一道，秒级出结果。
+      - name: 校验 workflow 语法
+        run: npm run lint:workflows
 
-    - name: 批处理文件编码规范
-      run: node scripts/fix-bat.js
+      - name: 版本号一致性
+        run: node scripts/check-version.mjs
 
-    - name: 单元测试 + 覆盖率
-      run: npm run test:coverage
+      - name: 批处理文件编码规范
+        run: node scripts/fix-bat.js
 
-    - name: 上传覆盖率报告
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage
-        path: coverage/
-        retention-days: 7
+      - name: 单元测试 + 覆盖率
+        run: npm run test:coverage
+
+      - name: 上传覆盖率报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
 
       # 只验证「能编译出 exe」，不做安装包。完整打包留给 release 工作流，省 CI 时间。
-    - name: 编译
-      run: npm run tauri build -- --no-bundle
+      - name: 编译
+        run: npm run tauri build -- --no-bundle
 
-    - name: 上传未打包的可执行文件
-      uses: actions/upload-artifact@v4
-      with:
-        name: diy-bath-ci-exe
-        path: src-tauri/target/release/diy-bath.exe
-        retention-days: 7
+      - name: 上传未打包的可执行文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: diy-bath-ci-exe
+          path: src-tauri/target/release/diy-bath.exe
+          retention-days: 7
 
-  # 改结构时验证 aarch64 还能编。Linux 产物本机跑不了，
+  # 改结构时验证 aarch64 还能编。Linux 产物在本机跑不了，
   # 所以只验证「能编出来」，实际运行留给有对应设备的机器。
   cross:
     name: 交叉编译 aarch64
