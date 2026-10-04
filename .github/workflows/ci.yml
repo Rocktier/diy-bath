@@ -17,6 +17,8 @@ jobs:
     name: 测试与构建校验
     runs-on: windows-latest
     steps:
+      # checkout v4 / setup-node v4 还在 Node 20 上跑，会被警告。
+      # 等它们出 v5 再统一升，这里先不动，避免引入不存在的版本。
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -77,10 +79,18 @@ jobs:
           path: src-tauri/target/release/diy-bath.exe
           retention-days: 7
 
-  # 改结构时验证 aarch64 还能编。Linux 产物在本机跑不了，
-  # 所以只验证「能编出来」，实际运行留给有对应设备的机器。
-  cross:
-    name: 交叉编译 aarch64
+  # 验证 Linux 侧还能编。
+  #
+  # 这里不用交叉编译。aarch64 交叉编译需要给每个 -dev 包都准备
+  # aarch64 版本，GitHub runner 上没有，实测会卡在
+  # 「pkg-config has not been configured to support cross-compilation」。
+  # 要出 aarch64 产物，正确做法是用 ARM 原生 runner 或自建，
+  # 属于以后要做的事。
+  #
+  # 当前只保证 Linux + x86_64 能编——这已经能挡住绝大多数
+  # 「只在 Windows 上能编」的写法（比如路径分隔符、盘符）。
+  linux:
+    name: Linux 编译校验
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,10 +101,8 @@ jobs:
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-unknown-linux-gnu
 
-      - name: 安装 aarch64 依赖
+      - name: 安装 Linux 依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -104,12 +112,6 @@ jobs:
             patchelf \
             build-essential
 
-      - name: 设置交叉编译工具链
-        run: |
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
-          echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
-          echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> "$GITHUB_ENV"
-
       - run: npm ci
 
       - name: 放行必要的安装脚本
@@ -117,5 +119,5 @@ jobs:
           npm install-scripts approve esbuild || true
           npm rebuild esbuild
 
-      - name: 交叉编译
-        run: npm run tauri build -- --target aarch64-unknown-linux-gnu --no-bundle
+      - name: 编译
+        run: npm run tauri build -- --no-bundle
