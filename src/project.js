@@ -1,3 +1,5 @@
+import { annotationLines } from './annotate.js';
+
 const PAD = 40;
 
 const orderOf = (p) => p.order ?? p.z + p.d;
@@ -131,7 +133,37 @@ export function front(ps, spec, L) {
   }
 
   sh.push({ shape: 'line', part: 'floor', x1: -300, y1: 0, x2: 1300, y2: 0, stroke: 'floor', sw: 1.4, bleed: true });
+
+  const ann = annotationBlock(spec, L, sh);
+  if (ann) sh.push(...ann);
+
   return sh;
+}
+
+/**
+ * 文字标注块。position='right' 排在图形右侧，'below' 排在下方。
+ * 位置依据不含自身的 bbox（否则会自我参照），因此先量图形部分。
+ */
+function annotationBlock(spec, L, shapes) {
+  if (!spec.annotations || !spec.annotations.enabled) return [];
+  const lines = annotationLines(spec, L);
+  if (!lines.length) return [];
+
+  const graphic = shapes.filter((s) => !s.bleed && s.part !== 'wall');
+  const b = bbox(graphic, 0);
+  const fs = spec.annotations.fontSize ?? 22;
+  const lh = spec.annotations.lineHeight ?? 34;
+  const below = spec.annotations.position === 'below';
+
+  const x = below ? b[0] : b[0] + b[2] + 30;
+  const y0 = below ? b[1] + b[3] + lh * 1.6 : b[1];
+
+  return lines.map((t, i) => ({
+    shape: 'text', part: 'dimText',
+    x, y: y0 + i * lh, text: t,
+    size: i === 0 ? fs * 1.15 : fs,
+    anchor: 'start', fill: 'dimText',
+  }));
 }
 
 export function plan(ps, spec, L) {
