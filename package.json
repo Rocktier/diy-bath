@@ -1,0 +1,10 @@
+{
+  "name": "diy-bath",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "定制浴室柜 2D 草图生成器 —— 参数化引擎，纯前端无构建",
+  "scripts": {
+    "test": "node test/run.js"
+  }
+}
