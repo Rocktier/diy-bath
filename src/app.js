@@ -9,6 +9,70 @@ let spec = makeSpec();
 let lastDraw = null;
 let currentPreset = null;
 
+// '3d' = 客户看的效果图（可旋转）；'ortho' = 给工厂看的三视图
+let mode = '3d';
+let threeView = null;
+let threePending = false;
+
+function threeContainer() {
+  return document.querySelector('#stage3d');
+}
+
+function ensureThree() {
+  if (threeView) return threeView;
+  if (threePending) return null;
+  const c = threeContainer();
+  if (!c) return null;
+
+  // Three.js 有 500KB，静态 import 会让首屏就背上这个体积。
+  // 动态加载：只有真正进 3D 模式时才下载，三视图模式不受影响。
+  threePending = true;
+  hint3d(c);
+  import('./three-view.js')
+    .then(({ ThreeView }) => {
+      threePending = false;
+      threeView = new ThreeView(c);
+      threeView.setSpec(spec);
+      const w = c.clientWidth;
+      const h = c.clientHeight;
+      if (w && h) threeView.resize(w, h);
+      const hint = c.querySelector('.hint3d');
+      if (hint) hint.textContent = '左键拖动旋转 · 滚轮缩放 · 右键平移';
+    })
+    .catch((e) => {
+      threePending = false;
+      console.error('3D 模块加载失败，回退到三视图：', e);
+      setMode('ortho');
+    });
+
+  return null;
+}
+
+function hint3d(c) {
+  if (c.querySelector('.hint3d')) return;
+  const hint = document.createElement('div');
+  hint.className = 'hint3d';
+  hint.textContent = '正在加载 3D…';
+  c.append(hint);
+}
+
+function setMode(next) {
+  mode = next;
+  for (const b of document.querySelectorAll('.tabs .btn')) {
+    b.classList.toggle('on', b.dataset.mode === next);
+  }
+  const stage = threeContainer();
+  const pv = document.querySelector('#preview');
+  if (next === '3d') {
+    pv.classList.add('hidden');
+    stage?.classList.remove('hidden');
+    ensureThree()?.setSpec(spec);
+  } else {
+    stage?.classList.add('hidden');
+    pv.classList.remove('hidden');
+  }
+}
+
 /* ---------------------------------------------------------------- 缩放 / 平移 */
 /* 之前 SVG 按宽度自适应，1500 宽的柜子加上文字标注后，缝宽、把手这些
    细节在屏幕上只剩几个像素，导购员没法指给客户看。
@@ -378,6 +442,20 @@ function redraw() {
   }
   if (!n) pv.append(errBox('三个视图都被隐藏了，请在「显示」里至少打开一个。'));
   syncZoomLabel();
+
+  // 3D 与三视图共用同一份 spec，几何必然一致
+  if (mode === '3d') {
+    const v = ensureThree();
+    if (v) {
+      v.setSpec(spec);
+      const stage = threeContainer();
+      if (stage) {
+        const w = stage.clientWidth;
+        const h = stage.clientHeight;
+        if (w && h) v.resize(w, h);
+      }
+    }
+  }
 }
 
 function errBox(msg) {
@@ -508,6 +586,20 @@ buildPresets();
 markPresets();
 renderHistory();
 rebuild();
+
+// 页签
+for (const b of document.querySelectorAll('.tabs .btn')) {
+  b.addEventListener('click', () => setMode(b.dataset.mode));
+}
+
+// 3D 视图在标签页隐藏时尺寸会是 0，切回来要重新算一次
+window.addEventListener('resize', () => {
+  if (mode !== '3d' || !threeView) return;
+  const stage = threeContainer();
+  if (stage) threeView.resize(stage.clientWidth, stage.clientHeight);
+});
+
+$('#btnResetView')?.addEventListener('click', () => threeView?.reset());
 
 // 缩放控件
 $('#zoomIn').addEventListener('click', () => zoomBy(ZOOM_STEP));
