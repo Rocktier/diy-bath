@@ -65,6 +65,22 @@ if (pkg.version !== NEXT) {
 bumpCrate('src-tauri/Cargo.toml', PKG);
 bumpCrate('src-tauri/Cargo.lock', PKG);
 
+// tauri.conf.json —— 早期靠 tauri-action 的 tag_name 注入，
+// 去掉那个 action 后就没人管这里了。漏掉的话
+// check-version.mjs 会因为它和 package.json 对不上而失败（下一个 tag 就暴露）。
+{
+  const f = 'src-tauri/tauri.conf.json';
+  const conf = JSON.parse(readFileSync(f, 'utf8'));
+  if (conf.version !== NEXT) {
+    conf.version = NEXT;
+    writeFileSync(f, JSON.stringify(conf, null, 2) + '\n');
+    console.log(`${f}: → ${NEXT}`);
+    touched++;
+  } else {
+    console.log(`${f}: 已是 ${NEXT}`);
+  }
+}
+
 // 核对：依赖里的 tauri 版本必须没被动过
 const lock = readFileSync('src-tauri/Cargo.lock', 'utf8');
 const tauriV = lock.match(/name = "tauri"\nversion = "([^"]+)"/)?.[1];

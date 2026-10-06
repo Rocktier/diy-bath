@@ -53,7 +53,8 @@ jobs:
         run: npm run test:coverage
 
       # 版本号统一从 tag 取。package.json 与 Cargo.toml 显式改，
-      # tauri.conf.json 的版本由 tauri-action 的 tag_name 注入。
+      # tauri.conf.json 的版本由 scripts/sync-version.mjs 一并改
+      # （早期靠 tauri-action 的 tag_name 注入，去掉那个 action 后这里会漏）。
       # 版本号统一到 tag。刻意用脚本而不是 PowerShell 一行正则：
       # 原来的 `$lock -replace '(?m)^version = ".*"$'` 会匹配 Cargo.lock 里
       # **每一行** version，把全部 417 个 crate 的版本一起改成应用版本号，
@@ -79,32 +80,33 @@ jobs:
 
       # 刻意不签名。SmartScreen 的警告只针对未签名程序，不影响使用；
       # 证书要花钱（OV 约 2000-5000 元/年），且 CI 里不该放私钥。
-      # 面向公众分发时在这里加 tauri-action 的 signing 配置 +
-      # GitHub Secrets 里的证书与密码。
-      - name: 构建安装包
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          release_name: 浴室柜画图工具 ${{ github.event.inputs.tag || github.ref_name }}
-          release_body: 见 CHANGELOG.md
-          release_draft: true
-          args: --bundles nsis
+      # 面向公众分发时在这里加签名配置 + GitHub Secrets 里的证书与密码。
 
-      # 产物已经由 tauri-action 上传到 Release draft 了。
-      # 这里再收一份到 artifact，方便不翻 Release 页面也能取。
+      # 自己构建，不用 tauri-action。
+      # 之前用 tauri-action 传的是 tag_name / release_name 这种蛇形，
+      # 而它要的是驼峰 tagName / releaseName —— 全部被忽略，日志里是：
+      #   Unexpected input(s) tag_name, release_name, ...
+      #   No releaseId or tagName provided, skipping all uploads...
+      # 结果构建成功了，安装包一个都没传上去，Release 里是个空壳
+      #（后面 softprops 顺手建的无附件 draft）。
+      # 职责分清：npm 构建，softprops 只负责建 release + 挂文件。
+      - name: 构建安装包
+        shell: pwsh
+        run: npm run tauri:build -- --bundles nsis
+
       - name: 收集产物
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out | Out-Null
-          Get-ChildItem 'src-tauri/target/release/bundle/nsis/*.exe' |
-            Copy-Item -Destination out/
+          $setup = Get-ChildItem 'src-tauri/target/release/bundle/nsis/*.exe'
+          if (-not $setup) { throw '没找到安装包，构建可能失败了' }
+          $setup | Copy-Item -Destination out/
           Copy-Item 'src-tauri/target/release/diy-bath.exe' out/
           Get-ChildItem out | ForEach-Object {
             Write-Host "$($_.Name)  $([math]::Round($_.Length/1MB,2)) MB"
           }
 
+      # 收一份到 artifact，方便不翻 Release 页面也能取
       - name: 上传产物到 artifact
         uses: actions/upload-artifact@v4
         with:
@@ -112,8 +114,14 @@ jobs:
           path: out/*
           retention-days: 30
 
-      - name: 写回版本号与标签
+      - name: 建 draft release 并挂上安装包
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: 浴室柜画图工具 ${{ github.event.inputs.tag || github.ref_name }}
+          body: 见 CHANGELOG.md
           draft: true
+          files: out/*
+          # 传了 files 却一个都没匹配上时要失败，
+          # 否则又会出现「Release 建出来了但是空的」这种情况
+          fail_on_unmatched_files: true
