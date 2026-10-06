@@ -37,7 +37,9 @@ test('盆：台上盆与台下盆不强制改绘制顺序', () => {
 });
 
 test('盆：meta 带上画内腔所需的参数', () => {
-  const b = parts(makeSpec({ basin: { shape: 'ellipse', wall: 22, wallBottom: 30, radius: 40 } }))
+  // type 显式指定：这条测的是「meta 把参数带下去」，
+  // 不该跟着默认值变（默认值改成台下盆时它不该红）
+  const b = parts(makeSpec({ basin: { type: 'vessel', shape: 'ellipse', wall: 22, wallBottom: 30, radius: 40 } }))
     .find((p) => p.kind === 'basin');
   eq(b.meta.shape, 'ellipse');
   eq(b.meta.wall, 22);

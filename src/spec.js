@@ -23,13 +23,13 @@ export const DEFAULTS = {
   },
 
   basin: {
-    type: 'vessel',
+    type: 'undermount',
     count: 1,
     width: 500,
     depth: 380,
-    height: 120,
+    height: 160,
     position: null,
-    depthBias: 0.5,
+    depthBias: 0.8,
     gap: 150,
     shape: 'rect',
     radius: 40,
@@ -39,7 +39,7 @@ export const DEFAULTS = {
 
   faucet: { height: 150, reach: 110, enabled: true },
 
-  mirror: { width: null, height: 780, depth: 150, gap: 30, led: false },
+  mirror: { width: null, height: 780, depth: 150, gap: 350, led: false },
 
   bands: [
     { kind: 'door', cols: [1, 1], rows: [1], cells: null, handle: 'bar-v', plinth: false },

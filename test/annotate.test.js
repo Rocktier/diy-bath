@@ -166,7 +166,7 @@ test('标注：画进正视图后可被渲染，不破坏 SVG', () => {
   const s = makeSpec();
   const out = drawAll(s);
   eq(out.front.svg.includes(s.name), true, '正视图应包含方案名');
-  eq(out.front.svg.includes('台上盆'), true);
+  eq(out.front.svg.includes('台下盆'), true, '默认盆型已按参照图改为台下盆');
   eq(out.front.svg.includes('分区：'), true);
 });
 

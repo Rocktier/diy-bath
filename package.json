@@ -22,7 +22,6 @@
   "dependencies": {
     "@tauri-apps/api": "2.12.1",
     "idb-keyval": "6.3.0",
-    "panzoom": "4.5.0",
     "three": "0.180.0"
   },
   "devDependencies": {

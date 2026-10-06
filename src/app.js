@@ -1,6 +1,5 @@
 import { makeSpec, clone, PRESETS } from './spec.js';
 import { drawAll } from './render.js';
-import Panzoom from 'panzoom';
 import { get as idbGet, set as idbSet, clear as idbClear } from 'idb-keyval';
 
 const $ = (s) => document.querySelector(s);
@@ -77,98 +76,27 @@ function setMode(next) {
     pv.classList.remove('hidden');
   }
 
-  // 缩放工具条是正视图专用的，3D 里用滚轮直接缩放画面。
-  document.querySelector('.zoomer')?.classList.toggle('hidden', is3d);
   document.querySelector('#btnSvg')?.classList.toggle('hidden', is3d);
-  // 重置视角只对 3D 相机有效，正视图里按 R 是重置缩放（另一个行为）
+  // 重置视角只对 3D 相机有效，正视图没有可重置的东西
   document.querySelector('#btnResetView')?.classList.toggle('hidden', !is3d);
 }
 
-/* ---------------------------------------------------------------- 缩放 / 平移 */
-/* 之前 SVG 按宽度自适应，1500 宽的柜子加上文字标注后，缝宽、把手这些
-   细节在屏幕上只剩几个像素，导购员没法指给客户看。
-   panzoom 负责滚轮缩放 + 拖拽平移；导出走的是原始 SVG 字符串，
-   ��缩放完全无关，导出结果始终是 1:1。 */
-
-const ZOOM_STEP = 1.25;
-const zoomers = new Map();
-
-/**
- * 把 SVG 的图形内容包进一个 <g>。
+/* ---------------------------------------------------------------- 图纸呈现 */
+/* 正视图不做缩放，也不平移。
  *
- * panzoom 不能作用在根 <svg> 上——它检查 svgElement.ownerSVGElement，
- * 根 svg 没有这个属性，直接抛错。必须包一层 <g> 再对它做 transform。
+ * 原本接了 panzoom 做滚轮缩放 + 拖拽平移（因为 1500 宽的柜子加上文字标注后，
+ * 缝宽、把手在屏幕上只剩几个像素）。实测下来它是**净负作用**，已删除：
  *
- * 这个 bug 从引入缩放功能起就存在：正视图模式下 attachZoom 一直抛错，
- * 把 redraw() 整个中断，所以只渲染出第一个视图。
- */
-function withZoomGroup(svgText) {
-  const open = svgText.indexOf('>');
-  const close = svgText.lastIndexOf('</svg>');
-  if (open < 0 || close < 0 || close < open) return svgText;
-  const head = svgText.slice(0, open + 1);
-  const body = svgText.slice(open + 1, close);
-  const tail = svgText.slice(close);
-  return `${head}<g data-zoom="1">${body}</g>${tail}`;
-}
-
-/**
- * panzoom 4.x 的 API 与 3.x 不同：
- *   返回对象只有 zoomTo / zoomAbs / moveTo / moveBy / centerOn /
- *   getTransform / showRectangle / dispose
- *   **没有** addEventListener / zoomBy / reset / getScale / getPanzoom
- * 事件要挂在元素自己身上（wheel / mousedown），缩放比例从 getTransform() 读。
- */
-function attachZoom(g, key) {
-  const pz = Panzoom(g, {
-    maxScale: 12,
-    minScale: 0.2,
-    step: 0.3,
-    contain: 'outside',
-    animate: false,
-  });
-
-  const markPanning = (on) => g.classList.toggle('panning', on);
-  g.addEventListener('mousedown', () => markPanning(true));
-  g.addEventListener('mouseup', () => markPanning(false));
-  g.addEventListener('mouseleave', () => markPanning(false));
-  g.addEventListener('wheel', () => requestAnimationFrame(syncZoomLabel), { passive: true });
-
-  zoomers.set(key, { pz, el: g });
-  syncZoomLabel();
-}
-
-/** 当前缩放比例。panzoom 4 没有 getScale，从变换矩阵的 a 分量取。 */
-function currentScale() {
-  for (const { pz } of zoomers.values()) {
-    const t = pz.getTransform();
-    if (t && Number.isFinite(t.a)) return t.a;
-  }
-  return 1;
-}
-
-function syncZoomLabel() {
-  const el = $('#zoomLabel');
-  if (el) el.textContent = `${Math.round(currentScale() * 100)}%`;
-}
-
-/** 按当前比例乘一个系数。panzoom 4 没有 zoomBy，得自己算目标绝对值。 */
-function zoomBy(factor) {
-  for (const { pz } of zoomers.values()) {
-    const t = pz.getTransform();
-    if (!t) continue;
-    pz.zoomAbs(t.a * factor, { animate: true });
-  }
-  syncZoomLabel();
-}
-
-/** 回到 1:1 且平移归零。panzoom 4 没有 reset()，用 zoomTo 表达。 */
-function zoomReset() {
-  for (const { pz } of zoomers.values()) {
-    pz.zoomTo(1, { x: 0, y: 0, animate: true });
-  }
-  syncZoomLabel();
-}
+ *   panzoom 会把 <svg> 上的 viewBox 摘掉，烘焙成 <g> 上的 transform。
+ *   而 CSS 里又有 svg { width:100% }——两者互相打架，
+ *   结果 1963 单位的图形只画成 291px，占掉容器 883px 里的三分之一，
+ *   剩下三分之二是空的。
+ *
+ *   也就是「加了缩放功能之后，图反而变小了」。
+ *   用户看到的就是那一大片空荡荡的灰色区域。
+ *
+ * 现在改成 svg { width:100%; height:100% } + preserveAspectRatio，
+ * 由 SVG 自己等比铺满整个右栏——没有缩放状态要维护，也就没有 bug 可写。 */
 
 /* ---------------------------------------------------------------- 表单 schema */
 /* get/set 用路径读写 spec。kind: num | text | enum | bool
@@ -554,7 +482,6 @@ const VIEW_LABEL = { front: '正视图' };
 function redraw() {
   const pv = $('#preview');
   pv.innerHTML = '';
-  zoomers.clear();
   refreshSummaries();
 
   let out;
@@ -570,18 +497,14 @@ function redraw() {
   let n = 0;
   for (const key of ['front']) {
     const fig = document.createElement('figure');
+    // 图纸铺满整个 figure，标题退成左上角的小角标
     const cap = document.createElement('figcaption');
     cap.textContent = VIEW_LABEL[key];
-    const wrap = document.createElement('div');
-    wrap.className = 'zoomwrap';
-    fig.append(cap, wrap);
-    wrap.insertAdjacentHTML('beforeend', withZoomGroup(out[key].svg));
+    fig.append(cap);
+    fig.insertAdjacentHTML('beforeend', out[key].svg);
     pv.append(fig);
-    const g = wrap.querySelector('svg > g[data-zoom]');
-    if (g) attachZoom(g, key);
     n++;
   }
-  syncZoomLabel();
 
   // 3D 与正视图共用同一份 spec，几何必然一致
   if (mode === '3d') {
@@ -786,7 +709,6 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === '3') setMode('ortho');
   else if (e.key === 'r' || e.key === 'R') {
     if (mode === '3d') threeView?.reset();
-    else zoomReset();
   }
 });
 
@@ -806,12 +728,4 @@ $('#btnExpandAll')?.addEventListener('click', () => {
   const anyClosed = [...document.querySelectorAll('#form .grp')].some((d) => !d.open);
   setAllGroups(anyClosed);
   $('#btnExpandAll').textContent = anyClosed ? '全部收起' : '全部展开';
-});
-
-$('#zoomIn').addEventListener('click', () => zoomBy(ZOOM_STEP));
-$('#zoomOut').addEventListener('click', () => zoomBy(1 / ZOOM_STEP));
-$('#zoomFit').addEventListener('click', () => zoomReset());
-$('#zoom100').addEventListener('click', () => {
-  for (const pz of zoomers.values()) pz.zoomTo(1, { animate: true });
-  syncZoomLabel();
 });
