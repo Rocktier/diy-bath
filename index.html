@@ -52,8 +52,9 @@
   /* 图形装在 zoom 容器里，由 panzoom 接管平移缩放。
      容器固定高度并裁掉溢出，panzoom 只改 svg 的 transform。 */
   figure .zoomwrap { overflow:hidden; height:min(62vh,720px); border-radius:4px; }
-  figure .zoomwrap svg { width:100%; height:auto; display:block; transform-origin:0 0; cursor:grab; }
-  figure .zoomwrap svg.panning { cursor:grabbing; }
+  figure .zoomwrap svg { width:100%; height:auto; display:block; cursor:grab; }
+  figure .zoomwrap svg > g { transform-origin:0 0; }
+  figure .zoomwrap svg > g.panning { cursor:grabbing; }
   .tabs { display:flex; gap:3px; padding:2px; background:#111419;
            border:1px solid var(--line); border-radius:7px; }
   .tabs .btn { border:0; background:transparent; padding:3px 12px; }

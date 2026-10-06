@@ -82,23 +82,57 @@ function setMode(next) {
 const ZOOM_STEP = 1.25;
 const zoomers = new Map();
 
-function attachZoom(svg, key) {
-  const pz = Panzoom(svg, {
+/**
+ * 把 SVG 的图形内容包进一个 <g>。
+ *
+ * panzoom 不能作用在根 <svg> 上——它检查 svgElement.ownerSVGElement，
+ * 根 svg 没有这个属性，直接抛错。必须包一层 <g> 再对它做 transform。
+ *
+ * 这个 bug 从引入缩放功能起就存在：三视图模式下 attachZoom 一直抛错，
+ * 把 redraw() 整个中断，所以只渲染出第一个视图。
+ */
+function withZoomGroup(svgText) {
+  const open = svgText.indexOf('>');
+  const close = svgText.lastIndexOf('</svg>');
+  if (open < 0 || close < 0 || close < open) return svgText;
+  const head = svgText.slice(0, open + 1);
+  const body = svgText.slice(open + 1, close);
+  const tail = svgText.slice(close);
+  return `${head}<g data-zoom="1">${body}</g>${tail}`;
+}
+
+/**
+ * panzoom 4.x 的 API 与 3.x 不同：
+ *   返回对象只有 zoomTo / zoomAbs / moveTo / moveBy / centerOn /
+ *   getTransform / showRectangle / dispose
+ *   **没有** addEventListener / zoomBy / reset / getScale / getPanzoom
+ * 事件要挂在元素自己身上（wheel / mousedown），缩放比例从 getTransform() 读。
+ */
+function attachZoom(g, key) {
+  const pz = Panzoom(g, {
     maxScale: 12,
     minScale: 0.2,
     step: 0.3,
     contain: 'outside',
     animate: false,
   });
-  svg.addEventListener('panzoomstart', () => svg.classList.add('panning'));
-  svg.addEventListener('panzoomend', () => svg.classList.remove('panning'));
-  pz.addEventListener('zoom', () => syncZoomLabel());
-  zoomers.set(key, pz);
+
+  const markPanning = (on) => g.classList.toggle('panning', on);
+  g.addEventListener('mousedown', () => markPanning(true));
+  g.addEventListener('mouseup', () => markPanning(false));
+  g.addEventListener('mouseleave', () => markPanning(false));
+  g.addEventListener('wheel', () => requestAnimationFrame(syncZoomLabel), { passive: true });
+
+  zoomers.set(key, { pz, el: g });
   syncZoomLabel();
 }
 
+/** 当前缩放比例。panzoom 4 没有 getScale，从变换矩阵的 a 分量取。 */
 function currentScale() {
-  for (const pz of zoomers.values()) return pz.getScale();
+  for (const { pz } of zoomers.values()) {
+    const t = pz.getTransform();
+    if (t && Number.isFinite(t.a)) return t.a;
+  }
   return 1;
 }
 
@@ -107,13 +141,21 @@ function syncZoomLabel() {
   if (el) el.textContent = `${Math.round(currentScale() * 100)}%`;
 }
 
+/** 按当前比例乘一个系数。panzoom 4 没有 zoomBy，得自己算目标绝对值。 */
 function zoomBy(factor) {
-  for (const pz of zoomers.values()) pz.zoomBy(factor, { animate: true });
+  for (const { pz } of zoomers.values()) {
+    const t = pz.getTransform();
+    if (!t) continue;
+    pz.zoomAbs(t.a * factor, { animate: true });
+  }
   syncZoomLabel();
 }
 
+/** 回到 1:1 且平移归零。panzoom 4 没有 reset()，用 zoomTo 表达。 */
 function zoomReset() {
-  for (const pz of zoomers.values()) pz.reset({ animate: true });
+  for (const { pz } of zoomers.values()) {
+    pz.zoomTo(1, { x: 0, y: 0, animate: true });
+  }
   syncZoomLabel();
 }
 
@@ -434,10 +476,10 @@ function redraw() {
     const wrap = document.createElement('div');
     wrap.className = 'zoomwrap';
     fig.append(cap, wrap);
-    wrap.insertAdjacentHTML('beforeend', out[key].svg);
+    wrap.insertAdjacentHTML('beforeend', withZoomGroup(out[key].svg));
     pv.append(fig);
-    const svg = wrap.querySelector('svg');
-    if (svg) attachZoom(svg, key);
+    const g = wrap.querySelector('svg > g[data-zoom]');
+    if (g) attachZoom(g, key);
     n++;
   }
   if (!n) pv.append(errBox('三个视图都被隐藏了，请在「显示」里至少打开一个。'));

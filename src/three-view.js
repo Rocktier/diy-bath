@@ -59,7 +59,14 @@ export class ThreeView {
   }
 
   _initRenderer() {
-    const r = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const r = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      // 必须开，否则 snapshot() 的 toDataURL() 拿到的是空白图。
+      // WebGL 默认在合成后就把绘制缓冲清掉，只有 preserveDrawingBuffer
+      // 才能在渲染之后回头读像素。代价是一点性能，换来导出能用。
+      preserveDrawingBuffer: true,
+    });
     r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     r.setClearColor(0xffffff, 1);
     this.renderer = r;
