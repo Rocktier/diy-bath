@@ -52,9 +52,15 @@ jobs:
       - name: 发版前跑测试
         run: npm run test:coverage
 
-      # 版本号统一从 tag 取。这里显式改 package.json 与 Cargo.toml，
-      # 而 tauri.conf.json 的版本由 tauri-action 的 tag_name 注入。
-      # 三处都要改，否则 exe 里的版本和页面显示的对不上。
+      # 版本号统一从 tag 取。package.json 与 Cargo.toml 显式改，
+      # tauri.conf.json 的版本由 tauri-action 的 tag_name 注入。
+      # 版本号统一到 tag。刻意用脚本而不是 PowerShell 一行正则：
+      # 原来的 `$lock -replace '(?m)^version = ".*"$'` 会匹配 Cargo.lock 里
+      # **每一行** version，把全部 417 个 crate 的版本一起改成应用版本号，
+      # tauri 也从 2.12.1 变成 0.3.0，于是 Tauri CLI 报
+      # 「tauri (v0.3.0) : @tauri-apps/api (v2.12.1) 版本不匹配」，
+      # Release 工作流从上线起就没成功发布过。
+      # scripts/sync-version.mjs 只按包名精确定位本包，并在改完核对依赖没被动。
       - name: 同步版本号到 tag
         shell: pwsh
         run: |
@@ -66,23 +72,7 @@ jobs:
           if (-not $tag) { throw '取不到版本号' }
           if ($tag -notmatch '^\d+\.\d+\.\d+$') { throw "版本号格式不对: $tag" }
           Write-Host "版本: $tag"
-
-          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
-          $pkg.version = $tag
-          $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -Encoding utf8
-
-          $cargoPath = 'src-tauri/Cargo.toml'
-          $cargo = Get-Content $cargoPath -Raw
-          $cargo = $cargo -replace '(?m)^version = ".*"$', "version = `"$tag`""
-          Set-Content $cargoPath -Value $cargo -Encoding utf8
-
-          # Cargo.lock 里本包的版本也要跟上，否则上面的 --locked 校验会失败
-          $lockPath = 'src-tauri/Cargo.lock'
-          if (Test-Path $lockPath) {
-            $lock = Get-Content $lockPath -Raw
-            $lock = $lock -replace '(?m)^version = ".*"$', "version = `"$tag`""
-            Set-Content $lockPath -Value $lock -Encoding utf8
-          }
+          node scripts/sync-version.mjs $tag
 
       - name: 校验版本号已同步
         run: node scripts/check-version.mjs
