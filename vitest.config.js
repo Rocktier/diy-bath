@@ -10,12 +10,19 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.js'],
-      // app.js 是唯一操作 DOM 的文件，需要浏览器环境才能覆盖，
-      // 阶段二再补 playwright 之类的方案。引擎部分要求接近全覆盖。
-      exclude: ['src/app.js'],
+      // 这两个文件在 Node 里跑不起来——不是不写测试，是**写不了**：
+      //   app.js        唯一操作 DOM 的文件
+      //   three-view.js 需要 WebGL 上下文与真实的 resize / pointer 事件
+      // vitest 跑在 environment: 'node'，import three 就炸。
+      //
+      // 它们的实际行为由 scripts/ui-audit/acceptance.js 在真浏览器里覆盖
+      // （16 条清单：手势、模式切换、导出、resize 恢复…），
+      // 那比 mock 更接近用户真实操作。
+      //
+      // 别为了刷覆盖率去 mock WebGL——那测的是 mock 自己，不是代码。
+      exclude: ['src/app.js', 'src/three-view.js'],
       reporter: ['text', 'lcov'],
-      // 定在当前实测水平之上：语句 99.76% / 分支 91.8% / 函数 97.22%。
-      // 只往上调，不下调。低于阈值 CI 失败。
+      // 定在当前实测水平之上，只往上调不下调。低于阈值 CI 失败。
       thresholds: { lines: 95, functions: 95, branches: 88, statements: 95 },
     },
   },

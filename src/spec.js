@@ -195,7 +195,3 @@ export const PRESETS = [
     },
   },
 ];
-
-export function presetById(id) {
-  return PRESETS.find((p) => p.id === id) || null;
-}
