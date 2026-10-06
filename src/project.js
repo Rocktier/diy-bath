@@ -5,7 +5,6 @@ const PAD = 40;
 const orderOf = (p) => p.order ?? p.z + p.d;
 const fy = (y) => -y;
 
-
 export function bbox(shapes, pad = PAD) {
   const xs = [];
   const ys = [];
