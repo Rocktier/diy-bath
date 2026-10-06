@@ -16,7 +16,8 @@
     "tauri:build": "tauri build",
     "lint:workflows": "node scripts/lint-workflows.mjs",
     "check:version": "node scripts/check-version.mjs",
-    "verify": "npm run check:version && npm run lint:workflows && npm test"
+    "verify": "npm run check:version && npm run lint:workflows && npm test && npm run build && npm run check:bundle",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.1",
