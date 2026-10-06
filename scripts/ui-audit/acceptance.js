@@ -167,12 +167,50 @@ window.__acc = (() => {
     ok(12.1, true, figTitles.length === 1 && figTitles[0] === '正视图'
       && !figTitles.some((s) => /俯|剖/.test(s)));
 
-    /* 13 正视图下「标注」分组可见，且整份表单里找不到俯视图 / 剖面图开关 */
-    const legends = [...document.querySelectorAll('#form legend')].map((l) => l.textContent);
+    /* 13 正视图下「标注」分组可见，且整份表单里找不到俯视图 / 剖面图开关。
+          表单已改成 <details> 手风琴，标题在 .grp > summary 的 .gname 里。 */
+    const names = [...document.querySelectorAll('#form .grp > summary .gname')].map((n) => n.textContent);
     const allLabels = [...document.querySelectorAll('#form .row > label')].map((l) => l.textContent);
-    ok(13, true, legends.includes('标注')
-      && !legends.some((s) => /俯视图|剖面图|显示/.test(s))
+    ok(13, true, names.includes('标注')
+      && !names.some((s) => /俯视图|剖面图/.test(s))
       && !allLabels.some((s) => /俯视图|剖面图/.test(s)));
+
+    /* 13.2 分组必须可折叠，且折叠时能看到当前值摘要 */
+    const grps = [...document.querySelectorAll('#form .grp')];
+    const collapsed = grps.filter((g) => !g.open);
+    ok(13.2, true, grps.length === 6
+      && grps.every((g) => g.querySelector('.gsum')?.textContent.trim())
+      && collapsed.length > 0);
+
+    /* 13.3 默认只展开一组（36 个输入框平铺的话屏幕放不下） */
+    const opened = grps.filter((g) => g.open);
+    const panel = document.querySelector('#form');
+    ok(13.3, true, opened.length <= 1 && panel.scrollHeight < window.innerHeight * 2);
+
+    /* 13.4 一键展开/收起可用 */
+    const btn = document.querySelector('#btnExpandAll');
+    btn.click();
+    await sleep(300);
+    const allOpen = [...document.querySelectorAll('#form .grp')].every((g) => g.open);
+    btn.click();
+    await sleep(300);
+    const allShut = [...document.querySelectorAll('#form .grp')].every((g) => !g.open);
+    ok(13.4, true, allOpen && allShut);
+
+    /* 13.5 改参数后折叠头的摘要要跟着变 */
+    const wid = [...document.querySelectorAll('#form input[type=number]')]
+      .find((i) => i.closest('.row').querySelector('label').textContent === '柜体宽');
+    const gsum = (n) => [...document.querySelectorAll('#form .grp')]
+      .find((g) => g.dataset.group === n).querySelector('.gsum').textContent;
+    const before = gsum('主柜');
+    wid.value = '1560';
+    wid.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(400);
+    const after = gsum('主柜');
+    wid.value = '1180';
+    wid.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(300);
+    ok(13.5, true, before !== after && after.includes('1560') && gsum('主柜').includes('1180'));
 
     /* 14 输入框外按 2 / 3 */
     document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }));

@@ -97,6 +97,48 @@
   fieldset { border:1px solid var(--line); border-radius:var(--r); margin:0 0 10px; padding:8px 10px 10px; }
   legend { color:var(--acc); font-size:12px; padding:0 6px; }
 
+  /* ---------------------------------------------------- 分组手风琴
+     之前 6 个 fieldset 全部平铺展开，36 个输入框一路铺下去。
+     屏幕再高也不够——面板高度是死的，跟屏幕多大无关。
+     改成可折叠，并且**折叠头直接显示当前值**，
+     「现在是多大」不用展开就能看到，只在真要改时才点开。 */
+  .grp {
+    border:1px solid var(--line); border-radius:var(--r);
+    margin:0 0 6px; background:var(--panel2); position:relative; overflow:hidden;
+  }
+  .grp > summary {
+    display:flex; align-items:center; gap:9px;
+    padding:9px 11px; cursor:pointer; list-style:none; user-select:none;
+    transition:background var(--dur) var(--ease);
+  }
+  .grp > summary::-webkit-details-marker { display:none; }
+  .grp > summary::marker { content:''; }
+  .grp > summary:hover { background:#272c33; }
+  .grp > summary:focus-visible { outline:2px solid var(--focus); outline-offset:-2px; }
+
+  /* chevron 用两条 border 画，不引图标字体 */
+  .grp > summary::before {
+    content:''; flex:0 0 auto; width:6px; height:6px;
+    border-right:1.6px solid var(--dim); border-bottom:1.6px solid var(--dim);
+    transform:rotate(-45deg); transition:transform var(--dur) var(--ease);
+  }
+  .grp[open] > summary::before { transform:rotate(45deg); }
+  .grp[open] > summary { border-bottom:1px solid var(--line); }
+  /* 展开的那组用左边缘一条金色细带标出来 */
+  .grp[open]::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:2px;
+    background:var(--acc); z-index:1;
+  }
+
+  .gname { color:var(--fg); font-size:13px; font-weight:600; flex:0 0 auto; }
+  /* 摘要用等宽数字，改参数时摘要宽度不会左右抖 */
+  .gsum {
+    color:var(--dim); font-size:11.5px; font-variant-numeric:tabular-nums;
+    margin-left:auto; text-align:right;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .gbody { padding:8px 11px 10px; }
+
   /* 整行可点：label 关联控件后，勾选框不再只有 13×13 那么一点地方可按。
      makeRow() 里给 label 补了 htmlFor，这里把它做成手型提示。 */
   .row { display:grid; grid-template-columns:1fr 96px; gap:8px; align-items:center; margin:4px 0; }
@@ -202,6 +244,7 @@
     </div>
     <button class="btn" id="btnResetView" title="回到默认视角">重置视角</button>
     <span class="sp"></span>
+    <button class="btn" id="btnExpandAll" title="展开或收起全部分组">全部展开</button>
     <select id="hist" title="历史方案" aria-label="历史方案"><option value="">— 历史方案 —</option></select>
     <div class="zoomer" role="group" aria-label="正视图缩放">
       <button class="btn" id="zoomOut" aria-label="缩小" title="缩小">−</button>

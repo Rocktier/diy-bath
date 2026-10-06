@@ -241,30 +241,108 @@ function getPath(obj, path) {
 
 /* ---------------------------------------------------------------- 表单 */
 
+/** 折叠状态存在 localStorage。导购员一天几十次调参数，
+ *  每次都要重新展开同一批分组是不能忍的。 */
+const OPEN_KEY = 'diy-bath:open-groups';
+
+function loadOpen() {
+  try {
+    const v = JSON.parse(localStorage.getItem(OPEN_KEY) ?? '');
+    return Array.isArray(v) ? new Set(v) : null;
+  } catch { return null; }
+}
+function saveOpen(set) {
+  try { localStorage.setItem(OPEN_KEY, JSON.stringify([...set])); } catch { /* 无痕模式，忽略 */ }
+}
+
+/** 只留「主柜」默认展开。其余折叠后由摘要告知当前值，
+ *  想改哪个再点开——36 个输入框平铺的话，屏幕再高也铺不下。 */
+const DEFAULT_OPEN = new Set(['主柜']);
+
+let openGroups = loadOpen() ?? new Set(DEFAULT_OPEN);
+
+/**
+ * 每组的当前值摘要。折叠时至少能看出「现在是什��样」，
+ * 不用为了确认一个数字而展开。
+ */
+function groupSummary(name) {
+  const c = spec.cabinet, t = spec.top, b = spec.basin;
+  switch (name) {
+    case '主柜':
+      return c.width + '×' + c.height + '×' + c.depth + ' · '
+        + (c.mount === 'wall' ? '悬空 ' + c.wallGap : '落地');
+    case '台面':
+      return t.material + ' ' + t.thickness + '厚 · 外挑' + t.overhang;
+    case '盆': {
+      const kind = { vessel: '台上盆', undermount: '台下盆', integral: '一体盆' }[b.type] ?? b.type;
+      return kind + ' ×' + b.count + ' · ' + b.width + '×' + b.depth;
+    }
+    case '龙头 / 镜柜':
+      return (spec.faucet.enabled ? '龙头✓' : '龙头✗') + ' · '
+        + (spec.mirror ? '镜柜✓ ' + spec.mirror.height + '×' + spec.mirror.depth : '镜柜✗');
+    case '标注':
+      return (spec.annotations.enabled ? '开' : '关') + ' · '
+        + (spec.annotations.position === 'below' ? '下方' : '右侧');
+    case '分区':
+      return (spec.bands?.length ?? 0) + ' 个分区';
+    default:
+      return '';
+  }
+}
+
+function makeGroup(name) {
+  const d = document.createElement('details');
+  d.className = 'grp';
+  d.dataset.group = name;
+  d.open = openGroups.has(name);
+
+  const sum = document.createElement('summary');
+  const nm = document.createElement('span');
+  nm.className = 'gname';
+  nm.textContent = name;
+  const sm = document.createElement('span');
+  sm.className = 'gsum';
+  sm.textContent = groupSummary(name);
+  sum.append(nm, sm);
+  d.append(sum);
+
+  const body = document.createElement('div');
+  body.className = 'gbody';
+  d.append(body);
+
+  d.addEventListener('toggle', () => {
+    if (d.open) openGroups.add(name); else openGroups.delete(name);
+    saveOpen(openGroups);
+  });
+  return { d, body };
+}
+
+/** 刷新所有折叠头的摘要（每次重绘调一次，很便宜） */
+function refreshSummaries() {
+  for (const sm of document.querySelectorAll('#form .gsum')) {
+    const g = sm.closest('.grp')?.dataset.group;
+    if (g) sm.textContent = groupSummary(g);
+  }
+}
+
 function buildForm() {
   const form = $('#form');
   form.innerHTML = '';
-  for (const [legend, fields] of SCHEMA) {
-    const fs = document.createElement('fieldset');
-    const lg = document.createElement('legend');
-    lg.textContent = legend;
-    fs.append(lg);
-    for (const f of fields) fs.append(makeRow(f));
-    form.append(fs);
+
+  for (const [name, fields] of SCHEMA) {
+    const { d, body } = makeGroup(name);
+    for (const f of fields) body.append(makeRow(f));
+    form.append(d);
   }
 
-  const bs = document.createElement('fieldset');
-  const bl = document.createElement('legend');
-  bl.textContent = '分区';
-  bs.append(bl);
+  const { d, body } = makeGroup('分区');
   const hint = document.createElement('p');
   hint.className = 'hint';
   hint.innerHTML = '列宽比 / 行高比 用逗号分隔。<br>'
     + '列 [1,1] 均分，[3,1,3] 两侧宽中间窄（中抽）。<br>'
     + '行 [2,1] 下大上小，[2,1.5,1] 三抽递减。';
-  bs.append(hint);
-  bs.append(buildBands());
-  form.append(bs);
+  body.append(hint, buildBands());
+  form.append(d);
 }
 
 function makeRow([path, label, kind, set, options]) {
@@ -477,6 +555,7 @@ function redraw() {
   const pv = $('#preview');
   pv.innerHTML = '';
   zoomers.clear();
+  refreshSummaries();
 
   let out;
   try {
@@ -712,6 +791,23 @@ document.addEventListener('keydown', (e) => {
 });
 
 // 缩放控件
+/* 一键展开/收起。导购员第一次打开可能想一眼看全所有参数，
+ *  但日常只改两三个值——所以两个方向都要有。 */
+function setAllGroups(open) {
+  for (const d of document.querySelectorAll('#form .grp')) {
+    d.open = open;
+    if (open) openGroups.add(d.dataset.group);
+    else openGroups.delete(d.dataset.group);
+  }
+  saveOpen(openGroups);
+}
+
+$('#btnExpandAll')?.addEventListener('click', () => {
+  const anyClosed = [...document.querySelectorAll('#form .grp')].some((d) => !d.open);
+  setAllGroups(anyClosed);
+  $('#btnExpandAll').textContent = anyClosed ? '全部收起' : '全部展开';
+});
+
 $('#zoomIn').addEventListener('click', () => zoomBy(ZOOM_STEP));
 $('#zoomOut').addEventListener('click', () => zoomBy(1 / ZOOM_STEP));
 $('#zoomFit').addEventListener('click', () => zoomReset());
