@@ -63,7 +63,9 @@ function setMode(next) {
   }
   const stage = threeContainer();
   const pv = document.querySelector('#preview');
-  if (next === '3d') {
+  const is3d = next === '3d';
+
+  if (is3d) {
     pv.classList.add('hidden');
     stage?.classList.remove('hidden');
     ensureThree()?.setSpec(spec);
@@ -71,6 +73,12 @@ function setMode(next) {
     stage?.classList.add('hidden');
     pv.classList.remove('hidden');
   }
+
+  // 「正视图 / 俯视图 / 剖面图」是 2D 的概念，3D 里勾选没有意义。
+  // 缩放按钮同理——panzoom 只作用在三视图上。
+  document.querySelector('#groupView')?.classList.toggle('hidden', is3d);
+  document.querySelector('.zoomer')?.classList.toggle('hidden', is3d);
+  document.querySelector('#btnSvg')?.classList.toggle('hidden', is3d);
 }
 
 /* ---------------------------------------------------------------- 缩放 / 平移 */
@@ -242,6 +250,8 @@ function buildForm() {
     lg.textContent = legend;
     fs.append(lg);
     for (const f of fields) fs.append(makeRow(f));
+    // 「显示」分组在 3D 模式下要整组隐藏（正/俯/剖是 2D 的概念）
+    if (legend === '显示') fs.id = 'groupView';
     form.append(fs);
   }
 
@@ -525,19 +535,7 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
 }
 
-$('#btnSvg').addEventListener('click', () => {
-  const key = firstVisible();
-  if (!key || !lastDraw) return;
-  download(
-    new Blob([lastDraw[key].svg], { type: 'image/svg+xml;charset=utf-8' }),
-    `${safeName()}-${key}.svg`,
-  );
-});
-
-$('#btnPng').addEventListener('click', () => {
-  const key = firstVisible();
-  if (!key || !lastDraw) return;
-  const { svg, box } = lastDraw[key];
+function exportSvgPng(svg, box, key) {
   const SCALE = 2;
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
   const img = new Image();
@@ -554,7 +552,46 @@ $('#btnPng').addEventListener('click', () => {
   };
   img.onerror = () => URL.revokeObjectURL(url);
   img.src = url;
+}
+
+$('#btnPng').addEventListener('click', () => {
+  // 3D 模式导出当前视角的截图
+  if (mode === '3d') {
+    if (!threeView) return;
+    const a = document.createElement('a');
+    a.href = threeView.snapshot();
+    a.download = `${safeName()}-3d.png`;
+    a.click();
+    return;
+  }
+  const key = firstVisible();
+  if (!key || !lastDraw) return;
+  exportSvgPng(lastDraw[key].svg, lastDraw[key].box, key);
 });
+
+$('#btnSvg').addEventListener('click', () => {
+  // 3D 没有矢量导出，白模本身是块状的，转 SVG 没有意义
+  if (mode === '3d') {
+    flashHint('3D 是位图，请用「导出 PNG」');
+    return;
+  }
+  const key = firstVisible();
+  if (!key || !lastDraw) return;
+  download(
+    new Blob([lastDraw[key].svg], { type: 'image/svg+xml;charset=utf-8' }),
+    `${safeName()}-${key}.svg`,
+  );
+});
+
+/** 在 3D 提示行上闪一句话，几秒后复原 */
+function flashHint(msg) {
+  const el = document.querySelector('.hint3d');
+  if (!el) return;
+  if (!el.dataset.origin) el.dataset.origin = el.textContent;
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = el.dataset.origin; }, 2200);
+}
 
 /* ---------------------------------------------------------------- 历史 */
 /* 用 IndexedDB（idb-keyval）而不是 localStorage：
@@ -628,6 +665,9 @@ buildPresets();
 markPresets();
 renderHistory();
 rebuild();
+// 默认就是 3D 模式，界面元素要跟着初始化一次，
+// 否则「显示」分组和缩放按钮会在 3D 模式下还露着
+setMode('3d');
 
 // 页签
 for (const b of document.querySelectorAll('.tabs .btn')) {
@@ -642,6 +682,25 @@ window.addEventListener('resize', () => {
 });
 
 $('#btnResetView')?.addEventListener('click', () => threeView?.reset());
+
+/**
+ * 快捷键。导购员一天要用几十次画图，能省不少点击。
+ *
+ * 关键是别在输入框里劫持——他们要能直接敲数字。
+ */
+document.addEventListener('keydown', (e) => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.repeat) return;
+
+  if (e.key === '2') setMode('3d');
+  else if (e.key === '3') setMode('ortho');
+  else if (e.key === 'r' || e.key === 'R') {
+    if (mode === '3d') threeView?.reset();
+    else zoomReset();
+  }
+});
 
 // 缩放控件
 $('#zoomIn').addEventListener('click', () => zoomBy(ZOOM_STEP));
