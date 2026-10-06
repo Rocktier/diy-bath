@@ -13,14 +13,18 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { parts } from './parts.js';
-import { partToWorld, colorOf, isVisible, NEEDS_EDGE, CAMERA_Y_SIGN } from './world.js';
+import { scenePlan } from './silhouette.js';
+import { partToWorld, CAMERA_Y_SIGN } from './world.js';
 
-/** 台面之外的默认取景参数 */
+/** 默认取景参数 */
 const DEFAULT_VIEW = {
   fov: 38,
-  /** 相机到目标的距离 */
-  distance: 2400,
+  /**
+   * 相机到目标的距离 = 场景尺寸 × 这个系数。
+   * 写死绝对值是不行的：600 的小柜和 1500 的大柜差 2.5 倍，
+   * 同一个距离会让小柜缩成一个点、大柜顶出画面。
+   */
+  distanceFactor: 2.4,
   /** 俯仰角（度）。正值俯视，参照图是从略高处往下看 */
   pitch: -18,
   /** 方位角（度）。0 = 正对柜面 */
@@ -44,6 +48,7 @@ export class ThreeView {
     this._disposed = false;
     this._lastW = 0;
     this._lastH = 0;
+    this.plan = null;
 
     this._initRenderer();
     this._initScene();
@@ -111,9 +116,22 @@ export class ThreeView {
   setSpec(spec) {
     if (this._disposed) return;
     this.spec = spec;
+    this.plan = scenePlan(spec);
+    this._clearGroup();
+    for (const p of this.plan.parts) this._addPart(p);
+    this._addGround(this.plan.ground);
+    this._frameCamera();
+    this._needsRender = true;
+  }
 
-    // 清掉旧场景。dispose 不调的话显存会一直涨，
-    // 改十几次参数就该重开应用了。
+  /**
+   * 清空场景。
+   *
+   * geometry / material 必须 dispose，否则改十几次参数显存就撑爆，
+   * 得重开应用。这是从 2D 版本学来的——SVG 是字符串没有这个问题，
+   * 3D 的 GPU 资源不会自动回收。
+   */
+  _clearGroup() {
     for (let i = this.group.children.length - 1; i >= 0; i--) {
       const c = this.group.children[i];
       this.group.remove(c);
@@ -121,24 +139,17 @@ export class ThreeView {
       if (Array.isArray(c.material)) c.material.forEach((m) => m.dispose?.());
       else c.material?.dispose?.();
     }
-
-    const ps = parts(spec).filter((p) => isVisible(p.kind));
-    for (const p of ps) this._addPart(p);
-    this._addGround(spec);
-
-    this._frameCamera();
-    this._needsRender = true;
   }
 
   _addPart(p) {
     const w = partToWorld(p);
     const geo = new THREE.BoxGeometry(w.size.x, w.size.y, w.size.z);
-    const mat = new THREE.MeshLambertMaterial({ color: colorOf(p.kind) });
+    const mat = new THREE.MeshLambertMaterial({ color: p.color });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(w.position.x, w.position.y, w.position.z);
     this.group.add(mesh);
 
-    if (NEEDS_EDGE.has(p.kind)) {
+    if (p.edge) {
       const eg = new THREE.EdgesGeometry(geo);
       const em = new THREE.LineBasicMaterial({ color: 0x6b6862 });
       const edge = new THREE.LineSegments(eg, em);
@@ -148,36 +159,33 @@ export class ThreeView {
   }
 
   /** 地面。参照图能看到影子，没有地面就完全浮空。 */
-  _addGround(spec) {
-    const w = spec.cabinet.width;
-    const d = spec.cabinet.depth;
-    const geo = new THREE.PlaneGeometry(w * 4, d * 6);
+  _addGround(g) {
+    const geo = new THREE.PlaneGeometry(g.w, g.d);
     const mat = new THREE.MeshLambertMaterial({ color: 0xf2f0ec });
-    const g = new THREE.Mesh(geo, mat);
-    g.rotation.x = -Math.PI / 2;
-    g.position.set(w / 2, -1, -(d / 2));
-    this.group.add(g);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(g.centerX, g.y - 1, -g.centerZ);
+    this.group.add(mesh);
   }
 
   /** 让相机对准柜体中心 */
   _frameCamera() {
-    const s = this.spec;
-    const cx = s.cabinet.width / 2;
-    const cy = s.cabinet.height / 2;
-    const cz = -s.cabinet.depth / 2;
+    const t = this.plan.target;
+    const b = this.plan.bounds;
 
-    const dist = DEFAULT_VIEW.distance * Math.max(s.cabinet.width, s.cabinet.height) / 1180;
+    const span = Math.max(b.maxX - b.minX, b.maxY - b.minY, b.maxZ - b.minZ);
+    const dist = span * DEFAULT_VIEW.distanceFactor;
     const pitch = THREE.MathUtils.degToRad(DEFAULT_VIEW.pitch);
-    // z 取反是镜像，场景转向会与鼠标手势相反，所以方位角也取反
+    // z 取反是镜像，场景转向会与鼠标手势相反，所以方位角取反
     const yaw = THREE.MathUtils.degToRad(DEFAULT_VIEW.yaw) * CAMERA_Y_SIGN;
 
     this.camera.position.set(
-      cx + dist * Math.cos(pitch) * Math.sin(yaw),
-      cy - dist * Math.sin(pitch),
-      cz + dist * Math.cos(pitch) * Math.cos(yaw),
+      t.x + dist * Math.cos(pitch) * Math.sin(yaw),
+      t.y - dist * Math.sin(pitch),
+      t.z + dist * Math.cos(pitch) * Math.cos(yaw),
     );
-    this.camera.lookAt(cx, cy, cz);
-    this.controls.target.set(cx, cy, cz);
+    this.camera.lookAt(t.x, t.y, t.z);
+    this.controls.target.set(t.x, t.y, t.z);
     this.controls.update();
   }
 
@@ -226,11 +234,7 @@ export class ThreeView {
     if (this._raf) cancelAnimationFrame(this._raf);
     window.removeEventListener('resize', this._onResize);
     this.controls?.dispose?.();
-    for (const c of this.group?.children ?? []) {
-      c.geometry?.dispose?.();
-      if (Array.isArray(c.material)) c.material.forEach((m) => m.dispose?.());
-      else c.material?.dispose?.();
-    }
+    this._clearGroup();
     this.renderer?.dispose?.();
     this.renderer?.domElement?.remove?.();
   }
