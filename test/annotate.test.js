@@ -2,7 +2,8 @@
 import { annotationLines, BASIN_LABEL, CELL_LABEL } from '../src/annotate.js';
 import { solve } from '../src/solve.js';
 import { drawAll } from '../src/render.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 const ann = (over) => {
   const s = makeSpec(over);
@@ -146,14 +147,14 @@ test('标注：BASIN_LABEL 与 CELL_LABEL 齐全', () => {
 });
 
 test('标注：全部预设都能生成文案且无 NaN/undefined', () => {
-  for (const p of PRESETS) {
-    const s = makeSpec(p.spec);
+  for (const lay of layoutMatrix()) {
+    const s = makeSpec(lay.patch);
     const lines = annotationLines(s, solve(s));
-    eq(lines.length, 6, `${p.name} 行数不对`);
+    eq(lines.length, 6, `${lay.label} 行数不对`);
     for (const l of lines) {
-      eq(l.includes('NaN'), false, `${p.name} 文案含 NaN：${l}`);
-      eq(l.includes('undefined'), false, `${p.name} 文案含 undefined：${l}`);
-      eq(l.includes('null'), false, `${p.name} 文案含 null：${l}`);
+      eq(l.includes('NaN'), false, `${lay.label} 文案含 NaN：${l}`);
+      eq(l.includes('undefined'), false, `${lay.label} 文案含 undefined：${l}`);
+      eq(l.includes('null'), false, `${lay.label} 文案含 null：${l}`);
     }
   }
 });

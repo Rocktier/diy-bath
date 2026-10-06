@@ -143,12 +143,31 @@ window.__acc = (() => {
     q('[data-mode="3d"]').click(); await sleep(600);
     ok(8, true, svgHas1500 && has3d());
 
-    /* 9 预设「中抽大柜」 */
-    const preset = [...document.querySelectorAll('#presetBar .btn')]
-      .find((b) => b.textContent.includes('中抽'));
-    preset?.click();
-    await sleep(800);
-    ok(9, true, !!preset && has3d() && findNum('柜体宽').value !== '1500');
+    /* 9 分格：改成「门 2 + 抽屉 1 + 上下」，摘要与图上分区都要跟着变。
+          预设列表已不存在，这条现在验的是数字驱动的分格。 */
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }));
+    await sleep(500);
+    const grp = q('#form .grp[data-group="分格"]');
+    grp.open = true;
+    await sleep(200);
+    const rowOf = (label) => [...grp.querySelectorAll('.row')]
+      .find((r) => r.querySelector('label').textContent === label);
+    const setNum = (label, v) => {
+      const i = rowOf(label).querySelector('input');
+      i.value = String(v);
+      i.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const setSel = (label, v) => {
+      const s = rowOf(label).querySelector('select');
+      s.value = v;
+      s.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    setNum('门（个）', 2);
+    setNum('抽屉（个）', 1);
+    setSel('排列', 'ud');
+    await sleep(700);
+    const sum9 = grp.querySelector('.gsum').textContent;
+    ok(9, true, has3d() && sum9.includes('2 门 1 抽') && sum9.includes('上下'));
 
     /* 10 切台下盆：盆变到台面下方 —— 场景 y 下界应低于台面 */
     const basin = [...document.querySelectorAll('#form select, #form input')]
@@ -193,6 +212,12 @@ window.__acc = (() => {
     ok(13.2, true, grps.length === 6
       && grps.every((g) => g.querySelector('.gsum')?.textContent.trim())
       && collapsed.length > 0);
+
+    /* 13.6 自定义分格要折起来，不能一上来就铺开一片输入框 */
+    ok(13.6, true, !!q('#form details.adv') && !q('#form details.adv').open);
+
+    /* 13.7 预设栏已经不存在了 */
+    ok(13.7, false, !!q('#presetBar'));
 
     /* 13.3 默认只展开一组（36 个输入框平铺的话屏幕放不下） */
     const opened = grps.filter((g) => g.open);

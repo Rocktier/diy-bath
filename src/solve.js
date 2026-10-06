@@ -1,3 +1,5 @@
+import { resolveBands } from './spec.js';
+
 const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
 function basinXs(basin, cabinet) {
@@ -19,7 +21,10 @@ function basinZ(basin, top, topDepth) {
 }
 
 export function solve(spec) {
-  const { cabinet, top, basin, bands } = spec;
+  const { cabinet, top, basin } = spec;
+// 分格从 doors / drawers / layout 生成，或取特例 / 自定义。
+// 不直接读 spec.bands，是为了让「两个门一个抽屉」这种改动只改数字就够。
+const bands = resolveBands(spec);
   const gap = cabinet.gap;
   const baseY = cabinet.mount === 'wall' ? cabinet.wallGap : cabinet.toe.height;
   const carcassTopY = baseY + cabinet.height;

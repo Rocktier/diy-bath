@@ -56,26 +56,6 @@
   }
 
   /* ---------------------------------------------------------------- 头部 */
-  header {
-    flex:0 0 auto;
-    border-bottom:1px solid var(--line); background:var(--panel);
-  }
-  .hrow { display:flex; align-items:center; gap:10px; padding:8px 14px 6px; }
-  header h1 { font-size:15px; margin:0; font-weight:600; white-space:nowrap; }
-  .sp { flex:1; min-width:0; }
-
-  /* 预设单独一行，单行横向滚动。
-     原来 10 个预设按钮和视图页签、历史、缩放、导出全挤在 header 一行，
-     flex 容器不换行而 #presetBar 内部换行，实测把 header 撑到 381px 高——
-     吃掉三分之一视口，还因为 header 是 sticky 的而一直占着。 */
-  #presetBar {
-    display:flex; gap:5px; flex-wrap:nowrap;
-    overflow-x:auto; overflow-y:hidden;
-    padding:0 14px 8px; scrollbar-width:thin;
-  }
-  #presetBar::-webkit-scrollbar { height:6px; }
-  #presetBar::-webkit-scrollbar-thumb { background:#33383f; border-radius:3px; }
-
   .btn {
     background:var(--panel2); color:var(--fg); border:1px solid var(--line);
     border-radius:var(--r); padding:4px 10px; cursor:pointer; font:inherit;
@@ -139,6 +119,29 @@
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .gbody { padding:8px 11px 10px; }
+
+  /* 「自定义分格」折叠区。绝大多数单子用「门 N + 抽 M + 排列」就够了，
+     但真遇到非典型分格得有个兜底的地方。折起来，不占地方。 */
+  .adv {
+    margin:10px 0 2px; padding-top:8px;
+    border-top:1px dashed var(--line);
+  }
+  .adv > summary {
+    cursor:pointer; list-style:none; user-select:none;
+    color:var(--dim); font-size:11.5px; padding:3px 0;
+    display:flex; align-items:center; gap:7px;
+  }
+  .adv > summary::-webkit-details-marker { display:none; }
+  .adv > summary::marker { content:''; }
+  .adv > summary::before {
+    content:''; flex:0 0 auto; width:5px; height:5px;
+    border-right:1.5px solid var(--dim); border-bottom:1.5px solid var(--dim);
+    transform:rotate(-45deg); transition:transform var(--dur) var(--ease);
+  }
+  .adv[open] > summary::before { transform:rotate(45deg); }
+  .adv > summary:hover { color:var(--fg); }
+  .adv > summary:focus-visible { outline:2px solid var(--focus); outline-offset:1px; }
+  .adv .gbody { padding:6px 0 0; }
 
   /* 整行可点：label 关联控件后，勾选框不再只有 13×13 那么一点地方可按。
      makeRow() 里给 label 补了 htmlFor，这里把它做成手型提示。 */
@@ -259,9 +262,6 @@
     <button class="btn" id="btnPng">导出 PNG</button>
     <button class="btn" id="btnSvg">导出 SVG</button>
   </div>
-  <!-- 「重置视角」从页签里挪出来了：它只对 3D 有意义，
-       放在两个视图页签中间会让人以为三视图也能重置视角。 -->
-  <div id="presetBar" role="group" aria-label="常用柜型预设"></div>
 </header>
 <main>
   <div id="form"></div>

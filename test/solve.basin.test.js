@@ -1,6 +1,7 @@
 ﻿import { test, eq, close } from './helpers.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('盆位：单盆居中 柜体1180 盆500 → x=340', () => {
   const L = solve(makeSpec({ cabinet: { width: 1180 }, basin: { count: 1, width: 500 } }));
@@ -83,11 +84,11 @@ test('盆位：盆比柜宽时不崩（不做校验，定制业务允许）', ()
 });
 
 test('盆位：全部预设的盆位都是有限数', () => {
-  for (const p of PRESETS) {
-    const L = solve(makeSpec(p.spec));
+  for (const lay of layoutMatrix()) {
+    const L = solve(makeSpec(lay.patch));
     for (const b of L.basins) {
       for (const k of ['x', 'z', 'w', 'd', 'h']) {
-        eq(Number.isFinite(b[k]), true, `${p.name} 的 basin.${k} = ${b[k]} 不是有限数`);
+        eq(Number.isFinite(b[k]), true, `${lay.label} 的 basin.${k} = ${b[k]} 不是有限数`);
       }
     }
   }

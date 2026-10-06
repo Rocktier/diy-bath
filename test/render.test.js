@@ -3,7 +3,8 @@ import { renderSVG, drawAll, WHITEMODEL } from '../src/render.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
 import { front } from '../src/project.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('renderSVG 产出带 mm 尺寸和 viewBox 的 svg', () => {
   const s = makeSpec();
@@ -144,13 +145,13 @@ test('文字带中文字体栈', () => {
 });
 
 test('回归：全部预设 × 三种盆型 × 正视图，SVG 里不得出现 NaN/undefined/Infinity', () => {
-  for (const p of PRESETS) {
+  for (const lay of layoutMatrix()) {
     for (const type of ['vessel', 'undermount', 'integral']) {
-      const s = makeSpec({ ...p.spec, basin: { ...(p.spec.basin ?? {}), type } });
+      const s = makeSpec({ ...lay.patch, basin: { ...(lay.patch.basin ?? {}), type } });
       const out = drawAll(s);
       for (const k of ['front']) {
         for (const bad of ['NaN', 'undefined', 'Infinity', 'null"']) {
-          eq(out[k].svg.includes(bad), false, `${p.name} / ${type} / ${k} 的 SVG 含 ${bad}`);
+          eq(out[k].svg.includes(bad), false, `${lay.label} / ${type} / ${k} 的 SVG 含 ${bad}`);
         }
       }
     }

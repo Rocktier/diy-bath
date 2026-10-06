@@ -1,7 +1,8 @@
 ﻿import { test, eq } from './helpers.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('外壳：台面左右外挑 overhang，前方也外挑 overhang', () => {
   const spec = makeSpec({ cabinet: { width: 1180, depth: 500 }, top: { thickness: 20, overhang: 10 } });
@@ -114,10 +115,10 @@ test('外壳：台面宽度小于 0 外挑时（overhang=0）台面与柜体同�
 });
 
 test('外壳：全部预设都能产出外壳零件且坐标有限', () => {
-  for (const p of PRESETS) {
-    for (const ps of parts(makeSpec(p.spec))) {
+  for (const lay of layoutMatrix()) {
+    for (const ps of parts(makeSpec(lay.patch))) {
       for (const k of ['x', 'y', 'z', 'w', 'h', 'd']) {
-        eq(Number.isFinite(ps[k]), true, `${p.name} 的 ${ps.kind}.${k} = ${ps[k]} 不是有限数`);
+        eq(Number.isFinite(ps[k]), true, `${lay.label} 的 ${ps.kind}.${k} = ${ps[k]} 不是有限数`);
       }
     }
   }

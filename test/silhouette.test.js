@@ -1,7 +1,8 @@
 import { test, eq, close } from './helpers.js';
 import { scenePlan } from '../src/silhouette.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('ScenePlan：台面在列表里，且宽于柜体（外挑）', () => {
   const s = makeSpec({ cabinet: { width: 1180, height: 680, depth: 500 }, top: { overhang: 10 } });
@@ -96,15 +97,15 @@ test('ScenePlan：target 在几何包围盒中心', () => {
 });
 
 test('ScenePlan：全部预设都能生成，坐标有限且尺寸为正', () => {
-  for (const p of PRESETS) {
-    const plan = scenePlan(makeSpec(p.spec));
-    eq(plan.parts.length > 0, true, `${p.name} 没有零件`);
+  for (const lay of layoutMatrix()) {
+    const plan = scenePlan(makeSpec(lay.patch));
+    eq(plan.parts.length > 0, true, `${lay.label} 没有零件`);
     for (const part of plan.parts) {
       for (const k of ['x', 'y', 'z', 'w', 'h', 'd']) {
-        eq(Number.isFinite(part[k]), true, `${p.name} 的 ${part.kind}.${k} = ${part[k]} 非有限数`);
+        eq(Number.isFinite(part[k]), true, `${lay.label} 的 ${part.kind}.${k} = ${part[k]} 非有限数`);
       }
-      eq(part.w > 0, true, `${p.name} 的 ${part.kind} 宽非正 ${part.w}`);
-      eq(part.h > 0, true, `${p.name} 的 ${part.kind} 高非正 ${part.h}`);
+      eq(part.w > 0, true, `${lay.label} 的 ${part.kind} 宽非正 ${part.w}`);
+      eq(part.h > 0, true, `${lay.label} 的 ${part.kind} 高非正 ${part.h}`);
     }
   }
 });

@@ -1,7 +1,8 @@
 ﻿import { test, eq } from './helpers.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('面板：抽屉与门生成面板，贴柜体前沿，厚 sidePanel', () => {
   const ps = parts(makeSpec({
@@ -113,13 +114,13 @@ test('面板：面板的 x/y/w/h 严格等于 solve 算出的格子', () => {
 });
 
 test('面板：全部预设的面板都不越出柜体', () => {
-  for (const p of PRESETS) {
-    const spec = makeSpec(p.spec);
+  for (const lay of layoutMatrix()) {
+    const spec = makeSpec(lay.patch);
     for (const c of parts(spec).filter((x) => x.kind === 'cell')) {
-      eq(c.x >= 0, true, `${p.name} 面板左越界 x=${c.x}`);
-      eq(c.x + c.w <= spec.cabinet.width + 0.01, true, `${p.name} 面板右越界`);
-      eq(c.w > 0, true, `${p.name} 面板宽非正 ${c.w}`);
-      eq(c.h > 0, true, `${p.name} 面板高非正 ${c.h}`);
+      eq(c.x >= 0, true, `${lay.label} 面板左越界 x=${c.x}`);
+      eq(c.x + c.w <= spec.cabinet.width + 0.01, true, `${lay.label} 面板右越界`);
+      eq(c.w > 0, true, `${lay.label} 面板宽非正 ${c.w}`);
+      eq(c.h > 0, true, `${lay.label} 面板高非正 ${c.h}`);
     }
   }
 });

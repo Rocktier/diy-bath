@@ -1,6 +1,7 @@
 ﻿import { test, eq, close } from './helpers.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('横向：柜体 1180 侧板18 2列 缝2 → 净宽1144 每格571', () => {
   const L = solve(makeSpec({
@@ -119,16 +120,18 @@ test('格子：每个格子记录 band / col / row 索引', () => {
 });
 
 test('格子：全部预设的格子坐标都是有限数', () => {
-  for (const p of PRESETS) {
-    const s = makeSpec(p.spec);
+  // 外层变量叫 lay 而不是 c：下面内层的 `for (const c of L.cells)`
+  // 会把外层遮蔽掉，`${lay.label}` 直接抛 lay is not defined。
+  for (const lay of layoutMatrix()) {
+    const s = makeSpec(lay.patch);
     const L = solve(s);
-    eq(L.cells.length > 0, true, `${p.name} 应至少有一个格子`);
+    eq(L.cells.length > 0, true, `${lay.label} 应至少有一个格子`);
     for (const c of L.cells) {
       for (const k of ['x', 'y', 'w', 'h']) {
-        eq(Number.isFinite(c[k]), true, `${p.name} 的 cell.${k} = ${c[k]} 不是有限数`);
+        eq(Number.isFinite(c[k]), true, `${lay.label} 的 cell.${k} = ${c[k]} 不是有限数`);
       }
-      eq(c.w > 0, true, `${p.name} 出现非正格宽 ${c.w}`);
-      eq(c.h > 0, true, `${p.name} 出现非正格高 ${c.h}`);
+      eq(c.w > 0, true, `${lay.label} 出现非正格宽 ${c.w}`);
+      eq(c.h > 0, true, `${lay.label} 出现非正格高 ${c.h}`);
     }
   }
 });

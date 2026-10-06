@@ -1,7 +1,8 @@
 ﻿import { test, eq } from './helpers.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('盆：台上盆底面坐在台面顶面', () => {
   const spec = makeSpec({ basin: { type: 'vessel', height: 120 } });
@@ -81,15 +82,15 @@ test('龙头：enabled=false 时不生成', () => {
 });
 
 test('盆：全部预设三种盆型都能产出盆与龙头', () => {
-  for (const p of PRESETS) {
+  for (const lay of layoutMatrix()) {
     for (const type of ['vessel', 'undermount', 'integral']) {
-      const spec = makeSpec({ ...p.spec, basin: { ...(p.spec.basin ?? {}), type } });
+      const spec = makeSpec({ ...lay.patch, basin: { ...(lay.patch.basin ?? {}), type } });
       const ps = parts(spec);
       const basins = ps.filter((x) => x.kind === 'basin');
-      eq(basins.length > 0, true, `${p.name} / ${type} 没有产出盆`);
+      eq(basins.length > 0, true, `${lay.label} / ${type} 没有产出盆`);
       for (const b of basins) {
         for (const k of ['x', 'y', 'z', 'w', 'h', 'd']) {
-          eq(Number.isFinite(b[k]), true, `${p.name} / ${type} 盆.${k} = ${b[k]} 不是有限数`);
+          eq(Number.isFinite(b[k]), true, `${lay.label} / ${type} 盆.${k} = ${b[k]} 不是有限数`);
         }
       }
     }

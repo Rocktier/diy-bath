@@ -1,4 +1,4 @@
-import { makeSpec, clone, PRESETS } from './spec.js';
+import { makeSpec, clone, bandsFrom, SPECIAL_CASES } from './spec.js';
 import { drawAll } from './render.js';
 import { get as idbGet, set as idbSet, clear as idbClear } from 'idb-keyval';
 
@@ -6,7 +6,6 @@ const $ = (s) => document.querySelector(s);
 
 let spec = makeSpec();
 let lastDraw = null;
-let currentPreset = null;
 
 // '3d' = 客户看的效果图（可旋转）；'ortho' = 给工厂看的正视图
 let mode = '3d';
@@ -159,6 +158,18 @@ const SCHEMA = [
     ['annotations.position', '标注位置', 'enum', (s, v) => { s.annotations.position = v; },
       [['right', '右侧'], ['below', '下方']]],
   ]],
+  /* 主柜无非是门和抽屉，所以不列几十个预设：
+     列不完（门数 × 抽屉数 × 排列），而且用户要说的
+     就是「两个抽屉一个门，左右排」这句话本身。
+     盆胆 / 双盆 / 中抽 / 侧柜不是门+抽能描述的，列为特例。 */
+  ['分格', [
+    ['cabinet.doors', '门（个）', 'num', (s, v) => { s.cabinet.doors = v; }],
+    ['cabinet.drawers', '抽屉（个）', 'num', (s, v) => { s.cabinet.drawers = v; }],
+    ['cabinet.layout', '排列', 'enum', (s, v) => { s.cabinet.layout = v; },
+      [['lr', '左右并排'], ['ud', '上下分层']]],
+    ['cabinet.special', '特例柜型', 'enum', (s, v) => { s.cabinet.special = v; },
+      SPECIAL_CASES.map((c) => [c.id, c.name])],
+  ]],
 ];
 
 function getPath(obj, path) {
@@ -211,8 +222,18 @@ function groupSummary(name) {
     case '标注':
       return (spec.annotations.enabled ? '开' : '关') + ' · '
         + (spec.annotations.position === 'below' ? '下方' : '右侧');
-    case '分区':
-      return (spec.bands?.length ?? 0) + ' 个分区';
+    case '分格': {
+      if (spec.cabinet.special === 'custom') {
+        return '自定义 ' + (spec.bands?.length ?? 0) + ' 条';
+      }
+      const sp = SPECIAL_CASES.find((c) => c.id === spec.cabinet.special);
+      if (sp && sp.bands) return sp.name;
+      const D = spec.cabinet.doors ?? 0;
+      const R = spec.cabinet.drawers ?? 0;
+      if (!D && !R) return '空';
+      const how = spec.cabinet.layout === 'ud' ? '上下' : '左右';
+      return D + ' 门 ' + R + ' 抽 · ' + how;
+    }
     default:
       return '';
   }
@@ -263,14 +284,30 @@ function buildForm() {
     form.append(d);
   }
 
-  const { d, body } = makeGroup('分区');
+  /* 自定义分格：折起来放在最下面。
+     绝大多数单子用上面的「门 N + 抽 M + 排列」就够了，
+     但真遇到非典型分格时得有个兜底的地方——
+     引擎的 bands 数据模型一个字没动，这里只是把它露出来。 */
+  const adv = document.createElement('details');
+  adv.className = 'adv';
+  const advSum = document.createElement('summary');
+  advSum.textContent = '自定义分格（逐条编辑）';
+  adv.append(advSum);
+
+  const advBody = document.createElement('div');
+  advBody.className = 'gbody';
   const hint = document.createElement('p');
   hint.className = 'hint';
   hint.innerHTML = '列宽比 / 行高比 用逗号分隔。<br>'
-    + '列 [1,1] 均分，[3,1,3] 两侧宽中间窄（中抽）。<br>'
-    + '行 [2,1] 下大上小，[2,1.5,1] 三抽递减。';
-  body.append(hint, buildBands());
-  form.append(d);
+    + '列 [1,1] 均分，[3,1,3] 两侧宽中间窄。<br>'
+    + '行 [2,1] 下大上小。';
+  advBody.append(hint, buildBands());
+  adv.append(advBody);
+
+  // 挂在「分格」这一组里
+  const layoutGroup = form.querySelector('.grp[data-group="分格"]');
+  if (layoutGroup) layoutGroup.querySelector('.gbody').append(adv);
+  else form.append(adv);
 }
 
 function makeRow([path, label, kind, set, options]) {
@@ -443,36 +480,8 @@ function textRow(label, value, onChange, title) {
 
 /* ---------------------------------------------------------------- 预设 */
 
-function buildPresets() {
-  const bar = $('#presetBar');
-  bar.innerHTML = '';
-  for (const p of PRESETS) {
-    const b = document.createElement('button');
-    b.className = 'btn';
-    b.textContent = p.name;
-    b.title = `${p.hint} —— 点一下填一整套起点值，之后每个数字都能单独改`;
-    b.dataset.id = p.id;
-    b.addEventListener('click', () => {
-      spec = makeSpec({ ...clone(p.spec), name: p.name });
-      currentPreset = p.id;
-      markPresets();
-      rebuild();
-      scheduleHistory();
-    });
-    bar.append(b);
-  }
-}
-
 function touched() {
-  currentPreset = null;
-  markPresets();
   scheduleHistory();
-}
-
-function markPresets() {
-  for (const b of document.querySelectorAll('#presetBar .btn')) {
-    b.classList.toggle('on', b.dataset.id === currentPreset);
-  }
 }
 
 /* ---------------------------------------------------------------- 预览 */
@@ -665,15 +674,11 @@ $('#hist').addEventListener('change', async (e) => {
   const h = (await loadHistory())[Number(e.target.value)];
   if (!h) return;
   spec = makeSpec(h.spec);
-  currentPreset = null;
-  markPresets();
   rebuild();
 });
 
 /* ---------------------------------------------------------------- 启动 */
 
-buildPresets();
-markPresets();
 renderHistory();
 rebuild();
 // 默认就是 3D 模式，界面元素要跟着初始化一次，

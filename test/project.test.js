@@ -2,7 +2,7 @@ import { test, eq, close } from './helpers.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
 import { front, bbox } from '../src/project.js';
-import { makeSpec, PRESETS } from '../src/spec.js';
+import { makeSpec } from '../src/spec.js';
 
 const SPEC = makeSpec({
   cabinet: { width: 1180, height: 680, depth: 500 },

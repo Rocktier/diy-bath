@@ -1,5 +1,6 @@
 import { test, eq } from './helpers.js';
-import { makeSpec, DEFAULTS, PRESETS, clone } from '../src/spec.js';
+import { makeSpec, DEFAULTS, SPECIAL_CASES, bandsFrom, resolveBands, clone } from '../src/spec.js';
+import { layoutMatrix } from './layouts.js';
 
 test('makeSpec 返回完整 Spec，含所有顶层字段', () => {
   const s = makeSpec();
@@ -39,42 +40,69 @@ test('makeSpec 接受 null 覆盖（关掉镜柜）', () => {
   eq(s.mirror, null);
 });
 
-test('预设库每个预设都能构造出 Spec，且 cells 长度自洽', () => {
-  eq(PRESETS.length >= 10, true, '预设应至少 10 个');
-  for (const p of PRESETS) {
-    const s = makeSpec(p.spec);
-    eq(typeof s.cabinet.width, 'number', `${p.name} 缺 cabinet.width`);
-    eq(s.bands.length >= 1, true, `${p.name} 没有分区`);
-    for (const b of s.bands) {
-      eq(b.cols.length >= 1, true, `${p.name} cols 为空`);
-      eq(b.rows.length >= 1, true, `${p.name} rows 为空`);
+test('每种分格组合都能构造出 Spec，且 cols / rows / cells 自洽', () => {
+  const all = layoutMatrix();
+  eq(all.length >= 70, true, `分格矩阵应至少 70 种，实际 ` + all.length);
+  for (const lay of all) {
+    const s = makeSpec(lay.patch);
+    const bands = resolveBands(s);
+    eq(typeof s.cabinet.width, `number`, lay.label + ` 缺 cabinet.width`);
+    eq(bands.length >= 1, true, lay.label + ` 没有分区`);
+    for (const b of bands) {
+      eq(b.cols.length >= 1, true, lay.label + ` cols 为空`);
+      eq(b.rows.length >= 1, true, lay.label + ` rows 为空`);
       if (b.cells) {
         eq(
           b.cells.length,
           b.cols.length * b.rows.length,
-          `${p.name} 的 cells 长度 ${b.cells.length} != ${b.cols.length}×${b.rows.length}`,
+          lay.label + ` 的 cells 长度 ` + b.cells.length
+            + ` != ` + b.cols.length + `×` + b.rows.length,
         );
       }
     }
   }
 });
 
-test('预设库 id 与 name 都不重复', () => {
-  eq(new Set(PRESETS.map((p) => p.id)).size, PRESETS.length, '存在重复 id');
-  eq(new Set(PRESETS.map((p) => p.name)).size, PRESETS.length, '存在重复 name');
+test('特例柜型 id 与 name 都不重复', () => {
+  eq(new Set(SPECIAL_CASES.map((s) => s.id)).size, SPECIAL_CASES.length, `存在重复 id`);
+  eq(new Set(SPECIAL_CASES.map((s) => s.name)).size, SPECIAL_CASES.length, `存在重复 name`);
 });
 
-test('预设库每个预设都带盆与镜柜起点值', () => {
-  for (const p of PRESETS) {
-    const s = makeSpec(p.spec);
-    eq(typeof s.basin.width, 'number', `${p.name} 缺盆宽`);
-    eq(s.basin.type, s.basin.type, `${p.name} 盆型缺失`);
-    if (p.id !== 'basin-unit') {
-      eq(s.mirror !== null, true, `${p.name} 缺镜柜`);
-    }
-  }
+test(`bandsFrom：门数与抽屉数决定格子数`, () => {
+  // 左右：门和抽屉并排成一排
+  const lr = bandsFrom(2, 1, `lr`);
+  eq(lr.length, 1, `左右分布应该只有一层`);
+  eq(lr[0].cells.length, 3, `2 门 1 抽 = 3 格`);
+  eq(lr[0].cells.filter((c) => c === `door`).length, 2, `应有 2 个门`);
+  eq(lr[0].cells.filter((c) => c === `drawer`).length, 1, `应有 1 个抽屉`);
+
+  // 上下：门在下，抽屉在上各一层
+  const ud = bandsFrom(2, 1, `ud`);
+  eq(ud.length, 2, `上下分布应该是两层`);
+  eq(ud[0].kind, `door`, `门在下`);
+  eq(ud[0].cols.length, 2, `2 扇门并排`);
+  eq(ud[1].kind, `drawer`, `抽屉在上`);
+  eq(ud[1].rows.length, 1, `1 个抽屉`);
+
+  // 只有抽屉时，上下分布才是常规（三抽是叠的）
+  const three = bandsFrom(0, 3, `ud`);
+  eq(three.length, 1, `只有抽屉时上下分布只有一层`);
+  eq(three[0].rows.length, 3, `三抽 = 3 行`);
+  eq(three[0].rows[0] > three[0].rows[2], true, `抽屉应下大上小`);
+
+  // 全 0 不该生成任何分区，也不该报错
+  eq(bandsFrom(0, 0, `lr`).length, 0, `没有门也没有抽屉时应为空`);
+
+  // 负数与小数要被夹住，不能生成负数个格子
+  eq(bandsFrom(-3, 2, `lr`)[0].cells.length, 2, `负门数应按 0 处理`);
+  eq(bandsFrom(2, 1.9, `lr`)[0].cells.length, 3, `小数抽屉数应向下取整`);
 });
 
+test(`makeSpec 显式传 bands 时自动切到自定义`, () => {
+  const s = makeSpec({ bands: [{ kind: `door`, cols: [1], rows: [1] }] });
+  eq(s.cabinet.special, `custom`, `显式 bands 应被当成自定义，否则会被 doors/drawers 覆盖掉`);
+  eq(resolveBands(s).length, 1, `应原样使用传入的 bands`);
+});
 test('clone 是深拷贝', () => {
   const a = makeSpec();
   const b = clone(a);
