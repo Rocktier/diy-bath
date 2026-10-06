@@ -48,7 +48,7 @@ export const DEFAULTS = {
 
   annotations: { enabled: true, position: 'right', fontSize: 22, lineHeight: 34 },
 
-  view: { front: true, plan: true, section: true, dims: false },
+  view: { front: true, dims: false },
 };
 
 export function clone(v) {

@@ -2,7 +2,7 @@
 import { renderSVG, drawAll, WHITEMODEL } from '../src/render.js';
 import { parts } from '../src/parts.js';
 import { solve } from '../src/solve.js';
-import { front, plan, section } from '../src/project.js';
+import { front } from '../src/project.js';
 import { makeSpec, PRESETS } from '../src/spec.js';
 
 test('renderSVG 产出带 mm 尺寸和 viewBox 的 svg', () => {
@@ -20,7 +20,7 @@ test('renderSVG 产出带 mm 尺寸和 viewBox 的 svg', () => {
 test('白模风格：SVG 里不出现渐变、滤镜、图案、投影', () => {
   const s = makeSpec();
   const out = drawAll(s);
-  for (const k of ['front', 'plan', 'section']) {
+  for (const k of ['front']) {
     for (const banned of ['linearGradient', 'radialGradient', '<filter', 'filter=', 'pattern', 'feGaussian', 'drop-shadow']) {
       eq(out[k].svg.includes(banned), false, `${k} 不应包含 ${banned}`);
     }
@@ -68,8 +68,7 @@ test('负零被归一成 0，SVG 里不会出现 x="-0"', () => {
 test('overhang=0 时台面左边界是 0 而不是 -0', () => {
   const out = drawAll(makeSpec({ cabinet: { width: 1180, depth: 500 }, top: { overhang: 0 } }));
   eq(out.front.svg.includes('"-0"'), false);
-  eq(out.plan.svg.includes('"-0"'), false);
-  eq(out.section.svg.includes('"-0"'), false);
+
 });
 
 test('fill:null 不填色，stroke 不为 null 时描边', () => {
@@ -144,38 +143,18 @@ test('文字带中文字体栈', () => {
   eq(svg.includes('Microsoft YaHei'), true);
 });
 
-test('drawAll 一次产出三张图', () => {
-  const out = drawAll(makeSpec());
-  eq(Object.keys(out).join(','), 'front,plan,section');
-  for (const k of ['front', 'plan', 'section']) {
-    eq(out[k].svg.startsWith('<svg'), true, `${k} 未产出 svg`);
-    eq(out[k].box[2] > 0 && out[k].box[3] > 0, true, `${k} 的 box 为空`);
-    eq(Array.isArray(out[k].shapes), true);
-  }
-});
-
-test('回归：全部预设 × 三种盆型 × 三视图，SVG 里不得出现 NaN/undefined/Infinity', () => {
+test('回归：全部预设 × 三种盆型 × 正视图，SVG 里不得出现 NaN/undefined/Infinity', () => {
   for (const p of PRESETS) {
     for (const type of ['vessel', 'undermount', 'integral']) {
       const s = makeSpec({ ...p.spec, basin: { ...(p.spec.basin ?? {}), type } });
       const out = drawAll(s);
-      for (const k of ['front', 'plan', 'section']) {
+      for (const k of ['front']) {
         for (const bad of ['NaN', 'undefined', 'Infinity', 'null"']) {
           eq(out[k].svg.includes(bad), false, `${p.name} / ${type} / ${k} 的 SVG 含 ${bad}`);
         }
       }
     }
   }
-});
-
-test('回归：三视图共用同一份 parts', () => {
-  const s = makeSpec();
-  const ps = parts(s);
-  const L = solve(s);
-  const t = ps.find((x) => x.kind === 'top');
-  eq(front(ps, s, L).find((x) => x.part === 'top').w, t.w);
-  eq(plan(ps, s, L).find((x) => x.part === 'top').w, t.w);
-  eq(section(ps, s, L).find((x) => x.part === 'top').h, t.h, '剖面图的台面"高"就是台面厚');
 });
 
 test('回归：极端尺寸不崩（超窄柜、超矮柜、盆超宽）', () => {
@@ -188,7 +167,7 @@ test('回归：极端尺寸不崩（超窄柜、超矮柜、盆超宽）', () =>
     { cabinet: { width: 1180 }, top: { thickness: 60, backsplash: { height: 200 } } },
   ]) {
     const out = drawAll(makeSpec(over));
-    for (const k of ['front', 'plan', 'section']) {
+    for (const k of ['front']) {
       eq(out[k].svg.length > 0, true, `${JSON.stringify(over)} / ${k} 产出为空`);
       eq(out[k].box[2] > 0, true, `${JSON.stringify(over)} / ${k} bbox 宽非正`);
     }
@@ -208,9 +187,4 @@ test('回归：龙头关掉时不崩', () => {
 test('回归：文字标注关掉时不崩', () => {
   const out = drawAll(makeSpec({ annotations: { enabled: false } }));
   eq(out.front.svg.length > 0, true);
-});
-
-test('section 已接入文字标注：分区示意标题出现在剖面图里', () => {
-  const out = drawAll(makeSpec());
-  eq(out.section.svg.includes('分区示意'), true);
 });

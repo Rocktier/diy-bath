@@ -1,6 +1,6 @@
 import { parts } from './parts.js';
 import { solve } from './solve.js';
-import { front, plan, section, bbox } from './project.js';
+import { front, bbox } from './project.js';
 
 export const WHITEMODEL = {
   wall: '#f4f4f2',
@@ -88,7 +88,7 @@ export function drawAll(spec) {
   const L = solve(spec);
   const ps = parts(spec);
   const out = {};
-  for (const [key, project] of [['front', front], ['plan', plan], ['section', section]]) {
+  for (const [key, project] of [['front', front]]) {
     const shapes = project(ps, spec, L);
     const box = bbox(shapes);
     out[key] = { shapes, box, svg: renderSVG(shapes, box) };

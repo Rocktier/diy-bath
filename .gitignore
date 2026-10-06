@@ -9,3 +9,6 @@ src-tauri/target/
 *.pfx
 *.p12
 *.cer
+
+# ui-ux-pro-max 技能，由 `uipro init --ai opencode` 装到本地（4.1MB，含字体数据集）
+.opencode/

@@ -9,7 +9,7 @@ let spec = makeSpec();
 let lastDraw = null;
 let currentPreset = null;
 
-// '3d' = 客户看的效果图（可旋转）；'ortho' = 给工厂看的三视图
+// '3d' = 客户看的效果图（可旋转）；'ortho' = 给工厂看的正视图
 let mode = '3d';
 let threeView = null;
 let threePending = false;
@@ -25,7 +25,7 @@ function ensureThree() {
   if (!c) return null;
 
   // Three.js 有 500KB，静态 import 会让首屏就背上这个体积。
-  // 动态加载：只有真正进 3D 模式时才下载，三视图模式不受影响。
+  // 动态加载：只有真正进 3D 模式时才下载，正视图模式不受影响。
   threePending = true;
   hint3d(c);
   import('./three-view.js')
@@ -41,7 +41,7 @@ function ensureThree() {
     })
     .catch((e) => {
       threePending = false;
-      console.error('3D 模块加载失败，回退到三视图：', e);
+      console.error('3D 模块加载失败，回退到正视图：', e);
       setMode('ortho');
     });
 
@@ -59,7 +59,10 @@ function hint3d(c) {
 function setMode(next) {
   mode = next;
   for (const b of document.querySelectorAll('.tabs .btn')) {
-    b.classList.toggle('on', b.dataset.mode === next);
+    const on = b.dataset.mode === next;
+    b.classList.toggle('on', on);
+    // 屏幕阅读器要能读出「当前选中哪个视图」。className 它看不见。
+    b.setAttribute('aria-pressed', String(on));
   }
   const stage = threeContainer();
   const pv = document.querySelector('#preview');
@@ -74,11 +77,11 @@ function setMode(next) {
     pv.classList.remove('hidden');
   }
 
-  // 「正视图 / 俯视图 / 剖面图」是 2D 的概念，3D 里勾选没有意义。
-  // 缩放按钮同理——panzoom 只作用在三视图上。
-  document.querySelector('#groupView')?.classList.toggle('hidden', is3d);
+  // 缩放工具条是正视图专用的，3D 里用滚轮直接缩放画面。
   document.querySelector('.zoomer')?.classList.toggle('hidden', is3d);
   document.querySelector('#btnSvg')?.classList.toggle('hidden', is3d);
+  // 重置视角只对 3D 相机有效，正视图里按 R 是重置缩放（另一个行为）
+  document.querySelector('#btnResetView')?.classList.toggle('hidden', !is3d);
 }
 
 /* ---------------------------------------------------------------- 缩放 / 平移 */
@@ -96,7 +99,7 @@ const zoomers = new Map();
  * panzoom 不能作用在根 <svg> 上——它检查 svgElement.ownerSVGElement，
  * 根 svg 没有这个属性，直接抛错。必须包一层 <g> 再对它做 transform。
  *
- * 这个 bug 从引入缩放功能起就存在：三视图模式下 attachZoom 一直抛错，
+ * 这个 bug 从引入缩放功能起就存在：正视图模式下 attachZoom 一直抛错，
  * 把 redraw() 整个中断，所以只渲染出第一个视图。
  */
 function withZoomGroup(svgText) {
@@ -223,10 +226,7 @@ const SCHEMA = [
     ['mirror.depth', '镜柜深', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), depth: v }; }],
     ['mirror.gap', '镜柜离台面', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), gap: v }; }],
   ]],
-  ['显示', [
-    ['view.front', '正视图', 'bool', (s, v) => { s.view.front = v; }],
-    ['view.plan', '俯视图', 'bool', (s, v) => { s.view.plan = v; }],
-    ['view.section', '剖面图', 'bool', (s, v) => { s.view.section = v; }],
+  ['标注', [
     ['annotations.enabled', '文字标注', 'bool', (s, v) => { s.annotations.enabled = v; }],
     ['annotations.position', '标注位置', 'enum', (s, v) => { s.annotations.position = v; },
       [['right', '右侧'], ['below', '下方']]],
@@ -250,8 +250,6 @@ function buildForm() {
     lg.textContent = legend;
     fs.append(lg);
     for (const f of fields) fs.append(makeRow(f));
-    // 「显示」分组在 3D 模式下要整组隐藏（正/俯/剖是 2D 的概念）
-    if (legend === '显示') fs.id = 'groupView';
     form.append(fs);
   }
 
@@ -276,11 +274,22 @@ function makeRow([path, label, kind, set, options]) {
   lb.textContent = label;
   lb.title = label;
 
+  /* label 必须和控件关联。
+     之前只建了一个 <label> 却没设 htmlFor，控件也不在 label 内部，
+     点标签文字什么都不会发生。数字和下拉还好（控件本身就在旁边），
+     但勾选框只有 13×13 实际可点区域小得离谱，
+     而「点文字就能切换」正是这类复选框的预期行为。 */
+  const link = (ctrl) => {
+    if (!ctrl.id) ctrl.id = 'f-' + path.replace(/[^\w-]/g, '-');
+    lb.htmlFor = ctrl.id;
+  };
+
   if (kind === 'bool') {
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = !!getPath(spec, path);
     cb.addEventListener('change', () => { set(spec, cb.checked); touched(); redraw(); });
+    link(cb);
     row.append(lb, cb);
     return row;
   }
@@ -295,6 +304,7 @@ function makeRow([path, label, kind, set, options]) {
     }
     sel.value = String(getPath(spec, path));
     sel.addEventListener('change', () => { set(spec, sel.value); touched(); redraw(); });
+    link(sel);
     row.append(lb, sel);
     return row;
   }
@@ -302,6 +312,7 @@ function makeRow([path, label, kind, set, options]) {
   const inp = document.createElement('input');
   inp.type = kind === 'num' ? 'number' : 'text';
   if (kind === 'num') inp.step = 'any';           // 只有 step，没有 min / max
+  link(inp);
   const cur = getPath(spec, path);
   inp.value = cur === null || cur === undefined ? '' : cur;
   inp.addEventListener('input', () => {
@@ -460,7 +471,7 @@ function markPresets() {
 
 /* ---------------------------------------------------------------- 预览 */
 
-const VIEW_LABEL = { front: '正视图', plan: '俯视图', section: '剖面图 1-1' };
+const VIEW_LABEL = { front: '正视图' };
 
 function redraw() {
   const pv = $('#preview');
@@ -478,8 +489,7 @@ function redraw() {
   lastDraw = out;
 
   let n = 0;
-  for (const key of ['front', 'plan', 'section']) {
-    if (!spec.view[key]) continue;
+  for (const key of ['front']) {
     const fig = document.createElement('figure');
     const cap = document.createElement('figcaption');
     cap.textContent = VIEW_LABEL[key];
@@ -492,10 +502,9 @@ function redraw() {
     if (g) attachZoom(g, key);
     n++;
   }
-  if (!n) pv.append(errBox('三个视图都被隐藏了，请在「显示」里至少打开一个。'));
   syncZoomLabel();
 
-  // 3D 与三视图共用同一份 spec，几何必然一致
+  // 3D 与正视图共用同一份 spec，几何必然一致
   if (mode === '3d') {
     const v = ensureThree();
     if (v) {
@@ -525,7 +534,7 @@ function rebuild() {
 /* ---------------------------------------------------------------- 导出 */
 
 const safeName = () => (spec.name || '方案').replace(/[\\/:*?"<>|]/g, '_');
-const firstVisible = () => ['front', 'plan', 'section'].find((k) => spec.view[k]);
+const firstVisible = () => 'front';
 
 function download(blob, name) {
   const a = document.createElement('a');
