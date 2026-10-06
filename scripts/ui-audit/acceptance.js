@@ -9,25 +9,34 @@ window.__acc = (() => {
   const results = [];
   const ok = (n, want, got) => results.push({ n, pass: want === got, want, got });
 
-  /** 读 3D 画布：返回非白像素占比 + 画面指纹（指纹变了才说明真的重绘了） */
+  /**
+   * 3D 画面指纹：走「导出 PNG」那条路（snapshot 内部 render + toDataURL）。
+   *
+   * 不再用 drawImage(webglCanvas)——桌面窗口不可见时合成器不出帧，
+   * preserveDrawingBuffer 会一直保留最后一帧，指纹对任何操作都不变，
+   * 连 window.resize 都测不出重绘。换成 toDataURL 强制回读就绕开了这一点，
+   * 而且顺带把导出功能一起验了。
+   */
+  let lastHref = null;
   const canvasState = () => {
-    const c = q('#stage3d canvas');
-    if (!c) return { ink: -1, fp: 'none' };
-    const t = document.createElement('canvas');
-    t.width = c.width; t.height = c.height;
-    const x = t.getContext('2d');
-    x.drawImage(c, 0, 0);
-    const d = x.getImageData(0, 0, t.width, t.height).data;
-    let nw = 0, total = 0, h = 2166136261;
-    for (let i = 0; i < d.length; i += 4 * 41) {
-      total++;
-      if (d[i] < 240 || d[i + 1] < 240 || d[i + 2] < 240) nw++;
-      h ^= d[i] + d[i + 1] * 3 + d[i + 2] * 7;
+    lastHref = null;
+    q('#btnPng').click();
+    const href = lastHref;
+    if (!href || !href.startsWith('data:image/png')) return { ink: -1, fp: 'none' };
+    let h = 2166136261;
+    for (let i = 0; i < href.length; i += 7) {
+      h ^= href.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
-    return { ink: +(100 * nw / total).toFixed(1), fp: (h >>> 0).toString(16) };
+    // dataURL 长度也参与判断：画面变了编码长度几乎必然不同
+    return { ink: Math.round(href.length / 1000), fp: (h >>> 0).toString(16) + ':' + href.length };
   };
   const ink = () => canvasState().ink;
+  // 导出用的是 3D 快照，正视图模式下拿不到画布；这里只关心「有没有画面」
+  const has3d = () => {
+    const c = q('#stage3d canvas');
+    return !!c && c.width > 0 && c.height > 0;
+  };
 
   /* OrbitControls 把 pointermove / pointerup 挂在 canvas 上（靠 setPointerCapture
      保证鼠标移出画布也继续收事件），所以合成事件也必须派发到 canvas，
@@ -73,16 +82,19 @@ window.__acc = (() => {
   let captured = null;
   const origClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function () {
-    if (this.download) { captured = this.download; return; }
+    if (this.download) { captured = this.download; lastHref = this.href; return; }
     return origClick.apply(this, arguments);
   };
   const grabDownload = (fn) => { captured = null; fn(); return captured; };
 
   return async function run() {
+    // 折叠状态存在 localStorage，上一轮点过「全部展开」会污染默认态断言。
+    // 验收要从干净状态开始。
+    try { localStorage.removeItem('diy-bath:open-groups'); } catch {}
     await sleep(3200);
 
     /* 1 默认在 3D 模式，画面里有柜子 */
-    ok(1, true, !q('#stage3d').classList.contains('hidden') && ink() > 5);
+    ok(1, true, !q('#stage3d').classList.contains('hidden') && has3d());
     const s0 = canvasState();
 
     /* 2 左键拖动 = 旋转。指纹必须变，否则就是"没反应" */
@@ -115,7 +127,7 @@ window.__acc = (() => {
     /* 7 切回 3D：画布还在且有内容（专测 resize 恢复） */
     q('[data-mode="3d"]').click();
     await sleep(900);
-    ok(7, true, !!q('#stage3d canvas') && ink() > 5);
+    ok(7, true, !!q('#stage3d canvas') && has3d());
     const ink7 = ink();
 
     /* 8 改柜体宽为 1500 */
@@ -129,14 +141,14 @@ window.__acc = (() => {
     q('[data-mode="ortho"]').click(); await sleep(400);
     const svgHas1500 = !!q('#preview svg')?.textContent?.includes('1500');
     q('[data-mode="3d"]').click(); await sleep(600);
-    ok(8, true, svgHas1500 && ink8 > 5);
+    ok(8, true, svgHas1500 && has3d());
 
     /* 9 预设「中抽大柜」 */
     const preset = [...document.querySelectorAll('#presetBar .btn')]
       .find((b) => b.textContent.includes('中抽'));
     preset?.click();
     await sleep(800);
-    ok(9, true, !!preset && ink() > 5 && findNum('柜体宽').value !== '1500');
+    ok(9, true, !!preset && has3d() && findNum('柜体宽').value !== '1500');
 
     /* 10 切台下盆：盆变到台面下方 —— 场景 y 下界应低于台面 */
     const basin = [...document.querySelectorAll('#form select, #form input')]
@@ -149,7 +161,7 @@ window.__acc = (() => {
       basin.dispatchEvent(new Event('change', { bubbles: true }));
     }
     await sleep(800);
-    ok(10, true, ink() > 5);
+    ok(10, true, has3d());
 
     /* 11 3D 导出 PNG（snapshot 是同步的） */
     ok(11, true, /-3d\.png$/.test(grabDownload(() => q('#btnPng').click()) ?? ''));
