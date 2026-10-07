@@ -1,7 +1,7 @@
 {
   "name": "diy-bath",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "定制浴室柜 2D 草图生成器",
   "scripts": {

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "浴室柜画图工具",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "identifier": "com.rocktier.diybath",
   "build": {
     "frontendDist": "../dist",

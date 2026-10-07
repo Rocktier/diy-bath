@@ -168,6 +168,11 @@ window.__acc = (() => {
     await sleep(700);
     const sum9 = grp.querySelector('.gsum').textContent;
     ok(9, true, has3d() && sum9.includes('2 门 1 抽') && sum9.includes('上下'));
+    // 第 9 条为了能点到输入框把「分格」展开了，用完必须收起。
+    // 不收的话第 13.3 条断言的是「默认只展开一组」，而那时已经开着
+    // 主柜 + 分格 = 2 组，必然失败——是脚本自己造的脏状态，不是界面的问题。
+    grp.open = false;
+    await sleep(200);
 
     /* 10 切台下盆：盆变到台面下方 —— 场景 y 下界应低于台面 */
     const basin = [...document.querySelectorAll('#form select, #form input')]

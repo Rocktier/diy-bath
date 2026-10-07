@@ -1,6 +1,6 @@
 [package]
 name = "diy-bath"
-version = "0.3.0"
+version = "0.4.0"
 description = "定制浴室柜 2D 草图生成器"
 authors = ["Rocktier"]
 license = ""
