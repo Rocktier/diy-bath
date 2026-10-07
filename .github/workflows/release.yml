@@ -18,12 +18,12 @@ jobs:
     name: 构建并发布 Windows 安装包
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -133,14 +133,17 @@ jobs:
 
       # 收一份到 artifact，方便不翻 Release 页面也能取
       - name: 上传产物到 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: diy-bath-${{ github.event.inputs.tag || github.ref_name }}
           path: out/*
           retention-days: 30
 
       - name: 建 draft release 并挂上安装包
-        uses: softprops/action-gh-release@v2
+        # v2 → v3：v2 在 Node 20 上，警告里点名了。
+        # 这个 action 之前坑过一次（传了 tag_name 但它要驼峰 tagName，
+        # 结果建出一个空壳 Release），所以升完盯一下日志确认产物真挂上了。
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           name: 浴室柜画图工具 ${{ github.event.inputs.tag || github.ref_name }}

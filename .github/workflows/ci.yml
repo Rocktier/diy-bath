@@ -17,11 +17,15 @@ jobs:
     name: 测试与构建校验
     runs-on: windows-latest
     steps:
-      # checkout v4 / setup-node v4 还在 Node 20 上跑，会被警告。
-      # 等它们出 v5 再统一升，这里先不动，避免引入不存在的版本。
-      - uses: actions/checkout@v4
+      # 之前停在 v4，是因为「还在 Node 20 上跑会被警告，而 v5 当时不存在」。
+      # 现在这些都出了 Node 24 版本，照警告里点名的顺序升到当前稳定版：
+      #   checkout v7 / setup-node v7 / upload-artifact v7
+      # 主版本一次跳了三段，不凭感觉升——让 CI 全绿来证明
+      # （单测 + 覆盖率阈值 + Windows 编译 + Linux 编译）。
+      # 万一 v7 改了行为，CI 会红，回退即可。
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -62,7 +66,7 @@ jobs:
 
       - name: 上传覆盖率报告
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/
@@ -73,7 +77,7 @@ jobs:
         run: npm run tauri build -- --no-bundle
 
       - name: 上传未打包的可执行文件
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: diy-bath-ci-exe
           path: src-tauri/target/release/diy-bath.exe
@@ -93,9 +97,9 @@ jobs:
     name: Linux 编译校验
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
