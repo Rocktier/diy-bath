@@ -7,8 +7,11 @@ export const WHITEMODEL = {
   wallT: '#e6e6e2',
   floor: '#9a9a9a',
   stroke: '#000000',
-  mirror: '#ffffff',
+  // 镜柜门板用 mirror 同色（都是镜面，白模里本来就该一致）。
+// 门板之间靠各自的黑描边区分，不必另配一个颜色。
+mirror: '#ffffff',
   mirrorInner: '#f0f0ee',
+  mirrorSlot: '#e6e6e4',
   top: '#dcdcda',
   backsplash: '#e9e9e7',
   basin: '#fbfbfa',

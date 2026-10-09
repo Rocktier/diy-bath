@@ -2,7 +2,7 @@ import { solve } from './solve.js';
 
 export function parts(spec) {
   const L = solve(spec);
-  const { cabinet, top, basin, faucet, mirror } = spec;
+  const { cabinet, top, basin, faucet } = spec;
   const { width: W, depth: D, backPanel: BP, bottomPanel: BoP, sidePanel: SP, toe } = cabinet;
   const out = [];
 
@@ -38,14 +38,27 @@ export function parts(spec) {
     w: ctW, h: top.backsplash.height, d: top.backsplash.thickness,
   });
 
-  if (mirror) {
-    const mw = mirror.width ?? W;
+  if (L.mirror) {
+    const M = L.mirror;
+    // 柜体（镜箱本体）。正视图里它的内部面只在下方敞口那段露出来。
     out.push({
       kind: 'mirror',
-      x: (W - mw) / 2,
-      y: L.ctTopY + top.backsplash.height + mirror.gap,
-      z: 0, w: mw, h: mirror.height, d: mirror.depth,
+      x: M.x, y: M.y, z: 0, w: M.w, h: M.h, d: M.d,
+      meta: {
+        boardT: M.boardT, shelfH: M.shelfH, railT: M.railT,
+        // doorH 必须一起带上：镜箱零件只知道自己多高，不知道门画到哪儿，
+        // 光靠 h - boardT 反推出来的位置和门板实际底边对不上。
+        doorH: M.doorH,
+      },
     });
+    // 门板贴在箱体最前面，z 用箱深——orderOf 按 z+d 排，自然盖在本体之上。
+    for (const dr of M.doors) {
+      out.push({
+        kind: 'mirrorDoor',
+        x: dr.x, y: dr.y, z: M.d, w: dr.w, h: dr.h, d: SP,
+        meta: { handle: dr.handle, slotOutward: dr.slotOutward, index: dr.index },
+      });
+    }
   }
 
   // ---- 面板 / 层板 / 抽屉箱 / 滑轨 ----

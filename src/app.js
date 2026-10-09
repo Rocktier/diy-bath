@@ -149,6 +149,11 @@ const SCHEMA = [
         ? (s.mirror ?? { width: null, height: 780, depth: 150, gap: 30, led: false })
         : null;
     }],
+    // enum 传进来的是字符串，这里转回数字——spec 里存数字，导出 JSON 才干净
+    ['mirror.doors', '镜柜门数', 'enum', (s, v) => { s.mirror = { ...(s.mirror ?? {}), doors: Number(v) }; },
+      [['2', '2 门'], ['3', '3 门'], ['4', '4 门（参照图）'], ['6', '6 门']]],
+    ['mirror.shelfH', '镜柜敞口搁板高', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), shelfH: v }; },
+      '0 = 没有敞口，做成整面到顶'],
     ['mirror.height', '镜柜高', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), height: v }; }],
     ['mirror.depth', '镜柜深', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), depth: v }; }],
     ['mirror.gap', '镜柜离台面', 'num', (s, v) => { s.mirror = { ...(s.mirror ?? {}), gap: v }; }],

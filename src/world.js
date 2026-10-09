@@ -92,6 +92,9 @@ export const PALETTE_3D = {
   backsplash: '#e8e4dc',
   mirror: '#dfe3e6',
   mirrorInner: '#cfd6da',
+  mirrorDoor: '#e8ecef',
+  mirrorSlot: '#b8c0c5',
+  mirrorKnob: '#c4a24a',
   basin: '#fbfbfa',
   basinInner: '#eae8e4',
   toe: '#b9b2a6',
@@ -128,5 +131,5 @@ export function isVisible(kind) {
  * 这是白模能看清结构的关键——纯色块堆在一起会糊成一坨。
  */
 export const NEEDS_EDGE = new Set([
-  'carcass', 'top', 'backsplash', 'cell', 'toe', 'mirror', 'basin',
+  'carcass', 'top', 'backsplash', 'cell', 'toe', 'mirror', 'mirrorDoor', 'basin',
 ]);

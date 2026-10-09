@@ -45,7 +45,9 @@ export const DEFAULTS = {
 
   faucet: { height: 150, reach: 110, enabled: true },
 
-  mirror: { width: null, height: 780, depth: 150, gap: 350, led: false },
+  // 镜柜默认：4 扇等宽门 + 下方一道敞口搁板。
+// 门数/搁板高都量自参照图 docs/reference/target-output.png，改这两个就够定制。
+mirror: { width: null, height: 780, depth: 150, gap: 350, led: false, doors: 4, shelfH: 140 },
 
   bands: [
     { kind: 'door', cols: [1, 1], rows: [1], cells: null, handle: 'bar-v', plinth: false },

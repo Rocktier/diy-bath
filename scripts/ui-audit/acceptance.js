@@ -266,6 +266,56 @@ window.__acc = (() => {
     /* 13.10 快捷栏不能把 header 撑高（之前 18 个预设撑到 381px） */
     ok(13.10, true, document.querySelector('header').getBoundingClientRect().height < 220);
 
+    /* 13.11 镜柜：4 扇等宽门 + 两种拉手（量自参照图） */
+    // 注意：正视图元素是屏幕坐标（y 向下），别拿工程坐标来比。
+    const rr = (el) => ({
+      x: +el.getAttribute('x'), y: +el.getAttribute('y'),
+      w: +el.getAttribute('width'), h: +el.getAttribute('height'),
+    });
+    const rects = [...document.querySelectorAll('#preview svg rect')];
+    // ⚠️ 尺寸不能写死。前面的 13.9 会点快捷方式，把柜宽从 1180 改成别的，
+    // 这里写死 1180/293.5 就必然失败——而且失败原因跟镜柜本身无关。
+    // 一律从图上量出来的箱体反推。
+    const boxes = rects.filter((r) => +r.getAttribute('height') === 780
+      && +r.getAttribute('width') > 400);
+    const box0 = boxes[0];
+    // 找不到箱体就直接判失败，别往下走。
+    // 取 box0.x 会抛 "Cannot read properties of undefined"，
+    // 一旦抛异常，后面所有断言都不执行，验收会假装跑完了。
+    const hasBox = !!box0;
+    const BX = hasBox ? +box0.getAttribute('x') : 0;
+    const BW = hasBox ? +box0.getAttribute('width') : 0;
+    const mid11 = BX + BW / 2;
+
+    // 4 扇门 + 3 道 2mm 缝 ⇒ 每扇 (BW - 6) / 4
+    const doorW = (BW - 6) / 4;
+    const doors11 = rects
+      .filter((r) => Math.abs(+r.getAttribute('width') - doorW) < 0.05
+        && +r.getAttribute('height') < 700 && +r.getAttribute('height') > 400)
+      .map(rr);
+    const slots11 = rects.filter((r) => +r.getAttribute('width') === 36
+      && +r.getAttribute('height') > 300).map(rr);
+    const knobs11 = rects.filter((r) => +r.getAttribute('width') === 28
+      && +r.getAttribute('height') === 28).map(rr);
+
+    ok(13.11, true, hasBox && doors11.length === 4
+      && slots11.length === 2 && knobs11.length === 2
+      // 四扇门等宽
+      && doors11.every((d) => Math.abs(d.w - doors11[0].w) < 0.01)
+      // 四扇门底边齐平（门缝只在 x 上）
+      && doors11.every((d) => d.y === doors11[0].y)
+      // 四扇门铺满箱体宽
+      && Math.abs((doors11[0].x - BX)
+        - ((BX + BW) - (doors11[3].x + doors11[3].w))) < 0.05
+      // 左右竖槽对称：距箱体左右外沿都 36mm
+      && Math.abs(slots11[0].x - (BX + 36)) < 0.01
+      && Math.abs((BX + BW - 36) - (slots11[1].x + slots11[1].w)) < 0.01
+      // 两个方钮在门高的 87.5% 处（距门顶）
+      && knobs11.every((k) => Math.abs((k.y + k.h / 2 - doors11[0].y) / doors11[0].h - 0.875) < 0.01)
+      // 两个方钮分列中缝两侧
+      && knobs11[0].x < mid11
+      && knobs11[1].x >= mid11);
+
     /* 13.3 默认只展开一组（36 个输入框平铺的话屏幕放不下） */
     const opened = grps.filter((g) => g.open);
     const panel = document.querySelector('#form');

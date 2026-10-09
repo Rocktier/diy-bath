@@ -20,6 +20,68 @@ function basinZ(basin, top, topDepth) {
   );
 }
 
+/**
+ * 镜柜分格。返回 null 表示不画镜柜。
+ *
+ * 尺寸是从参照图 docs/reference/target-output.png **量**出来的，不是估的。
+ * 那张图是透视 3D 视角，横向有透视压缩（左端被压、右端被拉），
+ * 所以横向只能取比例，纵向比例才可靠。量到的是：
+ *
+ *   · 4 扇**等宽**门。中间两扇都是镜面、缝看不出来，合起来像一整块，
+ *     所以肉眼看是「中:左:右 = 2:1:1」——实际就是等宽四门。
+ *   · 门区底边在距柜顶 **623mm**；往下到 **760mm** 是敞口搁板，
+ *     再往下 20mm 是底板。也就是门区约占柜高的 3/4。
+ *   · 最外两扇是**通高竖槽**拉手：槽宽 36mm，起于距柜体外沿 36mm。
+ *   · 中间两扇是 28mm 见方的**小方钮**，中心在距柜顶 547mm——
+ *     落在门高的 87.5% 处，明显偏低，照抄。
+ *
+ * 竖槽拉手靠**该门自己的外沿**（远离中线那一侧），这样门数不是 4 时也说得通。
+ * 奇数门时正中间那扇没有可靠的中缝可依，全给竖槽。
+ */
+export function solveMirror(spec, L) {
+  const m = spec.mirror;
+  if (!m) return null;
+
+  const w = m.width ?? spec.cabinet.width;
+  const h = m.height ?? 780;
+  const d = m.depth ?? 150;
+  const x = (spec.cabinet.width - w) / 2;
+  const y = L.ctTopY + spec.top.backsplash.height + (m.gap ?? 350);
+
+  const gap = spec.cabinet.gap;
+  const n = Math.max(1, Math.min(6, Math.round(m.doors ?? 4)));
+
+  const railT = 15;    // 顶框
+  const boardT = 20;   // 底板
+  // shelfH 可能来自用户输入：负数、空、NaN、或者大到把门区吃光。
+// 一律夹到「至少给门区留 1mm」——留 0 门会画出一堆零高度的零件，
+// 而 render.js 的 num() 见到非有限数会直接抛错。
+const wantShelf = Number.isFinite(m.shelfH) ? m.shelfH : 140;
+  const shelfH = Math.max(0, Math.min(h - railT - boardT - 1, wantShelf));
+  const doorH = h - railT - boardT - shelfH;
+
+  const dw = (w - gap * (n - 1)) / n;
+  const midX = w / 2;
+  const doors = [];
+  for (let i = 0; i < n; i++) {
+    const dx = i * (dw + gap);
+    doors.push({
+      index: i,
+      x: x + dx,
+      y: y + railT,
+      w: dw,
+      h: doorH,
+      z: d,
+      /** 正对中缝的那两扇（偶数门时）才给方钮，其余给竖槽 */
+      handle: n % 2 === 0 && Math.abs(dx + dw / 2 - midX) < dw ? 'knob' : 'slot',
+      /** 竖槽靠这条边：最外那扇靠柜体外沿，中间的靠自己的外侧边 */
+      slotOutward: dx + dw / 2 < midX ? 'left' : 'right',
+    });
+  }
+
+  return { x, y, w, h, d, railT, boardT, shelfH, doorH, doors };
+}
+
 export function solve(spec) {
   const { cabinet, top, basin } = spec;
 // 分格从 doors / drawers / layout 生成，或取特例 / 自定义。
@@ -115,5 +177,7 @@ const bands = resolveBands(spec);
     bands: bandLayouts,
     cells,
     basins,
+    // solveMirror 用的是 carcassTopY / ctTopY，直接传算好的，不用依赖整个 L
+    mirror: solveMirror(spec, { ctTopY }),
   };
 }
