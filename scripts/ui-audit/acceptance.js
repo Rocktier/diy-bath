@@ -221,8 +221,50 @@ window.__acc = (() => {
     /* 13.6 自定义分格要折起来，不能一上来就铺开一片输入框 */
     ok(13.6, true, !!q('#form details.adv') && !q('#form details.adv').open);
 
-    /* 13.7 预设栏已经不存在了 */
+    /* 13.7 旧的完整预设栏已经不存在了（快捷栏另算，见 13.8） */
     ok(13.7, false, !!q('#presetBar'));
+
+    /* 13.8 常用分格快捷栏：8 个按钮，点一下只改门/抽/排列 */
+    const sc = [...document.querySelectorAll('#shortcutBar .btn')];
+    ok(13.8, true, sc.length === 8
+      && sc.every((b) => b.textContent.trim().length > 0));
+
+    /* 13.9 点快捷方式后，三个输入框与图上分区都要真的变 */
+    // 注意：rebuild() 会重建整个表单，之前抓的 DOM 引用是脱离文档的旧节点，
+    // 读它会一直读到旧值。每一轮都重新查询。
+    const grp2 = () => document.querySelector('#form .grp[data-group="分格"]');
+    const readLayout = () => {
+      const g = grp2();
+      const rowOf = (l) => [...g.querySelectorAll('.row')]
+        .find((r) => r.querySelector('label').textContent === l);
+      return {
+        门: rowOf('门（个）').querySelector('input').value,
+        抽: rowOf('抽屉（个）').querySelector('input').value,
+        排列: rowOf('排列').querySelector('select').value,
+      };
+    };
+    sc.find((b) => b.textContent.trim() === '三抽')?.click();
+    await sleep(500);
+    const before9 = readLayout();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '3', bubbles: true }));
+    await sleep(400);
+    const zoneBefore = ([...document.querySelectorAll('#preview svg text')]
+      .map((x) => x.textContent).find((s) => s.startsWith('分区')) ?? '');
+    sc.find((b) => b.textContent.trim() === '双开门')?.click();
+    await sleep(500);
+    const after9 = readLayout();
+    const zoneAfter = ([...document.querySelectorAll('#preview svg text')]
+      .map((x) => x.textContent).find((s) => s.startsWith('分区')) ?? '');
+    ok(13.9, true,
+      before9.抽 === '3' && before9.排列 === 'ud'
+      && after9.门 === '2' && after9.抽 === '0' && after9.排列 === 'lr'
+      && zoneBefore !== zoneAfter
+      && zoneAfter.includes('门×2'));
+    grp2().open = false;
+    await sleep(150);
+
+    /* 13.10 快捷栏不能把 header 撑高（之前 18 个预设撑到 381px） */
+    ok(13.10, true, document.querySelector('header').getBoundingClientRect().height < 220);
 
     /* 13.3 默认只展开一组（36 个输入框平铺的话屏幕放不下） */
     const opened = grps.filter((g) => g.open);

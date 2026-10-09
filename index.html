@@ -56,6 +56,17 @@
   }
 
   /* ---------------------------------------------------------------- 头部 */
+  /* 常用分格快捷栏。单独一行、横向不换行——
+     之前 18 个预设挤在 header 里，把 header 撑到 381px 高。 */
+  #shortcutBar {
+    display:flex; gap:5px; flex-wrap:nowrap;
+    overflow-x:auto; overflow-y:hidden;
+    padding:0 14px 8px; scrollbar-width:thin;
+  }
+  #shortcutBar::-webkit-scrollbar { height:6px; }
+  #shortcutBar::-webkit-scrollbar-thumb { background:#33383f; border-radius:3px; }
+  #shortcutBar .btn { padding:3px 10px; font-size:12.5px; }
+
   .btn {
     background:var(--panel2); color:var(--fg); border:1px solid var(--line);
     border-radius:var(--r); padding:4px 10px; cursor:pointer; font:inherit;
@@ -262,6 +273,8 @@
     <button class="btn" id="btnPng">导出 PNG</button>
     <button class="btn" id="btnSvg">导出 SVG</button>
   </div>
+  <!-- 常用分格快捷方式：点一下等于手动填「门 N / 抽屉 M / 排列」那三个框 -->
+  <div id="shortcutBar" role="group" aria-label="常用分格"></div>
 </header>
 <main>
   <div id="form"></div>

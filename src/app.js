@@ -1,4 +1,4 @@
-import { makeSpec, clone, bandsFrom, SPECIAL_CASES } from './spec.js';
+import { makeSpec, clone, SPECIAL_CASES, LAYOUT_SHORTCUTS } from './spec.js';
 import { drawAll } from './render.js';
 import { get as idbGet, set as idbSet, clear as idbClear } from 'idb-keyval';
 
@@ -178,6 +178,70 @@ function getPath(obj, path) {
   return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 }
 
+/* ---------------------------------------------------------------- 快捷栏 */
+/**
+ * 常用分格快捷方式。
+ *
+ * 这些按钮**只写门数、抽屉数、排列**（个别顺带改宽度，因为双盆塞进 780
+ * 不合理），盆、镜柜、高度一律不动。
+ *
+ * 之前这里放过 18 个完整预设，每个都会把宽高深、盆型、镜柜一起改掉——
+ * 用户点完再调尺寸，就已经分不清哪些是自己改的了。
+ * 而且门数 × 抽屉数 × 排列是组合爆炸，18 个永远列不全。
+ * 现在这样：点一下等于手动填那三个框，其余照旧。
+ */
+function buildShortcuts() {
+  const bar = $('#shortcutBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  for (const s of LAYOUT_SHORTCUTS) {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.textContent = s.name;
+    b.dataset.id = s.id;
+    b.title = shortcutHint(s);
+    b.addEventListener('click', () => {
+      deepAssign(spec, s.patch);
+      touched();
+      rebuild();
+    });
+    bar.append(b);
+  }
+  markShortcuts();
+}
+
+function shortcutHint(s) {
+  const c = s.patch.cabinet;
+  const parts = [`${c.doors} 门`, `${c.drawers} 抽`,
+    c.layout === 'ud' ? '上下' : '左右'];
+  if (c.width) parts.push(`宽 ${c.width}`);
+  return parts.join(' · ') + '（只改分格，尺寸照旧）';
+}
+
+/** 当前分格命中哪个快捷方式 */
+function markShortcuts() {
+  const c = spec.cabinet;
+  for (const b of document.querySelectorAll('#shortcutBar .btn')) {
+    const s = LAYOUT_SHORTCUTS.find((x) => x.id === b.dataset.id);
+    const hit = s && s.patch.cabinet.doors === c.doors
+      && s.patch.cabinet.drawers === c.drawers
+      && s.patch.cabinet.layout === c.layout;
+    b.classList.toggle('on', !!hit);
+  }
+}
+
+/** 把 patch 里的字段写进 spec（只认自己那几层，不做数组合并） */
+function deepAssign(target, patch) {
+  for (const [k, v] of Object.entries(patch)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      target[k] = target[k] ?? {};
+      deepAssign(target[k], v);
+    } else {
+      target[k] = v;
+    }
+  }
+}
+
 /* ---------------------------------------------------------------- 表单 */
 
 /** 折叠状态存在 localStorage。导购员一天几十次调参数，
@@ -272,6 +336,7 @@ function refreshSummaries() {
     const g = sm.closest('.grp')?.dataset.group;
     if (g) sm.textContent = groupSummary(g);
   }
+  markShortcuts();
 }
 
 function buildForm() {
@@ -679,6 +744,7 @@ $('#hist').addEventListener('change', async (e) => {
 
 /* ---------------------------------------------------------------- 启动 */
 
+buildShortcuts();
 renderHistory();
 rebuild();
 // 默认就是 3D 模式，界面元素要跟着初始化一次，

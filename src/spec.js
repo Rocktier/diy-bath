@@ -91,6 +91,26 @@ export function makeSpec(over = {}) {
  */
 
 /**
+ * 常用分格快捷方式。
+ *
+ * 不是「预设」——预设会把宽高深、盆、镜柜一起改掉，那样用户改完尺寸
+ * 就不知道哪些是自己调的。这些**只写门数、抽屉数、排列**（个别还要改宽度，
+ * 因为双盆柜塞进 780 是不合理的），其余一律不动。
+ *
+ * 点一下等于手动填那三个框，然后想调哪儿调哪儿。
+ */
+export const LAYOUT_SHORTCUTS = [
+  { id: 's-door1', name: '单开门', patch: { cabinet: { doors: 1, drawers: 0, layout: 'lr', width: 680 } } },
+  { id: 's-door2', name: '双开门', patch: { cabinet: { doors: 2, drawers: 0, layout: 'lr', width: 780 } } },
+  { id: 's-door3', name: '三开门', patch: { cabinet: { doors: 3, drawers: 0, layout: 'lr', width: 980 } } },
+  { id: 's-dr1', name: '单抽', patch: { cabinet: { doors: 0, drawers: 1, layout: 'ud', width: 780 } } },
+  { id: 's-dr2', name: '双抽', patch: { cabinet: { doors: 0, drawers: 2, layout: 'ud', width: 880 } } },
+  { id: 's-dr3', name: '三抽', patch: { cabinet: { doors: 0, drawers: 3, layout: 'ud', width: 880 } } },
+  { id: 's-1d2r', name: '一门两抽', patch: { cabinet: { doors: 1, drawers: 2, layout: 'ud', width: 880 } } },
+  { id: 's-2d1r', name: '双门一抽', patch: { cabinet: { doors: 2, drawers: 1, layout: 'ud', width: 980 } } },
+];
+
+/**
  * 特例柜型：不是「门 + 抽屉」能描述的。
  * 涉及盆胆格、开放格、非等宽分格、双列——单靠两个数字表达不出来。
  */
