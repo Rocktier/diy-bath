@@ -181,7 +181,9 @@ export function bandsFrom(doors, drawers, layout) {
       cols: cells.map(() => 1),
       rows: [1],
       cells,
-      // 混合排布时一条带只有一个拉手样式，用门的竖拉手
+      // 混合排布时一条带只能给一种样式，这里给门的竖拉手；
+      // 抽屉会由 project.js 的 cellFront 按格子类型兜底成圆形小拉手
+      // （竖条装在抽屉上不合理）。
       handle: 'bar-v',
     }];
   }
@@ -198,7 +200,10 @@ export function bandsFrom(doors, drawers, layout) {
   if (R) {
     const step = R <= 3 ? 1 : 0.4;
     const rows = Array.from({ length: R }, (_, i) => +(1 + (R - 1 - i) * step).toFixed(2));
-    bands.push({ kind: 'drawer', cols: [1], rows, handle: 'bar-h' });
+    // 圆形小拉手，不是横长条。
+    // 参照图 docs/reference/target-output.png 上三个抽屉全是居中的圆形拉手，
+    // 这也是现在中端浴室柜的主流做法；横长条偏老。
+    bands.push({ kind: 'drawer', cols: [1], rows, handle: 'knob' });
   }
   return bands;
 }

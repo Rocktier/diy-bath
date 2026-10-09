@@ -35,10 +35,16 @@ function cabMid(ps) {
 
 function cellFront(p, mid) {
   const out = [{ shape: 'rect', part: 'cell', x: p.x, y: fy(p.y + p.h), w: p.w, h: p.h, fill: 'cell' }];
-  const h = p.meta.handle;
+  const isDrawer = p.meta.cellKind === 'drawer';
+  let h = p.meta.handle;
   const leftSide = p.x + p.w / 2 < mid;
 
+  // 竖条拉手是**门**的做法。左右并排时一条带只能给一种样式，
+  // 抽屉会跟着拿到 bar-v，看着就别扭——按格子类型兜底成圆形小拉手。
+  if (isDrawer && h === 'bar-v') h = 'knob';
+
   if (h === 'gola') {
+    // 暗拉手：嵌在面板上沿一道横槽
     out.push({
       shape: 'rect', part: 'gola',
       x: p.x + 2, y: fy(p.y + p.h),
@@ -48,7 +54,11 @@ function cellFront(p, mid) {
     const len = Math.min(240, p.w * 0.6);
     out.push({
       shape: 'rect', part: 'handle',
-      x: p.x + (p.w - len) / 2, y: fy(p.y + 34 + 14),
+      // 距面板**上沿** 48mm。原来写的是 fy(p.y + 34 + 14)，
+      // 那是从格子底边往上算 48——结果贴在抽屉最下面。
+      // 实测三抽：面板顶 -428 高 338，拉手落在 -138，
+      // 等于距顶 290mm、距底 48mm，正好装反了。
+      x: p.x + (p.w - len) / 2, y: fy(p.y + p.h - 48),
       w: len, h: 14, rx: 7, fill: 'handle',
     });
   } else if (h === 'bar-v') {
@@ -62,7 +72,9 @@ function cellFront(p, mid) {
   } else if (h === 'knob') {
     out.push({
       shape: 'ellipse', part: 'handle',
-      cx: leftSide ? p.x + p.w - 60 : p.x + 60,
+      // 抽屉的圆形拉手要**水平居中**；门才靠开启边。
+      // 原来不分门和抽，一律距左 60mm——整宽的抽屉上就偏到一边去了。
+      cx: isDrawer ? p.x + p.w / 2 : (leftSide ? p.x + p.w - 60 : p.x + 60),
       cy: fy(p.y + p.h / 2),
       rx: 10, ry: 10, fill: 'handle',
     });
