@@ -7,7 +7,10 @@
 下一轮：多用户协作 / 云同步、经授权的品牌模型（需书面授权）、基于照片的材质生成。
 
 ## 当前阶段（Current Phase）
-阶段 11：品牌扩展 + 法律风险规避（已完成）
+阶段 12：多端仓库结构 + 远端推送（已完成）
+
+仓库：https://github.com/Rocktier/diy-bath （旧内容已 force-push 清空）
+结构：根目录放三本台账 + README；`web/` 放网页应用；`android/`、`ios/`、`macos/`、`windows/` 各留 `.gitkeep` 占位。
 
 ## 阶段（Phases）
 
@@ -33,6 +36,12 @@
 
 ### 阶段 5：交付 — complete
 - [x] 检查产物、说明运行方式
+
+### 阶段 12：多端仓库结构 + 远端推送 — complete
+- [x] 三本台账留在仓库根目录
+- [x] 网页应用移入 `web/`；保留 `README.md` 说明多端结构
+- [x] 新建 `android/` `ios/` `macos/` `windows/` 占位目录（.gitkeep）
+- [x] 清空远端旧内容并 force-push 新结构（DNS 刷新后成功）
 
 ### 阶段 11：品牌扩展 + 法律风险规避 — complete
 - [x] 新增 GROHE / Dornbracht / Villeroy & Boch，品牌标签共 8 个
