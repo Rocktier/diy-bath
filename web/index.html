@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VanityLab — Parametric Bathroom Cabinet Designer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#eceff1;--panel:#fff;--line:#e2e6e8;--text:#20262b;--muted:#7a848c;--accent:#1f7a6f;--soft:#e6f2ef;--danger:#c0392b;--warn:#b8860b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;color:var(--text);font-size:13px}
+body{background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;flex:0 0 auto}
+.brand{font-weight:750;font-size:17px;letter-spacing:-.4px}.brand span{color:var(--accent)}
+.tagline{font-size:11px;color:var(--muted);border-left:1px solid var(--line);padding-left:12px;white-space:nowrap}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text);white-space:nowrap}
+.btn:hover{background:var(--soft);border-color:var(--accent)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.on{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:14px;padding:4px 9px;font-size:11px;cursor:pointer}
+.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.bcard{border:1px solid var(--line);border-radius:8px;padding:8px 9px;margin-bottom:6px;cursor:pointer;background:#fff}
+.bcard:hover{border-color:var(--accent);background:var(--soft)}
+.bcard b{display:block;font-size:12px}.bcard small{color:var(--muted);font-size:10px}
+.swatches{display:flex;flex-wrap:wrap;gap:5px}
+.sw{width:30px;height:30px;border-radius:6px;border:2px solid transparent;background-size:cover;background-position:center;cursor:pointer;padding:0}
+.sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--soft)}
+.seg button{border:0;background:#fff;padding:6px 9px;font-size:12px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:#fff}
+.main{flex:1;display:grid;grid-template-columns:234px 1fr 276px;min-height:0}
+.sidebar{background:#fff;overflow:auto;padding:14px}
+.left{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}
+.viewport{position:relative;min-width:0;background:linear-gradient(180deg,#f8fafb,#e6ebee)}
+canvas{display:block;width:100%;height:100%}
+#warn{position:absolute;left:14px;top:12px;background:#fff2f0;border:1px solid #e7b3ab;color:var(--danger);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;pointer-events:none;z-index:3}
+#issues{position:absolute;left:14px;top:52px;background:#fff8e6;border:1px solid #e8d08a;color:#8a6d00;border-radius:6px;padding:7px 10px;font-size:11px;z-index:3;max-width:320px}
+#issues .issue{margin-top:5px}
+#issues button{border:1px solid #d9bd63;background:#fff;border-radius:4px;color:#8a6d00;font-size:10px;padding:2px 7px;cursor:pointer;margin-left:5px}
+.hint{position:absolute;left:14px;bottom:12px;background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:11px;color:var(--muted);pointer-events:none}
+.badge{position:absolute;right:14px;top:12px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;pointer-events:none}
+.search{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;margin-bottom:12px;outline:none}
+.search:focus{border-color:var(--accent)}
+.sect{font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);font-weight:700;margin:14px 0 8px}
+/* ponytail: native <details> for progressive disclosure — no JS, no state */
+details.grp{border-top:1px solid var(--line);margin-top:10px;padding-top:7px}
+details.grp>summary{list-style:none;cursor:pointer;font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);font-weight:700}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:'▸ '}details.grp[open]>summary::before{content:'▾ '}
+details.menu{position:relative}
+details.menu>summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:12px;background:#fff;color:var(--text)}
+details.menu>summary::-webkit-details-marker{display:none}
+.menuBox{position:absolute;right:0;top:34px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:10;display:flex;flex-direction:column;gap:4px;min-width:132px}
+.menuBox .btn{width:100%;text-align:left}
+.legal{font-size:10px;line-height:1.5;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+.tile{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:7px;cursor:grab;background:#fff;display:flex;align-items:center;gap:10px;transition:.12s}
+.tile:hover{border-color:var(--accent);background:var(--soft);transform:translateY(-1px)}
+.tile:active{cursor:grabbing}.tile i{width:26px;height:26px;flex:0 0 auto;border-radius:5px;background:var(--soft);display:grid;place-items:center;color:var(--accent)}
+.tile b{font-weight:600;display:block;font-size:12px}.tile small{color:var(--muted);font-size:10px}
+.h{font-size:14px;font-weight:700;margin:0 0 4px}.sub{color:var(--muted);font-size:11px;margin-bottom:14px}
+.field{margin-bottom:11px}.field label{display:flex;justify-content:space-between;font-size:11px;color:#4d575e;margin-bottom:5px}
+.field label b{color:var(--text);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:6px;align-items:center}.row input[type=number]{width:74px}
+input[type=number],select{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 7px;font-size:12px;outline:none;background:#fff}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);height:18px}
+.chk{display:flex;align-items:center;gap:8px;font-size:12px}
+.empty{color:var(--muted);font-size:12px;line-height:1.6;padding:12px;border:1px dashed var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase}
+.btn-del{color:var(--danger);border-color:#f0c9c4;width:100%;margin-top:6px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#f8fafb;color:var(--muted);font-size:13px;z-index:5}
+#loading.err{color:var(--danger)}
+.scrim{display:none;position:fixed;inset:56px 0 0;background:rgba(0,0,0,.38);z-index:3}
+@media(min-width:901px){#mToggle{display:none}}
+@media(max-width:900px){
+  .main{grid-template-columns:1fr}.sidebar{display:none}
+  .left.show,.right.show{display:block;position:absolute;top:52px;bottom:0;width:min(86vw,310px);z-index:4;box-shadow:0 4px 20px rgba(0,0,0,.14);overflow:auto}
+  .left{left:0}.right{right:0}.tagline{display:none}
+  .scrim.show{display:block}
+  .topbar{height:52px;padding:0 8px;gap:5px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none}
+  .topbar::-webkit-scrollbar{display:none}
+  .brand,.tagline{position:sticky;left:0;background:#fff;z-index:1}
+  .btn{padding:8px 9px;min-height:36px}
+  .seg button{padding:8px 7px}
+  .hint{display:none}
+  .brand{font-size:15px}
+}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Vanity<span>Lab</span></div>
+  <div class="tagline" data-i18n="tagline">Parametric Bathroom Cabinet Designer</div>
+  <div class="spacer"></div>
+  <div class="seg" id="langSeg"><button data-l="en" class="on">EN</button><button data-l="zh">中文</button></div>
+  <button class="btn" id="mToggle" data-i18n="panels">Panels</button>
+  <div class="seg" id="views"><button data-v="persp" class="on">3D</button><button data-v="front">Front</button><button data-v="side">Side</button><button data-v="top">Top</button></div>
+  <button class="btn" id="fit" data-i18n="fit">Fit</button>
+  <div class="seg" id="units"><button data-u="mm" class="on">mm</button><button data-u="in">inch</button></div>
+  <button class="btn on" id="dims" data-i18n="dims">Dims</button>
+  <button class="btn" id="undo" data-i18n="undo">Undo</button>
+  <button class="btn" id="redo" data-i18n="redo">Redo</button>
+  <details class="menu"><summary data-i18n="export">Export</summary><div class="menuBox">
+    <button class="btn" id="png">PNG</button>
+    <button class="btn" id="glb">GLB</button>
+    <button class="btn primary" id="bom" data-i18n="bomBtn">BOM / CSV</button>
+  </div></details>
+</div>
+<div class="main">
+  <aside class="sidebar left" id="left">
+    <input class="search" id="search">
+    <details class="grp"><summary data-i18n="brands">Brand library</summary>
+    <div class="chips" id="brandTabs"></div>
+    <div id="brandPresets"></div>
+    <div class="legal" data-i18n="disclaimer"></div></details>
+    <div class="sect" data-i18n="components">Components</div>
+    <div id="library"></div>
+  </aside>
+  <div class="viewport" id="viewport">
+    <div id="loading">Loading 3D engine…</div>
+    <div id="warn" style="display:none"></div>
+    <div id="issues" style="display:none"></div>
+    <div class="badge" id="badge">No selection</div>
+    <div class="hint" data-i18n="hint">Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select</div>
+    <div class="scrim" id="scrim"></div>
+  </div>
+  <aside class="sidebar right" id="right">
+    <h2 class="h" data-i18n="properties">Properties</h2>
+    <div class="sub" id="propsHint">Select a component or click one in the library.</div>
+    <div id="props"></div>
+    <details class="grp"><summary data-i18n="bom">Bill of materials</summary>
+    <table id="bomTable"><thead><tr><th data-i18n="part">Part</th><th data-i18n="size">Size</th><th data-i18n="qty">Qty</th></tr></thead><tbody></tbody></table></details>
+    <details class="grp"><summary data-i18n="project">Project</summary>
+    <select id="projectSel" style="margin-bottom:6px"></select>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="btn" id="newProj" data-i18n="newP">New</button>
+      <button class="btn" id="saveAs" data-i18n="saveAs">Save as</button>
+      <button class="btn" id="renameProj" data-i18n="rename">Rename</button>
+      <button class="btn" id="delProj" data-i18n="delP">Delete</button>
+    </div>
+    <div class="row" style="flex-wrap:wrap;margin-top:6px">
+      <button class="btn" id="saveJson" data-i18n="saveJson">Save JSON</button>
+      <button class="btn" id="loadJson" data-i18n="openJson">Open JSON</button>
+      <button class="btn" id="clearAll" data-i18n="clear">Clear</button>
+    </div>
+    <input type="file" id="fileIn" accept="application/json" hidden></details>
+  </aside>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const $ = s => document.querySelector(s);
+const I18N = {
+  en:{ tagline:'Parametric Bathroom Cabinet Designer', panels:'Panels', fit:'Fit', dims:'Dims',
+    undo:'Undo', redo:'Redo', export:'Export', bomBtn:'BOM / CSV', search:'Search components…',
+    disclaimer:'Independent design tool. Brand names are style references only. No logos, product photos or official model data. Not affiliated with or endorsed by any manufacturer.', brands:'Brand library',
+    components:'Components', mine:'My Templates', noTpl:'No saved templates yet.', saveTpl:'Save current design as template',
+    hint:'Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select', noSel:'No selection',
+    properties:'Properties', propsHint:'Select a component or click one in the library.',
+    bom:'Bill of materials', part:'Part', size:'Size', qty:'Qty', project:'Project',
+    newP:'New', saveAs:'Save as', rename:'Rename', delP:'Delete', saveJson:'Save JSON', openJson:'Open JSON', clear:'Clear',
+    placement:'Placement', rotation:'Rotation', pbr:'PBR tuning', roughness:'Roughness', metalness:'Metalness', clearcoat:'Clearcoat',
+    delComp:'Delete component', openFronts:'Open fronts', closeFronts:'Close fronts', constraints:'constraints', constraint:'constraint',
+    fix:'Fix', overlap:'overlap — drag apart to fix', vanity:'VANITY', mirror:'MIRROR', shelf:'SHELF',
+    width:'Width', depth:'Depth', height:'Carcass height', drawers:'Drawers', doors:'Doors', handle:'Handle', basin:'Basin', basins:'Basins',
+    mount:'Mount', topHeight:'Top above floor', bottomHeight:'Bottom above floor', material:'Finish', countertop:'Countertop',
+    led:'LED light', shelves:'Shelves', openFront:'Open front' },
+  zh:{ tagline:'参数化浴室柜设计工具', panels:'面板', fit:'适应视图', dims:'标注',
+    undo:'撤销', redo:'重做', export:'导出', bomBtn:'物料清单 / CSV', search:'搜索组件…',
+    disclaimer:'独立设计工具。品牌名称仅作风格参考，不含 Logo、产品图片或官方型号数据，与任何制造商无关联或背书关系。', brands:'品牌模型库',
+    components:'组件', mine:'我的模板', noTpl:'暂无保存的模板', saveTpl:'将当前设计保存为模板',
+    hint:'拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择', noSel:'未选择组件',
+    properties:'属性', propsHint:'选择组件，或点击组件库中的项目。',
+    bom:'物料清单', part:'部件', size:'尺寸', qty:'数量', project:'方案',
+    newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'保存 JSON', openJson:'打开 JSON', clear:'清空',
+    placement:'位置', rotation:'旋转', pbr:'PBR 调节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
+    delComp:'删除组件', openFronts:'打开门板', closeFronts:'关闭门板', constraints:'条约束', constraint:'条约束',
+    fix:'修复', overlap:'重叠 — 拖动分开', vanity:'浴室柜', mirror:'镜柜', shelf:'侧柜',
+    width:'宽度', depth:'深度', height:'柜体高度', drawers:'抽屉数', doors:'门板数', handle:'拉手', basin:'盆型', basins:'盆数量',
+    mount:'安装方式', topHeight:'台面离地高', bottomHeight:'柜底离地高', material:'饰面', countertop:'台面',
+    led:'LED 灯', shelves:'层板数', openFront:'开放式' }
+};
+const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'BOM CSV 已导出','GLB exported':'GLB 已导出',
+  'Project saved':'方案已保存','Project loaded':'方案已载入','Project deleted':'方案已删除','New project created':'已新建方案',
+  'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
+  'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
+const MAT_ZH={white:'哑光白',cream:'暖白',sage:'鼠尾草绿',navy:'海军蓝',graphite:'石墨灰',oak:'原木橡木',walnut:'胡桃木',black:'黑色',stone:'石材台面',marble:'大理石',brass:'拉丝黄铜',concrete:'混凝土',terrazzo:'水磨石'};
+const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
+const OPT_ZH={recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无拉手',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
+const GROUP_ZH={'Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
+const TILE_ZH={'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
+const PRESET_ZH=s=>lang==='zh'?s.replace(/double basin/g,'双盆').replace(/recessed grip/g,'隐形拉手').replace(/marble top/g,'大理石台面').replace(/stone top/g,'石材台面').replace(/floor standing/g,'落地').replace(/soft-close/g,'静音阻尼').replace(/soft rounded/g,'圆角').replace(/handleless/g,'无拉手').replace(/wall hung/g,'挂墙').replace(/open shelf combo/g,'开放格组合').replace(/thin top/g,'薄台面').replace(/narrow/g,'窄型').replace(/compact/g,'紧凑').replace(/wide/g,'宽型').replace(/minimal/g,'极简').replace(/cube/g,'立方体').replace(/integrated/g,'一体盆').replace(/oak/g,'橡木').replace(/walnut/g,'胡桃木'):s;
+const TILE_DESC_ZH={'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','2 doors':'双门','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
+const L=(k,en)=>lang==='zh'?(LABEL_ZH[k]||en):en;
+const O=(v)=>lang==='zh'?(OPT_ZH[v]||v):v[0].toUpperCase()+v.slice(1);
+let lang=localStorage.getItem('vanitylab-lang')||'en';
+const T=k=>(I18N[lang]||I18N.en)[k]??k;
+function trMsg(s){
+  if(lang==='en')return s;
+  if(TOAST_ZH[s])return TOAST_ZH[s];
+  return s.replace(/ added$/,' 已添加').replace(/ placed · snapped to grid$/,' 已放置 · 已吸附网格')
+    .replace(/ saved$/,' 已保存').replace(/ loaded$/,' 已载入').replace(/ exported$/,' 已导出')
+    .replace(/^Invalid project file: /,'无效的方案文件：');
+}
+const viewport = $('#viewport');
+const loading = $('#loading');
+
+/* ---------- data ---------- */
+const MATERIALS = {
+  white:{n:'Matte White',c:0xf1f0eb,r:.85,m:0,cc:.05},
+  cream:{n:'Warm White',c:0xe7dfd1,r:.85,m:0,cc:.05},
+  sage:{n:'Sage',c:0x9aa892,r:.9,m:0,cc:.05},
+  navy:{n:'Navy',c:0x2d3b55,r:.8,m:0,cc:.1},
+  graphite:{n:'Graphite',c:0x4b5056,r:.75,m:0,cc:.1},
+  oak:{n:'Natural Oak',c:0xb98d5f,r:.9,m:0,cc:.1},
+  walnut:{n:'Walnut',c:0x6b4a32,r:.9,m:0,cc:.1},
+  black:{n:'Black',c:0x232629,r:.65,m:0,cc:.25},
+  stone:{n:'Stone Top',c:0xd9d6cf,r:.3,m:0,cc:.35},
+  marble:{n:'Marble',c:0xecebe7,r:.25,m:0,cc:.45},
+  brass:{n:'Brushed Brass',c:0xb08d4f,r:.35,m:.85,cc:0},
+  concrete:{n:'Concrete',c:0xb8b5ae,r:.95,m:0,cc:0},
+  terrazzo:{n:'Terrazzo',c:0xd8d5cc,r:.4,m:0,cc:.3}
+};
+const DEFAULTS = {
+  vanity:{width:900,depth:520,height:600,drawerCount:2,doorCount:0,handle:'recessed',basin:'integrated',basinCount:1,mount:'wall',topHeight:850,rot:0,open:0,material:'white',countertop:'stone'},
+  mirror:{width:900,height:700,depth:150,doors:2,led:true,bottomHeight:1080,rot:0,open:0,material:'white'},
+  shelf:{width:400,height:1600,depth:350,shelves:4,open:true,rot:0,material:'oak'}
+};
+const SCHEMAS = {
+  vanity:[
+    {k:'width',l:'Width',min:450,max:1800,step:10},
+    {k:'depth',l:'Depth',min:350,max:600,step:10},
+    {k:'height',l:'Carcass height',min:400,max:800,step:10},
+    {k:'drawerCount',l:'Drawers',min:0,max:4,step:1,raw:true},
+    {k:'doorCount',l:'Doors',min:0,max:3,step:1,raw:true},
+    {k:'handle',l:'Handle',t:'select',o:['recessed','bar','knob','none']},
+    {k:'basin',l:'Basin',t:'select',o:['integrated','vessel','none']},
+    {k:'basinCount',l:'Basins',min:1,max:2,step:1,raw:true},
+    {k:'mount',l:'Mount',t:'select',o:['wall','floor']},
+    {k:'topHeight',l:'Top above floor',min:600,max:1200,step:10},
+    {k:'material',l:'Finish',t:'select',o:Object.keys(MATERIALS)},
+    {k:'countertop',l:'Countertop',t:'select',o:['stone','marble','white','black','oak']}
+  ],
+  mirror:[
+    {k:'width',l:'Width',min:400,max:1400,step:10},
+    {k:'height',l:'Height',min:400,max:900,step:10},
+    {k:'depth',l:'Depth',min:80,max:220,step:10},
+    {k:'doors',l:'Doors',min:1,max:3,step:1,raw:true},
+    {k:'led',l:'LED light',t:'bool'},
+    {k:'bottomHeight',l:'Bottom above floor',min:800,max:1500,step:10},
+    {k:'material',l:'Frame finish',t:'select',o:Object.keys(MATERIALS)}
+  ],
+  shelf:[
+    {k:'width',l:'Width',min:250,max:700,step:10},
+    {k:'height',l:'Height',min:600,max:2000,step:10},
+    {k:'depth',l:'Depth',min:250,max:500,step:10},
+    {k:'shelves',l:'Shelves',min:0,max:6,step:1,raw:true},
+    {k:'open',l:'Open front',t:'bool'},
+    {k:'material',l:'Finish',t:'select',o:Object.keys(MATERIALS)}
+  ]
+};
+const TILES = [
+  {g:'Cabinets',items:[
+    {l:'Single Basin Vanity',s:'900 · 2 drawers',t:'vanity',p:{}},
+    {l:'Double Basin Vanity',s:'1400 · wide',t:'vanity',p:{width:1400,drawerCount:4}},
+    {l:'Narrow Vanity',s:'500 · small bath',t:'vanity',p:{width:500,depth:420,drawerCount:1}},
+    {l:'Tall Side Cabinet',s:'400 · 1600 h',t:'shelf',p:{}}
+  ]},
+  {g:'Fronts & Storage',items:[
+    {l:'Drawer Bank',s:'3 drawers',t:'vanity',p:{width:700,drawerCount:3,doorCount:0,basin:'none'}},
+    {l:'Door Cabinet',s:'2 doors',t:'vanity',p:{width:800,drawerCount:0,doorCount:2,basin:'none'}},
+    {l:'Open Shelf Unit',s:'3 shelves',t:'shelf',p:{height:900,shelves:3}}
+  ]},
+  {g:'Mirror',items:[
+    {l:'Mirror Cabinet',s:'2 doors',t:'mirror',p:{}},
+    {l:'LED Mirror',s:'slim · lit',t:'mirror',p:{doors:1,depth:70}}
+  ]},
+  {g:'Hardware (on selection)',items:[
+    {l:'Bar Handle',s:'metal bar',a:'handle',v:'bar'},
+    {l:'Recessed Grip',s:'45° groove',a:'handle',v:'recessed'},
+    {l:'Knob',s:'round',a:'handle',v:'knob'},
+    {l:'No Handle',s:'handleless',a:'handle',v:'none'}
+  ]}
+];
+
+// ponytail/legal: preset names are generic style descriptors, NOT product-line names.
+// Brand chips are style references only — see LEGAL.md. No logos/photos/model data bundled.
+const BRANDS=[
+ {id:'kohler',n:'Kohler',presets:[
+  {n:'Modern 900',d:'900 · integrated · recessed grip',items:[
+   {t:'vanity',x:0,z:0,p:{width:900,depth:520,height:600,drawerCount:2,basin:'integrated',handle:'recessed',material:'white',countertop:'stone'}},
+   {t:'mirror',x:0,z:0,p:{width:900,height:700,depth:150,doors:2,bottomHeight:1080,material:'white'}}]},
+  {n:'Classic Double 1400',d:'double basin · marble top',items:[
+   {t:'vanity',x:0,z:0,p:{width:1400,depth:560,height:620,drawerCount:4,basin:'integrated',basinCount:2,handle:'bar',material:'cream',countertop:'marble'}},
+   {t:'mirror',x:0,z:0,p:{width:1400,height:700,depth:150,doors:3,led:true,material:'cream'}}]},
+  {n:'Narrow 600',d:'narrow · floor standing',items:[
+   {t:'vanity',x:0,z:0,p:{width:600,depth:450,height:700,drawerCount:1,basin:'integrated',mount:'floor',material:'white',topHeight:850}},
+   {t:'mirror',x:0,z:0,p:{width:600,height:600,depth:120,doors:1,material:'white'}}]}
+  ]},
+  {id:'toto',n:'TOTO',presets:[
+   {n:'Minimal 900',d:'handleless · thin top',items:[
+    {t:'vanity',x:0,z:0,p:{width:900,depth:500,height:580,drawerCount:2,basin:'integrated',handle:'none',material:'white',countertop:'white'}},
+    {t:'mirror',x:0,z:0,p:{width:900,height:700,depth:120,doors:2,led:true,material:'white'}}]},
+   {n:'Double 1200',d:'double · soft-close',items:[
+    {t:'vanity',x:0,z:0,p:{width:1200,depth:540,height:600,drawerCount:4,basin:'integrated',basinCount:2,handle:'recessed',material:'graphite',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:1200,height:650,depth:140,doors:2,material:'graphite'}}]},
+   {n:'Compact 500',d:'compact 500 · wall hung',items:[
+    {t:'vanity',x:0,z:0,p:{width:500,depth:420,height:550,drawerCount:1,basin:'integrated',handle:'none',material:'cream'}},
+    {t:'mirror',x:0,z:0,p:{width:500,height:600,depth:110,doors:1,material:'cream'}}]}
+  ]},
+  {id:'roca',n:'Roca',presets:[
+   {n:'Warm Oak 900',d:'soft rounded · oak',items:[
+    {t:'vanity',x:0,z:0,p:{width:900,depth:520,height:600,drawerCount:2,basin:'integrated',handle:'bar',material:'oak',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:900,height:700,depth:150,doors:2,led:true,material:'oak'}}]},
+   {n:'Walnut Double 1400',d:'double · walnut',items:[
+    {t:'vanity',x:0,z:0,p:{width:1400,depth:560,height:600,drawerCount:4,basin:'integrated',basinCount:2,handle:'bar',material:'walnut',countertop:'marble'}},
+    {t:'mirror',x:0,z:0,p:{width:1400,height:700,depth:150,doors:3,material:'walnut'}}]},
+   {n:'Open Shelf 600',d:'open shelf combo',items:[
+    {t:'vanity',x:0,z:0,p:{width:600,depth:480,height:580,drawerCount:1,basin:'integrated',handle:'recessed',material:'sage'}},
+    {t:'shelf',x:420,z:0,p:{width:350,height:1600,depth:350,shelves:4,open:true,material:'sage'}}]}
+  ]},
+  {id:'hansgrohe',n:'Hansgrohe',presets:[
+   {n:'Cube 1000',d:'handleless cube',items:[
+    {t:'vanity',x:0,z:0,p:{width:1000,depth:540,height:600,drawerCount:2,basin:'integrated',handle:'none',material:'graphite',countertop:'concrete'}},
+    {t:'mirror',x:0,z:0,p:{width:1000,height:700,depth:120,doors:2,led:true,material:'graphite'}}]},
+   {n:'Cube Double 1375',d:'wide · double basin',items:[
+    {t:'vanity',x:0,z:0,p:{width:1375,depth:560,height:620,drawerCount:4,basin:'integrated',basinCount:2,handle:'none',material:'black',countertop:'concrete'}},
+    {t:'mirror',x:0,z:0,p:{width:1375,height:700,depth:140,doors:3,led:true,material:'black'}}]},
+   {n:'Cube Compact 450',d:'minimal 450',items:[
+    {t:'vanity',x:0,z:0,p:{width:450,depth:400,height:560,drawerCount:1,basin:'integrated',handle:'none',material:'white',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:450,height:600,depth:100,doors:1,material:'white'}}]}
+  ]},
+  {id:'grohe',n:'GROHE',presets:[
+   {n:'Slim 900',d:'slim top · chrome detail',items:[
+    {t:'vanity',x:0,z:0,p:{width:900,depth:510,height:560,drawerCount:2,basin:'integrated',handle:'bar',material:'white',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:900,height:700,depth:130,doors:2,led:true,material:'white'}}]},
+   {n:'Double 1300',d:'double · graphite',items:[
+    {t:'vanity',x:0,z:0,p:{width:1300,depth:540,height:600,drawerCount:4,basin:'integrated',basinCount:2,handle:'bar',material:'graphite',countertop:'marble'}},
+    {t:'mirror',x:0,z:0,p:{width:1300,height:700,depth:140,doors:3,led:true,material:'graphite'}}]},
+   {n:'Compact 500',d:'compact · wall hung',items:[
+    {t:'vanity',x:0,z:0,p:{width:500,depth:420,height:560,drawerCount:1,basin:'integrated',handle:'knob',material:'white',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:500,height:600,depth:110,doors:1,material:'white'}}]}
+  ]},
+  {id:'dornbracht',n:'Dornbracht',presets:[
+   {n:'Lux Minimal 1000',d:'ultra minimal · handleless',items:[
+    {t:'vanity',x:0,z:0,p:{width:1000,depth:540,height:600,drawerCount:2,basin:'integrated',handle:'none',material:'black',countertop:'concrete'}},
+    {t:'mirror',x:0,z:0,p:{width:1000,height:700,depth:120,doors:2,led:true,material:'black'}}]},
+   {n:'Lux Double 1400',d:'double · brushed brass detail',items:[
+    {t:'vanity',x:0,z:0,p:{width:1400,depth:560,height:620,drawerCount:4,basin:'integrated',basinCount:2,handle:'none',material:'cream',countertop:'marble'}},
+    {t:'mirror',x:0,z:0,p:{width:1400,height:700,depth:140,doors:3,led:true,material:'cream'}}]},
+   {n:'Slim 500',d:'slim compact',items:[
+    {t:'vanity',x:0,z:0,p:{width:500,depth:420,height:550,drawerCount:1,basin:'integrated',handle:'none',material:'graphite',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:500,height:600,depth:100,doors:1,material:'graphite'}}]}
+  ]},
+  {id:'villeroy',n:'Villeroy & Boch',presets:[
+   {n:'Ceramic 900',d:'classic · ceramic',items:[
+    {t:'vanity',x:0,z:0,p:{width:900,depth:520,height:620,drawerCount:2,basin:'integrated',handle:'knob',material:'cream',countertop:'marble'}},
+    {t:'mirror',x:0,z:0,p:{width:900,height:700,depth:150,doors:2,material:'cream'}}]},
+   {n:'Ceramic Double 1400',d:'double · classic',items:[
+    {t:'vanity',x:0,z:0,p:{width:1400,depth:560,height:640,drawerCount:4,basin:'integrated',basinCount:2,handle:'knob',material:'white',countertop:'marble'}},
+    {t:'mirror',x:0,z:0,p:{width:1400,height:700,depth:150,doors:3,material:'white'}}]},
+   {n:'Compact 600',d:'compact · ceramic top',items:[
+    {t:'vanity',x:0,z:0,p:{width:600,depth:460,height:600,drawerCount:1,basin:'integrated',handle:'knob',material:'white',countertop:'stone'}},
+    {t:'mirror',x:0,z:0,p:{width:600,height:600,depth:120,doors:1,material:'white'}}]}
+  ]}
+];
+let activeBrand='kohler';
+
+const state = {modules:[],selectedId:null,dims:true};
+let uid=1, unit='mm', history=[], hi=-1, currentView='persp';
+const clone = o => JSON.parse(JSON.stringify(o));
+
+/* ---------- three setup ---------- */
+let renderer,scene,camera,controls,root,selBox,raycaster,floorPlane;
+const matCache={},texCache={},pbrCache={},variantCache={};
+const HD_TEXTURES=!(window.matchMedia&&matchMedia('(max-width:900px)').matches);
+const assetTex={};
+function loadAssetTex(k){
+  if(assetTex[k])return assetTex[k];
+  const e=assetTex[k]={},loader=new THREE.TextureLoader();
+  for(const ch of ['albedo','normal','roughness','ao']){
+    loader.load('assets/textures/'+k+'_'+ch+'.png',t=>{
+      t.wrapS=t.wrapT=THREE.RepeatWrapping;
+      t.colorSpace=ch==='albedo'?THREE.SRGBColorSpace:THREE.NoColorSpace;
+      e[ch]=t;applyAssetTex(k);
+    },undefined,()=>{});
+  }
+  return e;
+}
+function applyAssetTex(k){
+  const e=assetTex[k];if(!e)return;
+  for(const m of [...Object.values(matCache),...Object.values(variantCache)]){
+    if(!m.userData||m.userData.texKey!==k)continue;
+    if(e.albedo)m.map=e.albedo;
+    if(e.normal)m.normalMap=e.normal;
+    if(e.roughness)m.roughnessMap=e.roughness;
+    if(e.ao)m.aoMap=e.ao;
+    m.needsUpdate=true;
+  }
+}
+let _activeTune=null;
+function texFor(k){
+  if(texCache[k])return texCache[k];
+  const m=MATERIALS[k]||MATERIALS.white;
+  const c=document.createElement('canvas');c.width=c.height=256;
+  const ctx=c.getContext('2d'),col='#'+m.c.toString(16).padStart(6,'0');
+  ctx.fillStyle=col;ctx.fillRect(0,0,256,256);
+  if(k==='oak'||k==='walnut'||k==='brass'){
+    ctx.strokeStyle=k==='walnut'?'rgba(35,18,8,.28)':k==='brass'?'rgba(70,50,15,.22)':'rgba(95,60,28,.20)';
+    for(let i=0;i<70;i++){ctx.globalAlpha=.25+Math.random()*.5;ctx.lineWidth=Math.random()*2+.3;ctx.beginPath();let y=Math.random()*256;ctx.moveTo(0,y);for(let x=0;x<=256;x+=14)ctx.lineTo(x,y+Math.sin(x/28+i)*3+(Math.random()-.5)*2);ctx.stroke();}
+    ctx.globalAlpha=1;
+  }else if(k==='stone'||k==='marble'||k==='terrazzo'){
+    if(k==='terrazzo'){
+      for(let i=0;i<240;i++){ctx.fillStyle=`rgba(${90+Math.random()*120|0},${90+Math.random()*120|0},${90+Math.random()*120|0},.35)`;ctx.beginPath();ctx.ellipse(Math.random()*256,Math.random()*256,2+Math.random()*6,1+Math.random()*4,Math.random()*3,0,7);ctx.fill();}
+    }
+    ctx.strokeStyle=k==='marble'?'rgba(110,110,125,.28)':'rgba(130,130,135,.20)';
+    for(let i=0;i<22;i++){ctx.lineWidth=Math.random()*3+.5;ctx.beginPath();let y=Math.random()*256;ctx.moveTo(0,y);for(let x=0;x<=256;x+=12){y+=(Math.random()-.5)*13;ctx.lineTo(x,y);}ctx.stroke();}
+  }else{
+    for(let i=0;i<1600;i++){ctx.fillStyle=`rgba(255,255,255,${Math.random()*.055})`;ctx.fillRect(Math.random()*256,Math.random()*256,1,1);}
+  }
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;
+  texCache[k]=t;return t;
+}
+function pbrFor(k){
+  if(pbrCache[k])return pbrCache[k];
+  const img=texFor(k).image,w=img.width,h=img.height,src=img.getContext('2d').getImageData(0,0,w,h).data;
+  const lum=(x,y)=>{x=(x+w)%w;y=(y+h)%h;const i=(y*w+x)*4;return (src[i]*.299+src[i+1]*.587+src[i+2]*.114)/255;};
+  const nc=document.createElement('canvas'),rc=document.createElement('canvas');nc.width=rc.width=w;nc.height=rc.height=h;
+  const nctx=nc.getContext('2d'),rctx=rc.getContext('2d'),nd=nctx.createImageData(w,h),rd=rctx.createImageData(w,h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const dx=lum(x+1,y)-lum(x-1,y),dy=lum(x,y+1)-lum(x,y-1),i=(y*w+x)*4,s=1.4;
+    let nx=-dx*s,ny=-dy*s,nz=1;const len=Math.hypot(nx,ny,nz);nx/=len;ny/=len;nz/=len;
+    nd.data[i]=(nx*.5+.5)*255;nd.data[i+1]=(ny*.5+.5)*255;nd.data[i+2]=(nz*.5+.5)*255;nd.data[i+3]=255;
+    const rv=Math.max(.2,Math.min(1,lum(x,y)*.55+.35))*255;rd.data[i]=rd.data[i+1]=rd.data[i+2]=rv;rd.data[i+3]=255;
+  }
+  nctx.putImageData(nd,0,0);rctx.putImageData(rd,0,0);
+  const nt=new THREE.CanvasTexture(nc),rt=new THREE.CanvasTexture(rc);
+  nt.colorSpace=rt.colorSpace=THREE.NoColorSpace;
+  return pbrCache[k]={normalMap:nt,roughnessMap:rt};
+}
+function mat(k){
+  if(k==='mirrorG'){return matCache.mirrorG||(matCache.mirrorG=new THREE.MeshPhysicalMaterial({color:0xa7b6bb,metalness:.75,roughness:.12,clearcoat:1}));}
+  if(k==='chrome'){return matCache.chrome||(matCache.chrome=new THREE.MeshPhysicalMaterial({color:0xc9ced2,metalness:.9,roughness:.18}));}
+  if(k==='dark'){return matCache.dark||(matCache.dark=new THREE.MeshPhysicalMaterial({color:0x3a3f44,roughness:.6}));}
+  if(k==='basin'){return matCache.basin||(matCache.basin=new THREE.MeshPhysicalMaterial({color:0xf7f7f4,roughness:.3,clearcoat:.5,side:THREE.DoubleSide}));}
+  if(k==='led'){return matCache.led||(matCache.led=new THREE.MeshStandardMaterial({color:0xfff3d6,emissive:0xffe9b0,emissiveIntensity:.7}));}
+  const key=k+'|'+JSON.stringify(_activeTune||{});
+  if(variantCache[key])return variantCache[key];
+  const m=MATERIALS[k]||MATERIALS.white,pbr=pbrFor(k),t=_activeTune||{};
+  const mm=new THREE.MeshPhysicalMaterial({
+    color:0xffffff,map:texFor(k),normalMap:pbr.normalMap,normalScale:new THREE.Vector2(.6,.6),roughnessMap:pbr.roughnessMap,
+    roughness:t.r!==undefined?t.r:m.r,metalness:t.m!==undefined?t.m:(m.m||0),clearcoat:t.cc!==undefined?t.cc:(m.cc||0),clearcoatRoughness:.25
+  });
+  mm.userData.texKey=k;
+  variantCache[key]=mm;
+  if(HD_TEXTURES)loadAssetTex(k);
+  return mm;
+}
+function rbox(w,h,d,r=4){return new RoundedBoxGeometry(Math.max(w,1),Math.max(h,1),Math.max(d,1),3,Math.min(r,Math.min(w,h,d)/2.2));}
+function mesh(geo,m,x,y,z,parent){if(geo.attributes.uv&&!geo.attributes.uv2)geo.setAttribute('uv2',geo.attributes.uv);const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
+function basinHoles(p){
+  if(p.basin==='none')return [];
+  const r=p.basin==='vessel'?175:Math.min(p.width*.26,p.depth*.31),n=p.basinCount||1,out=[];
+  for(let i=0;i<n;i++)out.push({x:n===1?0:(i===0?-p.width*.24:p.width*.24),z:0,r});
+  out.push({x:0,z:-(p.depth*.31+60),r:14});
+  return out;
+}
+function cutCounter(W,D,th,holes){
+  const s=new THREE.Shape(),w=W/2,h=D/2,r=6;
+  s.moveTo(-w+r,-h);s.lineTo(w-r,-h);s.absarc(w-r,-h+r,r,-Math.PI/2,0,false);
+  s.lineTo(w,h-r);s.absarc(w-r,h-r,r,0,Math.PI/2,false);
+  s.lineTo(-w+r,h);s.absarc(-w+r,h-r,r,Math.PI/2,Math.PI,false);
+  s.lineTo(-w,-h+r);s.absarc(-w+r,-h+r,r,Math.PI,1.5*Math.PI,false);
+  for(const o of holes){const path=new THREE.Path();path.absarc(o.x,-o.z,o.r,0,Math.PI*2,true);s.holes.push(path);}
+  const g=new THREE.ExtrudeGeometry(s,{depth:th,bevelEnabled:true,bevelSize:1.5,bevelThickness:1.5,bevelSegments:2,curveSegments:24});
+  g.rotateX(-Math.PI/2);g.translate(0,-th/2,0);
+  return g;
+}
+
+function buildVanity(p,g){
+  const W=p.width,D=p.depth,H=p.height,T=18;
+  const fy=p.mount==='wall'?(p.topHeight||850)-H:0;
+  mesh(rbox(W,H,D,5),mat(p.material),0,fy+H/2,0,g);
+  const fz=D/2+7,fronts=[];
+  if(p.drawerCount>0){
+    const n=p.drawerCount,gap=8,dh=(H-gap*(n+1))/n;
+    for(let i=0;i<n;i++){
+      const y=fy+gap+dh/2+i*(dh+gap),travel=Math.min(D*.55,300);
+      const pv=new THREE.Group();pv.position.set(0,y,fz);g.add(pv);
+      mesh(rbox(W-2*T,dh,14,4),mat(p.material),0,0,0,pv);
+      if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(W*.35,180),12),mat('chrome'),0,0,13,pv).rotation.z=Math.PI/2;
+      else if(p.handle==='recessed')mesh(rbox(Math.min(W*.45,200),14,3,2),mat('dark'),0,dh/2-10,8,pv);
+      else if(p.handle==='knob'){const k=mesh(new THREE.CylinderGeometry(12,12,16,16),mat('chrome'),0,0,14,pv);k.rotation.x=Math.PI/2;}
+      pv.position.z=fz+(p.open?travel:0);
+      fronts.push({pv,type:'drawer',base:fz,travel});
+    }
+  }
+  if(p.doorCount>0){
+    const n=p.doorCount,gap=6,dw=(W-2*T-gap*(n+1))/n;
+    for(let i=0;i<n;i++){
+      const x=-(W-2*T)/2+gap+dw/2+i*(dw+gap),y=fy+H/2;
+      const hinge=i%2?-1:1,hx=x+hinge*dw/2,angle=-hinge*1.1;
+      const pv=new THREE.Group();pv.position.set(hx,y,fz);g.add(pv);
+      mesh(rbox(dw,H-2*T,14,4),mat(p.material),x-hx,0,0,pv);
+      const hxr=x-hx+hinge*-dw*.32;
+      if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(dw*.4,120),12),mat('chrome'),hxr,0,13,pv).rotation.z=Math.PI/2;
+      else if(p.handle==='recessed')mesh(rbox(14,Math.min(H*.5,220),3,2),mat('dark'),hxr,0,8,pv);
+      else if(p.handle==='knob'){const k=mesh(new THREE.CylinderGeometry(12,12,16,16),mat('chrome'),hxr,0,14,pv);k.rotation.x=Math.PI/2;}
+      pv.rotation.y=p.open?angle:0;
+      fronts.push({pv,type:'door',angle});
+    }
+  }
+  g.userData.fronts=fronts;
+  const ctY=fy+H+13,bn=p.basinCount||1;
+  mesh(cutCounter(W+40,D+20,26,basinHoles(p)),mat(p.countertop||'stone'),0,ctY,0,g);
+  const bx=i=>bn===1?0:(i===0?-W*.24:W*.24);
+  if(p.basin==='integrated'){
+    const r=Math.min(W*.26,D*.31);
+    for(let i=0;i<bn;i++){
+      mesh(new THREE.CylinderGeometry(r-3,r-8,22,32,1,true),mat('basin'),bx(i),ctY-6,0,g);
+      mesh(new THREE.CylinderGeometry(r-8,r-8,4,32),mat('basin'),bx(i),ctY-16,0,g);
+      mesh(new THREE.CylinderGeometry(9,9,4,16),mat('chrome'),bx(i),ctY+5,0,g);
+    }
+  }else if(p.basin==='vessel'){
+    for(let i=0;i<bn;i++){
+      mesh(new THREE.CylinderGeometry(175,165,120,28),mat('basin'),bx(i),ctY+70,0,g);
+      mesh(new THREE.CylinderGeometry(9,9,4,16),mat('chrome'),bx(i),ctY+132,0,g);
+    }
+  }
+  const fzF=-(D*.31+60);
+  mesh(new THREE.CylinderGeometry(16,16,150,16),mat('chrome'),0,ctY+95,fzF,g);
+  const sp=mesh(rbox(20,18,110,8),mat('chrome'),0,ctY+165,fzF+45,g);
+  if(p.mount==='floor'){
+    for(const sx of [-1,1])for(const sz of [-1,1])mesh(rbox(24,Math.max(fy,20),24,2),mat('dark'),sx*(W/2-40),fy/2,sz*(D/2-40),g);
+  }
+}
+function buildMirror(p,g){
+  const W=p.width,H=p.height,D=p.depth,y=(p.bottomHeight||1080)+H/2;
+  mesh(rbox(W,H,D,5),mat(p.material),0,y,-D/2,g);
+  const n=p.doors,gap=5,dw=(W-16-gap*(n+1))/n,fronts=[];
+  for(let i=0;i<n;i++){
+    const x=-(W-16)/2+gap+dw/2+i*(dw+gap);
+    const hinge=i%2?-1:1,hx=x+hinge*dw/2,angle=-hinge*1.1;
+    const pv=new THREE.Group();pv.position.set(hx,y,D/2+2);g.add(pv);
+    mesh(rbox(dw,H-16,6,3),mat('mirrorG'),x-hx,0,0,pv);
+    pv.rotation.y=p.open?angle:0;
+    fronts.push({pv,type:'door',angle});
+  }
+  g.userData.fronts=fronts;
+  if(p.led)mesh(rbox(W-20,10,6,3),mat('led'),0,y-H/2+12,D/2+4,g);
+}
+function buildShelf(p,g){
+  const W=p.width,H=p.height,D=p.depth,T=18,y=H/2;
+  if(!p.open)mesh(rbox(W,H,10,2),mat(p.material),0,y,-D/2,g);
+  mesh(rbox(T,H,D,2),mat(p.material),-W/2+T/2,y,0,g);
+  mesh(rbox(T,H,D,2),mat(p.material),W/2-T/2,y,0,g);
+  mesh(rbox(W,T,D,2),mat(p.material),0,T/2,0,g);
+  mesh(rbox(W,T,D,2),mat(p.material),0,H-T/2,0,g);
+  const n=p.shelves||0;
+  for(let i=1;i<=n;i++){
+    const sy=T+(H-2*T)*i/(n+1);
+    mesh(rbox(W-2*T,14,D-10,2),mat(p.material),0,sy,0,g);
+  }
+  if(p.open){for(let i=0;i<n;i++){
+    const sy=T+(H-2*T)*i/(n+1)+(H-2*T)/(n+1)/2;
+    mesh(rbox(W-2*T-10,(H-2*T)/(n+1)-10,8,3),mat('mirrorG'),0,sy,D/2-4,g);
+  }}
+}
+function buildModule(m){
+  const g=new THREE.Group();g.userData.moduleId=m.id;
+  _activeTune=m.params.tune||null;
+  if(m.type==='vanity')buildVanity(m.params,g);
+  else if(m.type==='mirror')buildMirror(m.params,g);
+  else buildShelf(m.params,g);
+  _activeTune=null;
+  g.position.set(m.pos.x,0,m.pos.z);
+  g.rotation.y=(m.params.rot||0)*Math.PI/180;
+  return g;
+}
+// axis-aligned footprint (rotation only 0/90/180/270)
+function footprint(m){const r=((m.params.rot||0)%360+360)%360;return (r===90||r===270)?{w:m.params.depth,d:m.params.width}:{w:m.params.width,d:m.params.depth};}
+function disposeGroup(g){
+  const cached=[...Object.values(matCache),...Object.values(variantCache)];
+  g.traverse(o=>{
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms)if(!cached.includes(m))m.dispose();}
+  });
+}
+function rebuildAll(){
+  for(const c of [...root.children]){root.remove(c);disposeGroup(c);}
+  for(const m of state.modules)root.add(buildModule(m));
+  updateSelection();
+}
+function rebuildModule(m){
+  const i=root.children.findIndex(c=>c.userData.moduleId===m.id);
+  if(i<0)return;
+  const old=root.children[i],fresh=buildModule(m);
+  root.remove(old);disposeGroup(old);root.add(fresh);
+  updateSelection();
+}
+function updateSelection(){
+  if(selBox){scene.remove(selBox);selBox.geometry.dispose();selBox=null;}
+  const m=state.modules.find(x=>x.id===state.selectedId);
+  if(m){const g=root.children.find(c=>c.userData.moduleId===m.id);if(g){selBox=new THREE.BoxHelper(g,0x1f7a6f);scene.add(selBox);}}
+  updateDimensions();
+  updateCollisions();
+}
+/* ---------- overlap detection ---------- */
+let collisionGroup=null;
+function moduleRect(m){const f=footprint(m);return {x1:m.pos.x-f.w/2,x2:m.pos.x+f.w/2,z1:m.pos.z-f.d/2,z2:m.pos.z+f.d/2};}
+function collisionIds(){
+  const ids=new Set();
+  for(let i=0;i<state.modules.length;i++)for(let j=i+1;j<state.modules.length;j++){
+    const a=moduleRect(state.modules[i]),b=moduleRect(state.modules[j]);
+    const ox=Math.min(a.x2,b.x2)-Math.max(a.x1,b.x1);
+    const oz=Math.min(a.z2,b.z2)-Math.max(a.z1,b.z1);
+    if(ox>10&&oz>10){ids.add(state.modules[i].id);ids.add(state.modules[j].id);}
+  }
+  return ids;
+}
+function updateCollisions(){
+  if(collisionGroup){scene.remove(collisionGroup);collisionGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});collisionGroup=null;}
+  if(!scene||!root)return;
+  const ids=collisionIds(),g=new THREE.Group();
+  for(const id of ids){const c=root.children.find(x=>x.userData.moduleId===id);if(c)g.add(new THREE.BoxHelper(c,0xc0392b));}
+  collisionGroup=g;scene.add(g);
+  const warn=$('#warn');
+  if(warn){warn.style.display=ids.size?'block':'none';warn.textContent=ids.size?`⚠ ${ids.size} ${lang==='zh'?'个组件':'component'+(ids.size>1?'s':'')}${lang==='zh'?'':' '}${T('overlap')}`:'';}
+}
+/* ---------- dimension annotations (SketchUp-style) ---------- */
+let dimGroup=null;
+const fmtDim=v=>unit==='in'?(v/25.4).toFixed(2)+' in':Math.round(v)+' mm';
+function updateDimensions(){
+  if(dimGroup){scene.remove(dimGroup);dimGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});dimGroup=null;}
+  if(state.dims===false||!root||!scene)return;
+  const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
+  const p=m.params,ox=m.pos.x,oz=m.pos.z;
+  let W,D,lo,hi;
+  if(m.type==='vanity'){W=p.width;D=p.depth;lo=p.mount==='wall'?(p.topHeight||850)-p.height:0;hi=lo+p.height+26;}
+  else if(m.type==='mirror'){W=p.width;D=p.depth;lo=p.bottomHeight||1080;hi=lo+p.height;}
+  else{W=p.width;D=p.depth;lo=0;hi=p.height;}
+  const hh=m.type==='vanity'?lo+p.height:hi; // annotate carcass height, not countertop
+  const g=new THREE.Group(),off=150;
+  const line=(a,b)=>g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a),new THREE.Vector3(...b)]),new THREE.LineBasicMaterial({color:0x1f7a6f})));
+  const label=(text,x,y,z)=>{
+    const c=document.createElement('canvas');c.width=256;c.height=64;
+    const ctx=c.getContext('2d');ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(0,0,256,64);
+    ctx.strokeStyle='#1f7a6f';ctx.lineWidth=4;ctx.strokeRect(2,2,252,60);
+    ctx.fillStyle='#1f7a6f';ctx.font='bold 26px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,34);
+    const tex=new THREE.CanvasTexture(c);
+    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));
+    s.position.set(x,y,z);s.scale.set(300,75,1);g.add(s);
+  };
+  const tick=(a,b)=>line(a,b);
+  line([ox-W/2,hi+off,oz+D/2+off],[ox+W/2,hi+off,oz+D/2+off]);
+  tick([ox-W/2,hi+off-25,oz+D/2+off],[ox-W/2,hi+off+25,oz+D/2+off]);
+  tick([ox+W/2,hi+off-25,oz+D/2+off],[ox+W/2,hi+off+25,oz+D/2+off]);
+  label(fmtDim(W),ox,hi+off+48,oz+D/2+off);
+  line([ox-W/2-off,lo,oz+D/2],[ox-W/2-off,hh,oz+D/2]);
+  tick([ox-W/2-off-25,lo,oz+D/2],[ox-W/2-off+25,lo,oz+D/2]);
+  tick([ox-W/2-off-25,hh,oz+D/2],[ox-W/2-off+25,hh,oz+D/2]);
+  label(fmtDim(hh-lo),ox-W/2-off-75,(lo+hh)/2,oz+D/2);
+  line([ox+W/2+off,lo+20,oz-D/2],[ox+W/2+off,lo+20,oz+D/2]);
+  tick([ox+W/2+off,lo-5,oz-D/2],[ox+W/2+off,lo+45,oz-D/2]);
+  tick([ox+W/2+off,lo-5,oz+D/2],[ox+W/2+off,lo+45,oz+D/2]);
+  label(fmtDim(D),ox+W/2+off+55,lo+20,oz);
+  dimGroup=g;scene.add(g);
+}
+
+/* ---------- state helpers ---------- */
+const PROJECTS_KEY='vanitylab-projects';
+let projects=[],currentPid=null,pidSeq=1;
+const newPid=()=>'p'+Date.now().toString(36)+(pidSeq++);
+function saveProjects(){localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));}
+function loadProjects(){
+  try{projects=JSON.parse(localStorage.getItem(PROJECTS_KEY))||[];}catch(e){projects=[];}
+  if(!projects.length){
+    const raw=localStorage.getItem('vanitylab');let d={modules:[],selectedId:null,dims:true};
+    if(raw){try{const s=JSON.parse(raw);d={modules:s.modules||[],selectedId:s.selectedId||null,dims:s.dims!==false};}catch(e){}}
+    projects=[{id:newPid(),name:lang==='zh'?'我的设计':'My Design',data:d}];saveProjects();
+  }
+}
+function save(){
+  const p=projects.find(x=>x.id===currentPid);if(p)p.data=clone(state);
+  saveProjects();localStorage.setItem('vanitylab',JSON.stringify(state));
+}
+function renderProjectUI(){
+  const sel=$('#projectSel');if(!sel)return;
+  sel.innerHTML=projects.map(p=>`<option value="${p.id}" ${p.id===currentPid?'selected':''}>${p.name.replace(/</g,'&lt;')}</option>`).join('');
+}
+function activateProject(id){
+  save();const p=projects.find(x=>x.id===id);if(!p)return;
+  currentPid=id;state.modules=clone(p.data.modules||[]);state.selectedId=p.data.selectedId||null;state.dims=p.data.dims!==false;
+  uid=Math.max(1,...state.modules.map(m=>m.id+1));
+  history=[clone(state)];hi=0;
+  rebuildAll();setView(currentView);renderProjectUI();renderProps();renderBOM();updateBadge();updateHistoryBtns();
+}
+function pushHistory(){history=history.slice(0,hi+1);history.push(clone(state));hi=history.length-1;save();updateHistoryBtns();}
+function commit(){pushHistory();rebuildAll();renderBOM();renderProps();updateBadge();}
+function restore(){rebuildAll();renderProps();renderBOM();updateBadge();}
+function undo(){if(hi>0){hi--;Object.assign(state,clone(history[hi]));restore();updateHistoryBtns();}}
+function redo(){if(hi<history.length-1){hi++;Object.assign(state,clone(history[hi]));restore();updateHistoryBtns();}}
+function updateHistoryBtns(){$('#undo').disabled=hi<=0;$('#redo').disabled=hi>=history.length-1;}
+function addModule(type,preset={},x=null,z=0){
+  const m={id:uid++,type,params:{...clone(DEFAULTS[type]),...preset},pos:{x:x===null?autoX():x,z}};
+  if(x!==null){m.pos.x=Math.round(x/50)*50;m.pos.z=Math.round(z/50)*50;}
+  state.modules.push(m);state.selectedId=m.id;commit();if(x===null)setView(currentView);return m;
+}
+function autoX(){
+  if(!state.modules.length)return 0;
+  const last=state.modules[state.modules.length-1];
+  return last.pos.x+Math.round((footprint(last).w||400)/50)*50+100;
+}
+// Live update: no DOM rebuild, no history entry. Cheap enough to run on every input event.
+function setParam(k,v){
+  const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
+  if(k.startsWith('tune.')){
+    m.params.tune=m.params.tune||{};m.params.tune[k.slice(5)]=v;
+    rebuildModule(m);save();return;
+  }
+  m.params[k]=v;
+  if(k==='material'||k==='countertop'){
+    const d=MATERIALS[v]||MATERIALS.white;
+    m.params.tune={r:d.r,m:d.m||0,cc:d.cc||0};
+  }
+  if(k==='drawerCount'&&v>0)m.params.doorCount=0;
+  if(k==='doorCount'&&v>0)m.params.drawerCount=0;
+  rebuildModule(m);renderBOM();updateBadge();save();
+}
+function setPos(axis,v){
+  const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
+  m.pos[axis]=Math.round(v/10)*10;
+  rebuildModule(m);renderBOM();updateBadge();save();
+}
+function setRot(v){
+  const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
+  m.params.rot=(+v+360)%360;
+  rebuildModule(m);renderBOM();updateBadge();save();
+}
+
+/* ---------- UI: library ---------- */
+const ICONS={cabinet:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 7h12M8 7v7"/></svg>',
+ front:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12"/></svg>',
+ mirror:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="2" width="10" height="12" rx="4"/><path d="M8 2v12"/></svg>',
+ handle:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5" width="12" height="6" rx="3"/><path d="M5 8h6"/></svg>'};
+const iconFor=g=>g.startsWith('Cabinets')?ICONS.cabinet:g.startsWith('Fronts')?ICONS.front:g.startsWith('Mirror')?ICONS.mirror:ICONS.handle;
+const it_g=g=>lang==='zh'?(GROUP_ZH[g.g]||g.g):g.g;
+function renderLibrary(){
+  const q=($('#search').value||'').toLowerCase();let html='';
+  const nameOf=it=>lang==='zh'?(TILE_ZH[it.l]||it.l):it.l;
+  const descOf=it=>lang==='zh'?(TILE_DESC_ZH[it.s]||it.s):it.s;
+  for(const grp of TILES){
+    const items=grp.items.filter(i=>nameOf(i).toLowerCase().includes(q)||it_g(grp).toLowerCase().includes(q));
+    if(!items.length)continue;
+    html+=`<div class="sect">${it_g(grp)}</div>`;
+    for(const it of items){
+      html+=`<div class="tile" draggable="true" data-g="${grp.g}" data-i="${grp.items.indexOf(it)}"><i>${iconFor(grp.g)}</i><div><b>${nameOf(it)}</b><small>${descOf(it)}</small></div></div>`;
+    }
+  }
+  $('#library').innerHTML=html;
+  document.querySelectorAll('.tile').forEach(t=>{
+    t.addEventListener('click',()=>applyTile(JSON.parse(JSON.stringify(TILES.find(g=>g.g===t.dataset.g).items[+t.dataset.i]))));
+    t.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({g:t.dataset.g,i:+t.dataset.i}));});
+  });
+}
+function loadTemplates(){try{return JSON.parse(localStorage.getItem('vanitylab-templates'))||[];}catch(e){return [];}}
+function renderBrandTabs(){
+  const tabs=[...BRANDS.map(b=>({id:b.id,n:b.n})),{id:'mine',n:T('mine')}];
+  const box=$('#brandTabs');
+  box.innerHTML=tabs.map(t=>`<button data-b="${t.id}" class="${activeBrand===t.id?'on':''}">${t.n}</button>`).join('');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeBrand=b.dataset.b;renderBrandTabs();renderBrandPresets();});
+}
+function renderBrandPresets(){
+  const list=activeBrand==='mine'?loadTemplates():BRANDS.find(b=>b.id===activeBrand).presets;
+  const box=$('#brandPresets');
+  box.innerHTML=list.map((p,i)=>`<div class="bcard" data-p="${i}"><b>${p.n.replace(/</g,'&lt;')}</b><small>${PRESET_ZH(p.d||p.items.map(x=>x.t).join(' + ')).replace(/</g,'&lt;')}</small></div>`).join('')||`<div class="empty">${T('noTpl')}</div>`;
+  box.querySelectorAll('.bcard').forEach(c=>c.onclick=()=>applyPreset(list[+c.dataset.p]));
+  if(activeBrand==='mine'){
+    const b=document.createElement('button');b.className='btn';b.id='saveTpl';b.style.width='100%';b.style.marginTop='4px';b.textContent=T('saveTpl');
+    b.onclick=()=>{
+      const n=prompt(lang==='zh'?'模板名称：':'Template name:',lang==='zh'?'我的模板':'My Template');if(!n)return;
+      const arr=loadTemplates();arr.push({n,d:state.modules.length+' modules',items:state.modules.map(m=>({t:m.type,x:m.pos.x,z:m.pos.z,p:clone(m.params)}))});
+      localStorage.setItem('vanitylab-templates',JSON.stringify(arr));renderBrandPresets();toast('Template saved');
+    };
+    box.appendChild(b);
+  }
+}
+function applyPreset(p){
+  state.modules=[];
+  for(const it of p.items)state.modules.push({id:uid++,type:it.t,params:{...clone(DEFAULTS[it.t]),...it.p},pos:{x:it.x||0,z:it.z||0}});
+  state.selectedId=state.modules[0]?.id||null;
+  commit();setView(currentView);toast(p.n+' loaded');
+}
+function applyTile(it){
+  if(it.a==='handle'){
+    const m=state.modules.find(x=>x.id===state.selectedId);
+    if(m&&m.params.handle!==undefined){setParam('handle',it.v);toast('Handle updated');}
+    else toast('Select a vanity first');return;
+  }
+  addModule(it.t,it.p);toast(it.l+' added');
+}
+let toastT;
+function toast(msg){const b=$('#badge');b.textContent=trMsg(msg);clearTimeout(toastT);toastT=setTimeout(updateBadge,1400);}
+function updateBadge(){const m=state.modules.find(x=>x.id===state.selectedId);$('#badge').textContent=m?`${T(m.type)} · ${m.params.width}×${m.params.depth}×${m.params.height} mm`:T('noSel');updateIssues();}
+function validate(m){
+  const p=m.params,out=[];
+  if(m.type==='vanity'){
+    const T=18,gD=8,gDoor=6;
+    if(p.drawerCount>0){const w=(p.width-2*T-gD*(p.drawerCount+1))/p.drawerCount;if(w<120)out.push({msg:`Drawer face ${Math.round(w)} mm < 120 mm minimum`,z:`抽屉面板 ${Math.round(w)} mm 小于最小 120 mm`,fix:{drawerCount:Math.max(0,Math.floor((p.width-2*T)/(120+gD))-1)}});}
+    if(p.doorCount>0){const w=(p.width-2*T-gDoor*(p.doorCount+1))/p.doorCount;if(w<180)out.push({msg:`Door leaf ${Math.round(w)} mm < 180 mm minimum`,z:`门板宽 ${Math.round(w)} mm 小于最小 180 mm`,fix:{doorCount:Math.max(0,Math.floor((p.width-2*T)/(180+gDoor))-1)}});}
+    if(p.basin!=='none'){
+      const r=p.basin==='vessel'?175:Math.min(p.width*.26,p.depth*.31),n=p.basinCount||1;
+      if(2*r>p.width-40)out.push({msg:'Basin exceeds countertop width',z:'盆体超出台面宽度',fix:{basin:'none'}});
+      if(n===2&&p.width*.48<2*r+40)out.push({msg:'Two basins overlap',z:'双盆相互重叠',fix:{basinCount:1}});
+      const fz=-(p.depth*.31+60);
+      if(Math.abs(fz)+14>p.depth/2+10)out.push({msg:'Faucet hole outside countertop',z:'龙头孔超出台面范围',fix:{depth:Math.ceil((Math.abs(fz)+24)*2/10)*10}});
+    }
+    if(p.mount==='wall'&&p.topHeight-p.height<100)out.push({msg:'Carcass bottom below 100 mm',z:'柜体底部离地不足 100 mm',fix:{topHeight:p.height+100}});
+  }
+  if(m.type==='mirror'&&p.bottomHeight<800)out.push({msg:'Mirror cabinet mounted too low',z:'镜柜安装高度过低',fix:{bottomHeight:800}});
+  if(m.type==='shelf'&&p.height/(p.shelves+1)<150)out.push({msg:'Shelf spacing < 150 mm',z:'层板间距小于 150 mm',fix:{shelves:Math.max(0,Math.floor(p.height/150)-1)}});
+  return out;
+}
+function updateIssues(){
+  const box=$('#issues');if(!box)return;
+  const m=state.modules.find(x=>x.id===state.selectedId),list=m?validate(m):[];
+  if(!list.length){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='block';
+  box.innerHTML=`<b>⚠ ${list.length} ${T(list.length>1?'constraints':'constraint')}</b>`+list.map((v,i)=>`<div class="issue">${lang==='zh'?(v.z||v.msg):v.msg} <button data-fix="${i}">${T('fix')}</button></div>`).join('');
+  box.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{
+    const v=list[+b.dataset.fix];for(const k in v.fix)m.params[k]=v.fix[k];commit();toast('Auto-fixed');
+  });
+}
+
+/* ---------- UI: properties ---------- */
+const disp=v=>unit==='in'?+(v/25.4).toFixed(2):Math.round(v);
+const inp=v=>unit==='in'?Math.round(v*25.4):Math.round(v);
+function renderProps(){
+  const m=state.modules.find(x=>x.id===state.selectedId),box=$('#props');
+  if(!m){$('#propsHint').style.display='block';$('#propsHint').textContent=T('propsHint');box.innerHTML='';return;}
+  $('#propsHint').style.display='none';
+  let h=`<div class="sect" style="margin-top:0">${T(m.type)} · #${m.id}</div>`;
+  for(const f of SCHEMAS[m.type]){
+    const v=m.params[f.k],lab=L(f.k,f.l);
+    if(f.t==='select'&&(f.k==='material'||f.k==='countertop'))
+      h+=`<div class="field"><label>${lab}</label><div class="swatches">${f.o.map(o=>`<button class="sw ${o===v?'on':''}" data-sw="${f.k}" data-v="${o}" title="${lang==='zh'?(MAT_ZH[o]||o):(MATERIALS[o]?.n||o)}" style="background-image:url(${texFor(o).image.toDataURL()})"></button>`).join('')}</div></div>`;
+    else if(f.t==='select')h+=`<div class="field"><label>${lab}</label><select data-k="${f.k}">${f.o.map(o=>`<option value="${o}" ${o===v?'selected':''}>${O(o)}</option>`).join('')}</select></div>`;
+    else if(f.t==='bool')h+=`<div class="field"><label class="chk"><input type="checkbox" data-k="${f.k}" ${v?'checked':''}> ${lab}</label></div>`;
+    else{const dv=f.raw?v:disp(v),suf=f.raw?'':unit;
+      h+=`<div class="field"><label>${lab}<b>${dv} ${suf}</b></label><div class="row"><input type="range" data-k="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}"><input type="number" data-num="${f.k}" value="${dv}" step="${f.step}"></div></div>`;}
+  }
+  const tune=m.params.tune||{},def=MATERIALS[m.params.material]||MATERIALS.white;
+  const tuneSlider=(k,l,v)=>`<div class="field"><label>${l}<b>${(+v).toFixed(2)}</b></label><div class="row"><input type="range" data-k="${k}" min="0" max="1" step="0.05" value="${v}"><input type="number" data-num="${k}" value="${(+v).toFixed(2)}" step="0.05"></div></div>`;
+  h+=`<details class="grp"><summary>${T('pbr')}</summary>${tuneSlider('tune.r',T('roughness'),tune.r??def.r)}${tuneSlider('tune.m',T('metalness'),tune.m??(def.m||0))}${tuneSlider('tune.cc',T('clearcoat'),tune.cc??(def.cc||0))}</details>`;
+  h+=`<details class="grp"><summary>${T('placement')}</summary>
+  <div class="row">
+    <div class="field" style="flex:1"><label>X<b>${m.pos.x}</b></label><input type="number" data-pos="x" value="${m.pos.x}" step="10"></div>
+    <div class="field" style="flex:1"><label>Z<b>${m.pos.z}</b></label><input type="number" data-pos="z" value="${m.pos.z}" step="10"></div>
+  </div>
+  <div class="field"><label>${T('rotation')}</label><div class="seg" id="rotSeg">${[0,90,180,270].map(r=>`<button data-r="${r}" ${r===(m.params.rot||0)?'class="on"':''}>${r}°</button>`).join('')}</div></div>
+  ${m.params.open!==undefined?`<button class="btn" id="openFronts" style="width:100%;margin-bottom:6px">${m.params.open?T('closeFronts'):T('openFronts')}</button>`:''}
+  </details>
+  <button class="btn btn-del" id="del">${T('delComp')}</button>`;
+  box.innerHTML=h;
+  const sync=(k,v)=>{
+    const s=box.querySelector(`[data-k="${k}"]`),n=box.querySelector(`[data-num="${k}"]`),b=s?.closest('.field')?.querySelector('label b');
+    if(s&&s.type!=='checkbox'&&s.tagName!=='SELECT')s.value=v;
+    if(k.startsWith('tune.')){if(n)n.value=(+v).toFixed(2);if(b)b.textContent=(+v).toFixed(2);return;}
+    if(n)n.value=f_raw(k)?v:disp(v);
+    if(b)b.textContent=(f_raw(k)?v:disp(v))+(f_raw(k)?'':' '+unit);
+  };
+  box.querySelectorAll('[data-sw]').forEach(el=>{el.onclick=()=>{
+    const k=el.dataset.sw;setParam(k,el.dataset.v);pushHistory();
+    box.querySelectorAll(`[data-sw="${k}"]`).forEach(x=>x.classList.toggle('on',x===el));
+  };});
+  box.querySelectorAll('[data-k]').forEach(el=>{
+    const k=el.dataset.k;
+    if(el.type==='checkbox')el.onchange=()=>{setParam(k,el.checked);pushHistory();};
+    else if(el.tagName==='SELECT')el.onchange=()=>{setParam(k,el.value);pushHistory();};
+    else{
+      el.oninput=()=>{const v=+el.value;setParam(k,v);sync(k,v);
+        if(k==='drawerCount'&&v>0)sync('doorCount',0);
+        if(k==='doorCount'&&v>0)sync('drawerCount',0);};
+      el.onchange=()=>pushHistory(); // one history entry per gesture, not per pixel
+    }
+  });
+  box.querySelectorAll('[data-num]').forEach(el=>{el.onchange=()=>{
+    const k=el.dataset.num;let v=+el.value;
+    if(k.startsWith('tune.')){v=Math.max(0,Math.min(1,v));setParam(k,v);sync(k,v);pushHistory();return;}
+    if(!f_raw(k))v=Math.max(1,inp(v));
+    setParam(k,v);sync(k,v);pushHistory();
+    if(k==='drawerCount'&&v>0)sync('doorCount',0);
+    if(k==='doorCount'&&v>0)sync('drawerCount',0);
+  };});
+  box.querySelectorAll('[data-pos]').forEach(el=>{el.onchange=()=>{
+    const axis=el.dataset.pos;setPos(axis,+el.value);pushHistory();
+    const cur=state.modules.find(x=>x.id===state.selectedId);
+    el.value=cur?cur.pos[axis]:0;
+    const b=el.closest('.field').querySelector('label b');if(b)b.textContent=el.value;
+  };});
+  box.querySelectorAll('#rotSeg button').forEach(b=>b.onclick=()=>{
+    setRot(b.dataset.r);pushHistory();
+    box.querySelectorAll('#rotSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  });
+  if($('#openFronts'))$('#openFronts').onclick=toggleFronts;
+  $('#del').onclick=()=>{state.modules=state.modules.filter(x=>x.id!==state.selectedId);state.selectedId=null;commit();};
+}
+const f_raw=k=>{for(const t in SCHEMAS){const f=SCHEMAS[t].find(f=>f.k===k);if(f)return !!f.raw;}return false;};
+
+function renderBOM(){
+  const rows=[];
+  for(const m of state.modules){
+    const p=m.params;
+    if(m.type==='vanity'){
+      const T=18;
+      rows.push(['Carcass',`${p.width}×${p.height}×${p.depth}`,1]);
+      rows.push(['Drawer fronts',`${p.width-2*T}×${Math.round((p.height-8*(p.drawerCount+1))/Math.max(p.drawerCount,1))}×18`,p.drawerCount]);
+      rows.push(['Door fronts',`${Math.round((p.width-2*T-6*(p.doorCount+1))/Math.max(p.doorCount,1))}×${p.height-2*T}×18`,p.doorCount]);
+      rows.push(['Countertop',`${p.width+40}×26×${p.depth+20}`,1]);
+      const bn=p.basinCount||1,r=p.basin==='vessel'?175:Math.min(Math.round(p.width*.26),Math.round(p.depth*.31));
+      if(p.basin==='integrated')rows.push(['Integrated basin',`Ø${r*2}×22`,bn]);
+      else if(p.basin==='vessel')rows.push(['Vessel basin','Ø350×120',bn]);
+      if(p.basin!=='none')rows.push(['Countertop cut-outs',`Ø${r*2} × ${bn} + faucet Ø28`,1]);
+      if(p.mount==='floor')rows.push(['Support feet','24×20×24',4]);
+    }else if(m.type==='mirror'){
+      rows.push(['Mirror cabinet',`${p.width}×${p.height}×${p.depth}`,1]);
+      rows.push(['Mirror doors',`${Math.round(p.width/p.doors)}×${p.height-16}×6`,p.doors]);
+    }else{
+      rows.push(['Side panels',`18×${p.height}×${p.depth}`,2]);
+      rows.push(['Shelves',`${p.width-36}×14×${p.depth-10}`,p.shelves]);
+      rows.push(['Top / bottom',`${p.width}×18×${p.depth}`,2]);
+    }
+  }
+  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
+  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r[0]]||r[0]):r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
+  return rows;
+}
+
+/* ---------- camera / scene ---------- */
+function setView(v){
+  currentView=v;
+  const box=new THREE.Box3().setFromObject(root);
+  if(dimGroup)box.union(new THREE.Box3().setFromObject(dimGroup));
+  const c=box.isEmpty()?new THREE.Vector3(0,700,0):box.getCenter(new THREE.Vector3());
+  const size=box.isEmpty()?new THREE.Vector3(900,800,500):box.getSize(new THREE.Vector3());
+  const max=Math.max(size.x,size.y,size.z,700);
+  const dist=max*1.9;
+  const dir={persp:[0.85,0.62,1.25],front:[0,0.12,1],side:[1,0.12,0],top:[0,1,0.001]}[v];
+  camera.position.copy(c).addScaledVector(new THREE.Vector3(...dir).normalize(),dist);
+  controls.target.copy(c);controls.update();
+  document.querySelectorAll('#views button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+}
+function init(){
+  const W=viewport.clientWidth,H=viewport.clientHeight;
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(45,W/H,1,12000);
+  renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  viewport.insertBefore(renderer.domElement,loading);
+  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,720,0);
+  scene.add(new THREE.HemisphereLight(0xffffff,0xc8ced4,1.5));
+  const dl=new THREE.DirectionalLight(0xffffff,2.1);dl.position.set(900,1800,1200);dl.castShadow=true;
+  dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=-2500;dl.shadow.camera.right=2500;dl.shadow.camera.top=2500;dl.shadow.camera.bottom=-2500;scene.add(dl);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(8000,8000),new THREE.MeshStandardMaterial({color:0xe8ecee,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(8000,4000),new THREE.MeshStandardMaterial({color:0xf4f6f7,roughness:1}));wall.position.set(0,2000,-D_WALL);wall.receiveShadow=true;scene.add(wall);
+  const grid=new THREE.GridHelper(8000,80,0xc9d2d6,0xdde3e6);grid.position.y=1;scene.add(grid);
+  root=new THREE.Group();scene.add(root);
+  raycaster=new THREE.Raycaster();floorPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  loading.style.display='none';
+  new ResizeObserver(()=>{const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}).observe(viewport);
+  renderer.domElement.addEventListener('pointerdown',onDown);
+  renderer.domElement.addEventListener('pointermove',onMove);
+  renderer.domElement.addEventListener('dblclick',e=>{const id=pick(e);if(id!=null){state.selectedId=id;updateSelection();renderProps();updateBadge();toggleFronts();}});
+  renderer.domElement.addEventListener('drop',onDrop);
+  renderer.domElement.addEventListener('dragover',e=>e.preventDefault());
+  (function loop(){requestAnimationFrame(loop);animateFronts();controls.update();renderer.render(scene,camera);})();
+}
+const D_WALL=300;
+function animateFronts(){
+  for(const g of root.children){
+    const m=state.modules.find(x=>x.id===g.userData.moduleId);
+    if(!m||!g.userData.fronts)continue;
+    for(const f of g.userData.fronts){
+      if(f.type==='drawer'){
+        const target=f.base+(m.params.open?f.travel:0);
+        f.pv.position.z+=(target-f.pv.position.z)*.16;
+      }else{
+        const target=m.params.open?f.angle:0;
+        f.pv.rotation.y+=(target-f.pv.rotation.y)*.16;
+      }
+    }
+  }
+}
+function toggleFronts(){
+  const m=state.modules.find(x=>x.id===state.selectedId);if(!m||m.params.open===undefined)return;
+  m.params.open=m.params.open?0:1;save();renderProps();toast(m.params.open?'Fronts opened':'Fronts closed');
+}
+function ndc(e){const r=renderer.domElement.getBoundingClientRect();return new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);}
+function pick(e){
+  raycaster.setFromCamera(ndc(e),camera);
+  const hits=raycaster.intersectObjects(root.children,true);
+  if(hits.length){let o=hits[0].object;while(o&&!o.userData.moduleId)o=o.parent;return o?o.userData.moduleId:null;}
+  return null;
+}
+let downPt=null,drag=null;
+function onDown(e){
+  downPt={x:e.clientX,y:e.clientY};
+  const id=pick(e);
+  if(id!=null&&e.button===0){
+    state.selectedId=id;updateSelection();renderProps();updateBadge();
+    if(window.innerWidth<=900&&id!=null)setPanels(2);
+    raycaster.setFromCamera(ndc(e),camera);const pt=new THREE.Vector3();
+    if(raycaster.ray.intersectPlane(floorPlane,pt)){
+      const m=state.modules.find(x=>x.id===id);
+      drag={id,ox:m.pos.x-pt.x,oz:m.pos.z-pt.z,moved:false};
+      controls.enabled=false;renderer.domElement.style.cursor='grabbing';
+    }
+  }
+}
+function onMove(e){
+  if(!drag)return;
+  raycaster.setFromCamera(ndc(e),camera);const pt=new THREE.Vector3();
+  if(!raycaster.ray.intersectPlane(floorPlane,pt))return;
+  const m=state.modules.find(x=>x.id===drag.id);if(!m)return;
+  const nx=Math.round((pt.x+drag.ox)/10)*10,nz=Math.round((pt.z+drag.oz)/10)*10;
+  if(nx!==m.pos.x||nz!==m.pos.z){
+    m.pos.x=nx;m.pos.z=nz;drag.moved=true;
+    rebuildModule(m);renderBOM();updateBadge();save();
+    const fx=document.querySelector('[data-pos="x"]'),fz=document.querySelector('[data-pos="z"]');
+    if(fx)fx.value=nx;if(fz)fz.value=nz;
+  }
+}
+function onUp(e){
+  renderer.domElement.style.cursor='';
+  if(drag){const moved=drag.moved;drag=null;controls.enabled=true;downPt=null;if(moved)pushHistory();return;}
+  if(!downPt)return;const d=Math.hypot(e.clientX-downPt.x,e.clientY-downPt.y);downPt=null;if(d>4)return;
+  const id=pick(e);state.selectedId=id;updateSelection();renderProps();updateBadge();
+}
+function snapDrop(x,z,W,D){
+  let sx=Math.round(x/50)*50;
+  for(const o of state.modules){
+    const f=footprint(o),ow=f.w||400;
+    let best=null,bd=120;
+    for(const c of [o.pos.x-ow/2-W/2,o.pos.x+ow/2+W/2,o.pos.x]){
+      const d=Math.abs(sx-c);if(d<bd){bd=d;best=c;}
+    }
+    if(best!==null){sx=best;break;}
+  }
+  let sz=Math.round(z/50)*50;
+  if(Math.abs(sz)<200)sz=0; // snap to the wall line
+  return {x:sx,z:sz};
+}
+function onDrop(e){
+  e.preventDefault();const raw=e.dataTransfer.getData('text/plain');if(!raw)return;
+  const {g,i}=JSON.parse(raw);const it=TILES.find(x=>x.g===g).items[i];
+  raycaster.setFromCamera(ndc(e),camera);const pt=new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(floorPlane,pt)&&!it.a){
+    const W=(it.p&&it.p.width)||DEFAULTS[it.t].width;
+    const D=(it.p&&it.p.depth)||DEFAULTS[it.t].depth;
+    const s=snapDrop(pt.x,pt.z,W,D);
+    addModule(it.t,it.p,s.x,s.z);toast(it.l+' placed · snapped to grid');
+  }
+  else if(it.a)applyTile(it);
+}
+
+/* ---------- wire UI ---------- */
+function setLang(l){
+  lang=l;localStorage.setItem('vanitylab-lang',l);
+  document.documentElement.lang=l==='zh'?'zh-CN':'en';
+  document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=T(e.dataset.i18n));
+  $('#search').placeholder=T('search');
+  document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  renderLibrary();renderBrandTabs();renderBrandPresets();renderProps();renderBOM();updateBadge();updateCollisions();
+}
+$('#langSeg').onclick=e=>{const b=e.target.closest('button');if(b)setLang(b.dataset.l);};
+$('#search').oninput=renderLibrary;
+$('#units').onclick=e=>{const b=e.target.closest('button');if(!b)return;unit=b.dataset.u;document.querySelectorAll('#units button').forEach(x=>x.classList.toggle('on',x===b));renderProps();updateDimensions();};
+$('#dims').onclick=()=>{state.dims=state.dims===false;save();$('#dims').classList.toggle('on',state.dims!==false);updateDimensions();};
+$('#views').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.v);};
+$('#fit').onclick=()=>setView(currentView);
+$('#projectSel').onchange=e=>activateProject(e.target.value);
+$('#newProj').onclick=()=>{const p={id:newPid(),name:(lang==='zh'?'未命名方案 ':'Untitled ')+(projects.length+1),data:{modules:[],selectedId:null,dims:true}};projects.push(p);saveProjects();activateProject(p.id);toast('New project created');};
+$('#saveAs').onclick=()=>{const n=prompt(lang==='zh'?'另存为：':'Save current design as:',(projects.find(x=>x.id===currentPid)?.name||(lang==='zh'?'设计':'Design'))+(lang==='zh'?' 副本':' copy'));if(!n)return;const p={id:newPid(),name:n,data:clone(state)};projects.push(p);saveProjects();activateProject(p.id);toast('Saved as "'+n+'"');};
+$('#renameProj').onclick=()=>{const p=projects.find(x=>x.id===currentPid);if(!p)return;const n=prompt(lang==='zh'?'重命名方案：':'Rename project:',p.name);if(!n)return;p.name=n;saveProjects();renderProjectUI();};
+$('#delProj').onclick=()=>{if(projects.length<2){toast('Cannot delete the only project');return;}const p=projects.find(x=>x.id===currentPid);if(!confirm(lang==='zh'?`删除方案“${p.name}”？`:`Delete "${p.name}"?`))return;projects=projects.filter(x=>x.id!==currentPid);saveProjects();activateProject(projects[0].id);toast('Project deleted');};
+$('#saveJson').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'.json';a.click();toast('Project saved');};
+$('#loadJson').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!Array.isArray(s.modules))throw new Error('invalid project');state.modules=s.modules;state.selectedId=null;if(typeof s.dims==='boolean')state.dims=s.dims;uid=Math.max(1,...s.modules.map(m=>m.id+1));commit();setView(currentView);toast('Project loaded');}catch(err){toast('Invalid project file: '+err.message);}};r.readAsText(f);e.target.value='';};
+$('#clearAll').onclick=()=>{if(!confirm(lang==='zh'?'清空当前设计的所有组件？（Ctrl+Z 可撤销）':'Clear all components in this design? (Ctrl+Z to undo)'))return;state.modules=[];state.selectedId=null;commit();toast('Design cleared');};
+$('#undo').onclick=undo;$('#redo').onclick=redo;
+$('#png').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download='vanitylab.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('PNG exported');};
+$('#glb').onclick=()=>{new GLTFExporter().parse(root,buf=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'model/gltf-binary'}));a.download='vanitylab.glb';a.click();toast('GLB exported');},err=>toast('GLB export failed: '+err.message),{binary:true});};
+$('#bom').onclick=()=>{const rows=renderBOM();let csv='Part,Size(mm),Qty\n'+rows.map(r=>`"${r[0]}","${r[1]}",${r[2]}`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='vanitylab-bom.csv';a.click();toast('BOM CSV exported');};
+let panelState=0; // 0 none · 1 library · 2 properties
+function setPanels(s){
+  panelState=s;
+  $('#left').classList.toggle('show',s===1);
+  $('#right').classList.toggle('show',s===2);
+  $('#scrim').classList.toggle('show',s!==0);
+}
+$('#mToggle').onclick=()=>setPanels((panelState+1)%3);
+$('#scrim').onclick=()=>setPanels(0);
+function deleteSelected(){if(state.selectedId==null)return;state.modules=state.modules.filter(x=>x.id!==state.selectedId);state.selectedId=null;commit();}
+function duplicateSelected(){const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;const n={...clone(m),id:uid++,pos:{x:m.pos.x+footprint(m).w/2+300,z:m.pos.z}};state.modules.push(n);state.selectedId=n.id;commit();setView(currentView);}
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement?.tagName;
+  if(tag==='INPUT'||tag==='SELECT')return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();duplicateSelected();}
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected();}
+  if(e.key==='Escape'){state.selectedId=null;updateSelection();renderProps();updateBadge();}
+});
+window.addEventListener('pointerup',onUp);
+
+/* ---------- boot ---------- */
+try{
+  loadProjects();currentPid=projects[0].id;
+  const d=projects[0].data;
+  state.modules=clone(d.modules||[]);state.selectedId=d.selectedId||null;state.dims=d.dims!==false;
+  uid=Math.max(1,...state.modules.map(m=>m.id+1));
+  history=[clone(state)];hi=0;
+  $('#dims').classList.toggle('on',state.dims!==false);init();rebuildAll();setView('persp');renderLibrary();renderBrandTabs();renderBrandPresets();renderProjectUI();renderProps();renderBOM();updateHistoryBtns();updateBadge();setLang(lang);
+  if(!state.modules.length){addModule('vanity');history=[clone(state)];hi=0;updateHistoryBtns();}
+}catch(err){loading.classList.add('err');loading.textContent='Failed to load: '+err.message;console.error(err);}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

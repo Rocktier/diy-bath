@@ -1,0 +1,24 @@
+{
+  "name": "vanitylab",
+  "version": "0.1.0",
+  "description": "Parametric bathroom cabinet designer (Three.js)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.vanitylab.designer",
+    "productName": "VanityLab",
+    "files": ["index.html", "main.js", "manifest.webmanifest", "icon.svg", "sw.js", "assets/**/*"],
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg" },
+    "linux": { "target": "AppImage" }
+  }
+}

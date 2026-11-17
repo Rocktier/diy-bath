@@ -1,0 +1,12 @@
+{
+  "name": "VanityLab — Bathroom Cabinet Designer",
+  "short_name": "VanityLab",
+  "description": "Parametric bathroom cabinet drawing tool",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eceff1",
+  "theme_color": "#1f7a6f",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
