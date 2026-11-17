@@ -676,13 +676,16 @@ function updateDimensions(){
   else if(m.type==='mirror'){lo=p.bottomHeight||1080;hi=lo+p.height;}
   else{lo=0;hi=p.height;}
   const bodyH=p.height;
-  const g=new THREE.Group(),OFF=150,ZF=oz+D/2+OFF,COL=0x222222;
+  const g=new THREE.Group(),OFF=150,ZF=oz+D/2+OFF,COL=0x18796e;
   const V=a=>new THREE.Vector3(a[0],a[1],a[2]);
   const line=(a,b)=>g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color:COL})));
+  // solid triangular arrowhead (SketchUp style), facing the camera so it stays readable
   const arrow=(tip,dir,perp,sz)=>{
-    const d=dir.clone().normalize(),pp=perp.clone().normalize().multiplyScalar(sz*.32),ds=d.multiplyScalar(sz);
-    line(tip,tip.clone().add(ds).add(pp));
-    line(tip,tip.clone().add(ds).sub(pp));
+    const d=dir.clone().normalize(),pp=perp.clone().normalize().multiplyScalar(sz*.38),ds=d.multiplyScalar(sz);
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([...tip.toArray(),...(tip.clone().add(ds).add(pp)).toArray(),...(tip.clone().add(ds).sub(pp)).toArray()],3));
+    geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:COL,side:THREE.DoubleSide,depthTest:false})));
   };
   const label=(str,x,y,z,sc)=>{
     const c=document.createElement('canvas');c.width=384;c.height=64;
