@@ -165,7 +165,8 @@ const $ = s => document.querySelector(s);
 const I18N = {
   en:{ tagline:'Parametric Bathroom Cabinet Designer', panels:'Panels', fit:'Fit', dims:'Dims',
     undo:'Undo', redo:'Redo', export:'Export', bomBtn:'BOM / CSV', search:'Search components…',
-    disclaimer:'Independent design tool. Brand names are style references only. No logos, product photos or official model data. Not affiliated with or endorsed by any manufacturer.', brands:'Brand library',
+    disclaimer:'Independent design tool. Brand names are style references only. No logos, product photos or official model data. Not affiliated with or endorsed by any manufacturer.',
+    customColor:'Custom', reset:'Reset', brands:'Brand library',
     components:'Components', mine:'My Templates', noTpl:'No saved templates yet.', saveTpl:'Save current design as template',
     hint:'Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select', noSel:'No selection',
     properties:'Properties', propsHint:'Select a component or click one in the library.',
@@ -179,7 +180,8 @@ const I18N = {
     led:'LED light', shelves:'Shelves', openFront:'Open front' },
   zh:{ tagline:'参数化浴室柜设计工具', panels:'面板', fit:'适应视图', dims:'标注',
     undo:'撤销', redo:'重做', export:'导出', bomBtn:'物料清单 / CSV', search:'搜索组件…',
-    disclaimer:'独立设计工具。品牌名称仅作风格参考，不含 Logo、产品图片或官方型号数据，与任何制造商无关联或背书关系。', brands:'品牌模型库',
+    disclaimer:'独立设计工具。品牌名称仅作风格参考，不含 Logo、产品图片或官方型号数据，与任何制造商无关联或背书关系。',
+    customColor:'自定义颜色', reset:'重置', brands:'品牌模型库',
     components:'组件', mine:'我的模板', noTpl:'暂无保存的模板', saveTpl:'将当前设计保存为模板',
     hint:'拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择', noSel:'未选择组件',
     properties:'属性', propsHint:'选择组件，或点击组件库中的项目。',
@@ -403,7 +405,7 @@ function applyAssetTex(k){
   const e=assetTex[k];if(!e)return;
   for(const m of [...Object.values(matCache),...Object.values(variantCache)]){
     if(!m.userData||m.userData.texKey!==k)continue;
-    if(e.albedo)m.map=e.albedo;
+    if(e.albedo&&!m.userData.tint)m.map=e.albedo;
     if(e.normal)m.normalMap=e.normal;
     if(e.roughness)m.roughnessMap=e.roughness;
     if(e.ao)m.aoMap=e.ao;
@@ -433,6 +435,17 @@ function texFor(k){
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;
   texCache[k]=t;return t;
 }
+const grayCache={};
+function grayTexFor(k){
+  if(grayCache[k])return grayCache[k];
+  const src=texFor(k).image,c=document.createElement('canvas');c.width=src.width;c.height=src.height;
+  const ctx=c.getContext('2d');ctx.drawImage(src,0,0);
+  const d=ctx.getImageData(0,0,c.width,c.height),a=d.data;
+  for(let i=0;i<a.length;i+=4){const l=a[i]*.299+a[i+1]*.587+a[i+2]*.114;a[i]=a[i+1]=a[i+2]=l;}
+  ctx.putImageData(d,0,0);
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;
+  grayCache[k]=t;return t;
+}
 function pbrFor(k){
   if(pbrCache[k])return pbrCache[k];
   const img=texFor(k).image,w=img.width,h=img.height,src=img.getContext('2d').getImageData(0,0,w,h).data;
@@ -450,20 +463,21 @@ function pbrFor(k){
   nt.colorSpace=rt.colorSpace=THREE.NoColorSpace;
   return pbrCache[k]={normalMap:nt,roughnessMap:rt};
 }
-function mat(k){
+function mat(k,tint){
   if(k==='mirrorG'){return matCache.mirrorG||(matCache.mirrorG=new THREE.MeshPhysicalMaterial({color:0xa7b6bb,metalness:.75,roughness:.12,clearcoat:1}));}
   if(k==='chrome'){return matCache.chrome||(matCache.chrome=new THREE.MeshPhysicalMaterial({color:0xc9ced2,metalness:.9,roughness:.18}));}
   if(k==='dark'){return matCache.dark||(matCache.dark=new THREE.MeshPhysicalMaterial({color:0x3a3f44,roughness:.6}));}
   if(k==='basin'){return matCache.basin||(matCache.basin=new THREE.MeshPhysicalMaterial({color:0xf7f7f4,roughness:.3,clearcoat:.5,side:THREE.DoubleSide}));}
   if(k==='led'){return matCache.led||(matCache.led=new THREE.MeshStandardMaterial({color:0xfff3d6,emissive:0xffe9b0,emissiveIntensity:.7}));}
-  const key=k+'|'+JSON.stringify(_activeTune||{});
+  const key=k+'|'+JSON.stringify(_activeTune||{})+'|'+(tint||'');
   if(variantCache[key])return variantCache[key];
   const m=MATERIALS[k]||MATERIALS.white,pbr=pbrFor(k),t=_activeTune||{};
   const mm=new THREE.MeshPhysicalMaterial({
-    color:0xffffff,map:texFor(k),normalMap:pbr.normalMap,normalScale:new THREE.Vector2(.6,.6),roughnessMap:pbr.roughnessMap,
+    color:tint?new THREE.Color(tint):0xffffff,map:tint?grayTexFor(k):texFor(k),normalMap:pbr.normalMap,normalScale:new THREE.Vector2(.6,.6),roughnessMap:pbr.roughnessMap,
     roughness:t.r!==undefined?t.r:m.r,metalness:t.m!==undefined?t.m:(m.m||0),clearcoat:t.cc!==undefined?t.cc:(m.cc||0),clearcoatRoughness:.25
   });
   mm.userData.texKey=k;
+  mm.userData.tint=tint||null;
   variantCache[key]=mm;
   if(HD_TEXTURES)loadAssetTex(k);
   return mm;
@@ -489,17 +503,25 @@ function cutCounter(W,D,th,holes){
   return g;
 }
 
+const PANEL_T=18;
+// single source of truth: geometry and BOM both derive from these params
+function cabinetMetrics(p){
+  const T=PANEL_T,gD=8,gDoor=6,n=Math.max(1,p.drawerCount||0),nd=Math.max(1,p.doorCount||0);
+  return {T,gD,gDoor,drawerH:(p.height-gD*(n+1))/n,doorW:(p.width-2*T-gDoor*(nd+1))/nd,
+    counterW:p.width+40,counterD:p.depth+20,
+    basinR:p.basin==='vessel'?175:Math.min(p.width*.26,p.depth*.31),feetH:20};
+}
 function buildVanity(p,g){
-  const W=p.width,D=p.depth,H=p.height,T=18;
+  const W=p.width,D=p.depth,H=p.height,M=cabinetMetrics(p),T=M.T;
   const fy=p.mount==='wall'?(p.topHeight||850)-H:0;
-  mesh(rbox(W,H,D,5),mat(p.material),0,fy+H/2,0,g);
+  mesh(rbox(W,H,D,5),mat(p.material,p.tint),0,fy+H/2,0,g);
   const fz=D/2+7,fronts=[];
   if(p.drawerCount>0){
-    const n=p.drawerCount,gap=8,dh=(H-gap*(n+1))/n;
+    const n=p.drawerCount,gap=M.gD,dh=M.drawerH;
     for(let i=0;i<n;i++){
       const y=fy+gap+dh/2+i*(dh+gap),travel=Math.min(D*.55,300);
       const pv=new THREE.Group();pv.position.set(0,y,fz);g.add(pv);
-      mesh(rbox(W-2*T,dh,14,4),mat(p.material),0,0,0,pv);
+      mesh(rbox(W-2*T,dh,14,4),mat(p.material,p.tint),0,0,0,pv);
       if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(W*.35,180),12),mat('chrome'),0,0,13,pv).rotation.z=Math.PI/2;
       else if(p.handle==='recessed')mesh(rbox(Math.min(W*.45,200),14,3,2),mat('dark'),0,dh/2-10,8,pv);
       else if(p.handle==='knob'){const k=mesh(new THREE.CylinderGeometry(12,12,16,16),mat('chrome'),0,0,14,pv);k.rotation.x=Math.PI/2;}
@@ -508,12 +530,12 @@ function buildVanity(p,g){
     }
   }
   if(p.doorCount>0){
-    const n=p.doorCount,gap=6,dw=(W-2*T-gap*(n+1))/n;
+    const n=p.doorCount,gap=M.gDoor,dw=M.doorW;
     for(let i=0;i<n;i++){
       const x=-(W-2*T)/2+gap+dw/2+i*(dw+gap),y=fy+H/2;
       const hinge=i%2?-1:1,hx=x+hinge*dw/2,angle=-hinge*1.1;
       const pv=new THREE.Group();pv.position.set(hx,y,fz);g.add(pv);
-      mesh(rbox(dw,H-2*T,14,4),mat(p.material),x-hx,0,0,pv);
+      mesh(rbox(dw,H-2*T,14,4),mat(p.material,p.tint),x-hx,0,0,pv);
       const hxr=x-hx+hinge*-dw*.32;
       if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(dw*.4,120),12),mat('chrome'),hxr,0,13,pv).rotation.z=Math.PI/2;
       else if(p.handle==='recessed')mesh(rbox(14,Math.min(H*.5,220),3,2),mat('dark'),hxr,0,8,pv);
@@ -524,10 +546,10 @@ function buildVanity(p,g){
   }
   g.userData.fronts=fronts;
   const ctY=fy+H+13,bn=p.basinCount||1;
-  mesh(cutCounter(W+40,D+20,26,basinHoles(p)),mat(p.countertop||'stone'),0,ctY,0,g);
+  mesh(cutCounter(M.counterW,M.counterD,26,basinHoles(p)),mat(p.countertop,p.counterTint),0,ctY,0,g);
   const bx=i=>bn===1?0:(i===0?-W*.24:W*.24);
   if(p.basin==='integrated'){
-    const r=Math.min(W*.26,D*.31);
+    const r=M.basinR;
     for(let i=0;i<bn;i++){
       mesh(new THREE.CylinderGeometry(r-3,r-8,22,32,1,true),mat('basin'),bx(i),ctY-6,0,g);
       mesh(new THREE.CylinderGeometry(r-8,r-8,4,32),mat('basin'),bx(i),ctY-16,0,g);
@@ -543,12 +565,12 @@ function buildVanity(p,g){
   mesh(new THREE.CylinderGeometry(16,16,150,16),mat('chrome'),0,ctY+95,fzF,g);
   const sp=mesh(rbox(20,18,110,8),mat('chrome'),0,ctY+165,fzF+45,g);
   if(p.mount==='floor'){
-    for(const sx of [-1,1])for(const sz of [-1,1])mesh(rbox(24,Math.max(fy,20),24,2),mat('dark'),sx*(W/2-40),fy/2,sz*(D/2-40),g);
+    for(const sx of [-1,1])for(const sz of [-1,1])mesh(rbox(24,M.feetH,24,2),mat('dark'),sx*(W/2-40),M.feetH/2,sz*(D/2-40),g);
   }
 }
 function buildMirror(p,g){
   const W=p.width,H=p.height,D=p.depth,y=(p.bottomHeight||1080)+H/2;
-  mesh(rbox(W,H,D,5),mat(p.material),0,y,-D/2,g);
+  mesh(rbox(W,H,D,5),mat(p.material,p.tint),0,y,-D/2,g);
   const n=p.doors,gap=5,dw=(W-16-gap*(n+1))/n,fronts=[];
   for(let i=0;i<n;i++){
     const x=-(W-16)/2+gap+dw/2+i*(dw+gap);
@@ -854,8 +876,11 @@ function renderProps(){
   let h=`<div class="sect" style="margin-top:0">${T(m.type)} · #${m.id}</div>`;
   for(const f of SCHEMAS[m.type]){
     const v=m.params[f.k],lab=L(f.k,f.l);
-    if(f.t==='select'&&(f.k==='material'||f.k==='countertop'))
-      h+=`<div class="field"><label>${lab}</label><div class="swatches">${f.o.map(o=>`<button class="sw ${o===v?'on':''}" data-sw="${f.k}" data-v="${o}" title="${lang==='zh'?(MAT_ZH[o]||o):(MATERIALS[o]?.n||o)}" style="background-image:url(${texFor(o).image.toDataURL()})"></button>`).join('')}</div></div>`;
+    if(f.t==='select'&&(f.k==='material'||f.k==='countertop')){
+      const tintKey=f.k==='material'?'tint':'counterTint';
+      h+=`<div class="field"><label>${lab}</label><div class="swatches">${f.o.map(o=>`<button class="sw ${o===v?'on':''}" data-sw="${f.k}" data-v="${o}" title="${lang==='zh'?(MAT_ZH[o]||o):(MATERIALS[o]?.n||o)}" style="background-image:url(${texFor(o).image.toDataURL()})"></button>`).join('')}</div>
+      <div class="row" style="margin-top:7px;align-items:center"><input type="color" data-tint="${tintKey}" value="${m.params[tintKey]||'#ffffff'}" title="${T('customColor')}" style="width:38px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:none"><span style="font-size:11px;color:var(--muted)">${T('customColor')}</span>${m.params[tintKey]?`<button class="btn" data-cleartint="${tintKey}" style="margin-left:auto;padding:3px 7px">${T('reset')}</button>`:''}</div></div>`;
+    }
     else if(f.t==='select')h+=`<div class="field"><label>${lab}</label><select data-k="${f.k}">${f.o.map(o=>`<option value="${o}" ${o===v?'selected':''}>${O(o)}</option>`).join('')}</select></div>`;
     else if(f.t==='bool')h+=`<div class="field"><label class="chk"><input type="checkbox" data-k="${f.k}" ${v?'checked':''}> ${lab}</label></div>`;
     else{const dv=f.raw?v:disp(v),suf=f.raw?'':unit;
@@ -882,9 +907,17 @@ function renderProps(){
     if(b)b.textContent=(f_raw(k)?v:disp(v))+(f_raw(k)?'':' '+unit);
   };
   box.querySelectorAll('[data-sw]').forEach(el=>{el.onclick=()=>{
-    const k=el.dataset.sw;setParam(k,el.dataset.v);pushHistory();
-    box.querySelectorAll(`[data-sw="${k}"]`).forEach(x=>x.classList.toggle('on',x===el));
+    const k=el.dataset.sw;setParam(k,el.dataset.v);
+    const ck=k==='material'?'tint':'counterTint';
+    if(state.modules.find(x=>x.id===state.selectedId)?.params[ck])setParam(ck,null);
+    pushHistory();renderProps();
   };});
+  box.querySelectorAll('[data-tint]').forEach(el=>{
+    const k=el.dataset.tint;
+    el.oninput=()=>setParam(k,el.value);
+    el.onchange=()=>{pushHistory();renderProps();};
+  });
+  box.querySelectorAll('[data-cleartint]').forEach(el=>el.onclick=()=>{setParam(el.dataset.cleartint,null);pushHistory();renderProps();});
   box.querySelectorAll('[data-k]').forEach(el=>{
     const k=el.dataset.k;
     if(el.type==='checkbox')el.onchange=()=>{setParam(k,el.checked);pushHistory();};
@@ -919,33 +952,37 @@ function renderProps(){
 }
 const f_raw=k=>{for(const t in SCHEMAS){const f=SCHEMAS[t].find(f=>f.k===k);if(f)return !!f.raw;}return false;};
 
-function renderBOM(){
+// pure compiler: params -> panel list. No Three.js, no DOM. Quote/BOM and geometry share cabinetMetrics().
+function compilePanels(){
   const rows=[];
   for(const m of state.modules){
-    const p=m.params;
+    const p=m.params,M=cabinetMetrics(p);
     if(m.type==='vanity'){
-      const T=18;
-      rows.push(['Carcass',`${p.width}×${p.height}×${p.depth}`,1]);
-      rows.push(['Drawer fronts',`${p.width-2*T}×${Math.round((p.height-8*(p.drawerCount+1))/Math.max(p.drawerCount,1))}×18`,p.drawerCount]);
-      rows.push(['Door fronts',`${Math.round((p.width-2*T-6*(p.doorCount+1))/Math.max(p.doorCount,1))}×${p.height-2*T}×18`,p.doorCount]);
-      rows.push(['Countertop',`${p.width+40}×26×${p.depth+20}`,1]);
-      const bn=p.basinCount||1,r=p.basin==='vessel'?175:Math.min(Math.round(p.width*.26),Math.round(p.depth*.31));
-      if(p.basin==='integrated')rows.push(['Integrated basin',`Ø${r*2}×22`,bn]);
-      else if(p.basin==='vessel')rows.push(['Vessel basin','Ø350×120',bn]);
-      if(p.basin!=='none')rows.push(['Countertop cut-outs',`Ø${r*2} × ${bn} + faucet Ø28`,1]);
-      if(p.mount==='floor')rows.push(['Support feet','24×20×24',4]);
+      rows.push({part:'Carcass',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
+      if(p.drawerCount>0)rows.push({part:'Drawer fronts',size:`${Math.round(p.width-2*M.T)}×${Math.round(M.drawerH)}×18`,qty:p.drawerCount});
+      if(p.doorCount>0)rows.push({part:'Door fronts',size:`${Math.round(M.doorW)}×${p.height-2*M.T}×18`,qty:p.doorCount});
+      rows.push({part:'Countertop',size:`${M.counterW}×26×${M.counterD}`,qty:1});
+      const bn=p.basinCount||1,r=Math.round(M.basinR);
+      if(p.basin==='integrated')rows.push({part:'Integrated basin',size:`Ø${r*2}×22`,qty:bn});
+      else if(p.basin==='vessel')rows.push({part:'Vessel basin',size:'Ø350×120',qty:bn});
+      if(p.basin!=='none')rows.push({part:'Countertop cut-outs',size:`Ø${r*2} × ${bn} + faucet Ø28`,qty:1});
+      if(p.mount==='floor')rows.push({part:'Support feet',size:`24×${M.feetH}×24`,qty:4});
     }else if(m.type==='mirror'){
-      rows.push(['Mirror cabinet',`${p.width}×${p.height}×${p.depth}`,1]);
-      rows.push(['Mirror doors',`${Math.round(p.width/p.doors)}×${p.height-16}×6`,p.doors]);
+      rows.push({part:'Mirror cabinet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
+      rows.push({part:'Mirror doors',size:`${Math.round(p.width/p.doors)}×${p.height-16}×6`,qty:p.doors});
     }else{
-      rows.push(['Side panels',`18×${p.height}×${p.depth}`,2]);
-      rows.push(['Shelves',`${p.width-36}×14×${p.depth-10}`,p.shelves]);
-      rows.push(['Top / bottom',`${p.width}×18×${p.depth}`,2]);
+      rows.push({part:'Side panels',size:`18×${p.height}×${p.depth}`,qty:2});
+      rows.push({part:'Shelves',size:`${p.width-36}×14×${p.depth-10}`,qty:p.shelves});
+      rows.push({part:'Top / bottom',size:`${p.width}×18×${p.depth}`,qty:2});
     }
   }
-  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
-  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r[0]]||r[0]):r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
   return rows;
+}
+function renderBOM(){
+  const rows=compilePanels();
+  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
+  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td>${r.qty}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
+  return rows.map(r=>[r.part,r.size,r.qty]);
 }
 
 /* ---------- camera / scene ---------- */
