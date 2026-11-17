@@ -6,7 +6,7 @@
 - 组件：抽屉、拉手、镜柜、开放格、镜片等（可增补）。
 - 主要用 Three.js；跨网页/桌面/移动；精巧、低门槛。
 - 交互：拖入组件、输入数值、360°旋转查看。
-- 用户面向海外 → 英文 UI，单位双制。
+- 单位双制（mm/inch）；中英双语。（早期设定「面向海外」，后经 grill-me 修正为国内市场优先，见战略决策。）
 
 ## 调研发现（Research Findings）
 - **andrejvysny/HomeStudio**：Vite+TS+Three.js，无框架/无后端/无外部 3D 资产，所有 mesh 由参数程序化生成；面板清单(panel list IR)同时驱动 3D 与 BOM/切割清单导出；localStorage 自动保存。
@@ -35,6 +35,21 @@
 - https://github.com/ArcaneSK/cabinet-configurator-interface
 - https://github.com/vukovuko/shelf-builder
 - https://github.com/torusservices/morti-app
+
+## 战略决策（2026-11-17 · grill-me 五问拷问后定案）
+
+五个分支全部收敛，无未决项：
+
+| 分支 | 决策 | 理由 |
+|------|------|------|
+| 市场 | 放弃海外，转国内 | 海外缺品牌/支付/售后；国内有客户、产品知识、场景 |
+| 模式 | 先 A（自己门店用，免费）跑通，再叠 B（经销商 SaaS） | A 零市场成本、立刻能验证产品价值 |
+| 终端 | A 阶段纯 H5 网页 + PWA 添加到桌面；保留 4 个空平台文件夹占位 | 微信发链接是天然渠道；原生/小程序第一阶段不碰 |
+| 架构 | 保持单文件；只把 4 个 CDN 依赖本地化到 `web/vendor/`；不上 Vite | unpkg 国内白屏是硬阻塞；最小改动修掉 |
+| 数据 | A 阶段 localStorage 不动，JSON 文件互传；不做后端/云 | A 只有一个门店、方案量小；B 阶段再上 |
+| 合规 | A 阶段不动；B 阶段发布前把免责声明移到显眼处并过 LEGAL.md + 律师 | 内部工具无需受众可见的声明 |
+
+一句话：把这版网页做到国内能稳定打开、导购能直接出图报价，就是 A 阶段全部；B 的云/账号/计费/显眼合规等 A 跑通再动。
 
 ## 可视化/浏览器发现（Visual/Browser Findings）
 - 待浏览器验证后补充。
