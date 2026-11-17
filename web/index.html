@@ -664,40 +664,73 @@ function updateCollisions(){
 /* ---------- dimension annotations (SketchUp-style) ---------- */
 let dimGroup=null;
 const fmtDim=v=>unit==='in'?(v/25.4).toFixed(2)+' in':Math.round(v)+' mm';
+// ponytail: SketchUp-style dimensions — arrow heads, text directly on the line,
+// transparent labels (white halo for legibility), and a fuller set of measures.
 function updateDimensions(){
   if(dimGroup){scene.remove(dimGroup);dimGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});dimGroup=null;}
   if(state.dims===false||!root||!scene)return;
   const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
-  const p=m.params,ox=m.pos.x,oz=m.pos.z;
-  let W,D,lo,hi;
-  if(m.type==='vanity'){W=p.width;D=p.depth;lo=p.mount==='wall'?(p.topHeight||850)-p.height:0;hi=lo+p.height+26;}
-  else if(m.type==='mirror'){W=p.width;D=p.depth;lo=p.bottomHeight||1080;hi=lo+p.height;}
-  else{W=p.width;D=p.depth;lo=0;hi=p.height;}
-  const hh=m.type==='vanity'?lo+p.height:hi; // annotate carcass height, not countertop
-  const g=new THREE.Group(),off=150;
-  const line=(a,b)=>g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a),new THREE.Vector3(...b)]),new THREE.LineBasicMaterial({color:0x1f7a6f})));
-  const label=(text,x,y,z)=>{
-    const c=document.createElement('canvas');c.width=256;c.height=64;
-    const ctx=c.getContext('2d');ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(0,0,256,64);
-    ctx.strokeStyle='#1f7a6f';ctx.lineWidth=4;ctx.strokeRect(2,2,252,60);
-    ctx.fillStyle='#1f7a6f';ctx.font='bold 26px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,34);
-    const tex=new THREE.CanvasTexture(c);
-    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));
-    s.position.set(x,y,z);s.scale.set(300,75,1);g.add(s);
+  const p=m.params,ox=m.pos.x,oz=m.pos.z,M=cabinetMetrics(p),W=p.width,D=p.depth;
+  let lo,hi;
+  if(m.type==='vanity'){lo=p.mount==='wall'?(p.topHeight||850)-p.height:0;hi=lo+p.height+26;}
+  else if(m.type==='mirror'){lo=p.bottomHeight||1080;hi=lo+p.height;}
+  else{lo=0;hi=p.height;}
+  const bodyH=p.height;
+  const g=new THREE.Group(),OFF=150,ZF=oz+D/2+OFF,COL=0x222222;
+  const V=a=>new THREE.Vector3(a[0],a[1],a[2]);
+  const line=(a,b)=>g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color:COL})));
+  const arrow=(tip,dir,perp,sz)=>{
+    const d=dir.clone().normalize(),pp=perp.clone().normalize().multiplyScalar(sz*.32),ds=d.multiplyScalar(sz);
+    line(tip,tip.clone().add(ds).add(pp));
+    line(tip,tip.clone().add(ds).sub(pp));
   };
-  const tick=(a,b)=>line(a,b);
-  line([ox-W/2,hi+off,oz+D/2+off],[ox+W/2,hi+off,oz+D/2+off]);
-  tick([ox-W/2,hi+off-25,oz+D/2+off],[ox-W/2,hi+off+25,oz+D/2+off]);
-  tick([ox+W/2,hi+off-25,oz+D/2+off],[ox+W/2,hi+off+25,oz+D/2+off]);
-  label(fmtDim(W),ox,hi+off+48,oz+D/2+off);
-  line([ox-W/2-off,lo,oz+D/2],[ox-W/2-off,hh,oz+D/2]);
-  tick([ox-W/2-off-25,lo,oz+D/2],[ox-W/2-off+25,lo,oz+D/2]);
-  tick([ox-W/2-off-25,hh,oz+D/2],[ox-W/2-off+25,hh,oz+D/2]);
-  label(fmtDim(hh-lo),ox-W/2-off-75,(lo+hh)/2,oz+D/2);
-  line([ox+W/2+off,lo+20,oz-D/2],[ox+W/2+off,lo+20,oz+D/2]);
-  tick([ox+W/2+off,lo-5,oz-D/2],[ox+W/2+off,lo+45,oz-D/2]);
-  tick([ox+W/2+off,lo-5,oz+D/2],[ox+W/2+off,lo+45,oz+D/2]);
-  label(fmtDim(D),ox+W/2+off+55,lo+20,oz);
+  const label=(str,x,y,z,sc)=>{
+    const c=document.createElement('canvas');c.width=384;c.height=64;
+    const ctx=c.getContext('2d');ctx.font='700 32px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.lineJoin='round';ctx.lineWidth=5;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.strokeText(str,192,34);
+    ctx.fillStyle='#141414';ctx.fillText(str,192,34);
+    const t=new THREE.CanvasTexture(c);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));
+    sp.position.set(x,y,z);sp.scale.set(sc||250,(sc||250)/6,1);g.add(sp);
+  };
+  const dim=(a,b,perp,str,textOff)=>{
+    const av=V(a),bv=V(b),pp=V(perp).normalize();
+    line(av,bv);
+    const dir=bv.clone().sub(av);
+    arrow(av,dir,pp,30);arrow(bv,dir.clone().negate(),pp,30);
+    const mid=av.clone().add(bv).multiplyScalar(.5).add(pp.clone().multiplyScalar(textOff||40));
+    label(str,mid.x,mid.y,mid.z);
+  };
+  const leader=(from,to,str)=>{
+    const a=V(from),b=V(to),e=b.clone().add(new THREE.Vector3(60,0,0));
+    line(a,b);line(b,e);
+    label(str,e.x+100,e.y+18,e.z,240);
+  };
+  if(m.type==='vanity'){
+    dim([ox-(W+40)/2,hi+OFF,ZF],[ox+(W+40)/2,hi+OFF,ZF],[0,1,0],fmtDim(W+40));
+    dim([ox-W/2,hi+OFF/2,ZF],[ox+W/2,hi+OFF/2,ZF],[0,1,0],fmtDim(W));
+    dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,lo+bodyH,oz+D/2],[-1,0,0],fmtDim(bodyH));
+    dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
+    dim([ox-W/2-2*OFF,0,oz+D/2],[ox-W/2-2*OFF,hi,oz+D/2],[-1,0,0],fmtDim(hi));
+    if(p.drawerCount>0){const dw=Math.round(W-2*M.T);dim([ox-dw/2,lo-70,ZF],[ox+dw/2,lo-70,ZF],[0,1,0],fmtDim(dw)+' / drawer');}
+    if(p.basin!=='none'){
+      const r=Math.round(M.basinR),bn=p.basinCount||1;
+      for(let i=0;i<bn;i++){
+        const bx=ox+(bn===1?0:(i===0?-W*.24:W*.24));
+        leader([bx,hi-6,oz],[bx+(i?70:-70),hi+70,ZF],'Ø'+fmtDim(r*2));
+      }
+    }
+  }else if(m.type==='mirror'){
+    dim([ox-W/2,hi+OFF,ZF],[ox+W/2,hi+OFF,ZF],[0,1,0],fmtDim(W));
+    dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,hi,oz+D/2],[-1,0,0],fmtDim(p.height));
+    dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
+    leader([ox,hi-20,oz],[ox+100,hi+60,ZF],p.doors+'-door');
+  }else{
+    dim([ox-W/2,hi+OFF,ZF],[ox+W/2,hi+OFF,ZF],[0,1,0],fmtDim(W));
+    dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,hi,oz+D/2],[-1,0,0],fmtDim(p.height));
+    dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
+    if(p.shelves>0)leader([ox,lo+p.height/2,oz],[ox+120,lo+p.height/2+60,ZF],fmtDim(p.height/(p.shelves+1))+' pitch');
+  }
   dimGroup=g;scene.add(g);
 }
 
