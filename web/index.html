@@ -388,7 +388,7 @@ let uid=1, unit='mm', history=[], hi=-1, currentView='persp';
 const clone = o => JSON.parse(JSON.stringify(o));
 
 /* ---------- three setup ---------- */
-let renderer,scene,camera,controls,root,selBox,raycaster,floorPlane;
+let renderer,scene,camera,controls,root,raycaster,floorPlane;
 const matCache={},texCache={},pbrCache={},variantCache={};
 const HD_TEXTURES=!(window.matchMedia&&matchMedia('(max-width:900px)').matches);
 const assetTex={};
@@ -636,9 +636,8 @@ function rebuildModule(m){
   updateSelection();
 }
 function updateSelection(){
-  if(selBox){scene.remove(selBox);selBox.geometry.dispose();selBox=null;}
-  const m=state.modules.find(x=>x.id===state.selectedId);
-  if(m){const g=root.children.find(c=>c.userData.moduleId===m.id);if(g){selBox=new THREE.BoxHelper(g,0x1f7a6f);scene.add(selBox);}}
+  // ponytail: no selection box — sets are drawn as whole suites; the right-side
+  // properties panel and badge already show which component is active.
   updateDimensions();
   updateCollisions();
 }
@@ -834,10 +833,11 @@ function renderLibrary(){
   for(const grp of TILES){
     const items=grp.items.filter(i=>nameOf(i).toLowerCase().includes(q)||it_g(grp).toLowerCase().includes(q));
     if(!items.length)continue;
-    html+=`<div class="sect">${it_g(grp)}</div>`;
+    html+=`<details class="grp"${q?' open':''}><summary>${it_g(grp)}</summary>`;
     for(const it of items){
       html+=`<div class="tile" draggable="true" data-g="${grp.g}" data-i="${grp.items.indexOf(it)}"><i>${iconFor(grp.g)}</i><div><b>${nameOf(it)}</b><small>${descOf(it)}</small></div></div>`;
     }
+    html+='</details>';
   }
   $('#library').innerHTML=html;
   document.querySelectorAll('.tile').forEach(t=>{
@@ -873,13 +873,26 @@ function applyPreset(p){
   state.selectedId=state.modules[0]?.id||null;
   commit();setView(currentView);toast((PRESET_NAME_ZH[p.n]||p.n)+' loaded');
 }
+// ponytail: one component per slot — picking another tile of the same type replaces
+// the current selection (keeping its position) instead of stacking a second copy.
+function placeTileComponent(it,x,z){
+  const cur=state.modules.find(m=>m.id===state.selectedId);
+  if(cur&&cur.type===it.t){
+    cur.params={...clone(DEFAULTS[it.t]),...it.p};
+    if(x!==undefined){cur.pos.x=Math.round(x/50)*50;cur.pos.z=clampZ(cur,Math.round(z/50)*50);}
+    else cur.pos.z=clampZ(cur,cur.pos.z);
+    commit();setView(currentView);toast((TILE_ZH[it.l]||it.l)+' 已替换');return;
+  }
+  if(x!==undefined){addModule(it.t,it.p,x,z);toast((TILE_ZH[it.l]||it.l)+' placed · snapped to grid');}
+  else{addModule(it.t,it.p);toast((TILE_ZH[it.l]||it.l)+' added');}
+}
 function applyTile(it){
   if(it.a==='handle'){
     const m=state.modules.find(x=>x.id===state.selectedId);
     if(m&&m.params.handle!==undefined){setParam('handle',it.v);toast('Handle updated');}
     else toast('Select a vanity first');return;
   }
-  addModule(it.t,it.p);toast((TILE_ZH[it.l]||it.l)+' added');
+  placeTileComponent(it);
 }
 let toastT;
 function toast(msg){const b=$('#badge');b.textContent=trMsg(msg);clearTimeout(toastT);toastT=setTimeout(updateBadge,1400);}
@@ -1193,7 +1206,7 @@ function onDrop(e){
     const W=(it.p&&it.p.width)||DEFAULTS[it.t].width;
     const D=(it.p&&it.p.depth)||DEFAULTS[it.t].depth;
     const s=snapDrop(pt.x,pt.z,W,D);
-    addModule(it.t,it.p,s.x,s.z);toast((TILE_ZH[it.l]||it.l)+' placed · snapped to grid');
+    placeTileComponent(it,s.x,s.z);
   }
   else if(it.a)applyTile(it);
 }
