@@ -644,13 +644,29 @@ function updateSelection(){
 /* ---------- overlap detection ---------- */
 let collisionGroup=null;
 function moduleRect(m){const f=footprint(m);return {x1:m.pos.x-f.w/2,x2:m.pos.x+f.w/2,z1:m.pos.z-f.d/2,z2:m.pos.z+f.d/2};}
+// ponytail: a suite is stacked vertically (mirror above vanity) — 2D overlap alone
+// is a false alarm. Share one y-range with the dimension code so they never drift.
+function moduleYRange(m){
+  const p=m.params;
+  if(m.type==='vanity'){
+    const lo=p.mount==='wall'?(p.topHeight||850)-p.height:0;
+    return {y1:lo,y2:lo+p.height+26};
+  }
+  if(m.type==='mirror'){
+    const lo=p.bottomHeight||1080;
+    return {y1:lo,y2:lo+p.height};
+  }
+  return {y1:0,y2:p.height};
+}
 function collisionIds(){
   const ids=new Set();
   for(let i=0;i<state.modules.length;i++)for(let j=i+1;j<state.modules.length;j++){
     const a=moduleRect(state.modules[i]),b=moduleRect(state.modules[j]);
+    const ay=moduleYRange(state.modules[i]),by=moduleYRange(state.modules[j]);
     const ox=Math.min(a.x2,b.x2)-Math.max(a.x1,b.x1);
     const oz=Math.min(a.z2,b.z2)-Math.max(a.z1,b.z1);
-    if(ox>10&&oz>10){ids.add(state.modules[i].id);ids.add(state.modules[j].id);}
+    const oy=Math.min(ay.y2,by.y2)-Math.max(ay.y1,by.y1);
+    if(ox>10&&oz>10&&oy>10){ids.add(state.modules[i].id);ids.add(state.modules[j].id);}
   }
   return ids;
 }
@@ -673,10 +689,7 @@ function updateDimensions(){
   if(state.dims===false||!root||!scene)return;
   const m=state.modules.find(x=>x.id===state.selectedId);if(!m)return;
   const p=m.params,ox=m.pos.x,oz=m.pos.z,M=cabinetMetrics(p),W=p.width,D=p.depth;
-  let lo,hi;
-  if(m.type==='vanity'){lo=p.mount==='wall'?(p.topHeight||850)-p.height:0;hi=lo+p.height+26;}
-  else if(m.type==='mirror'){lo=p.bottomHeight||1080;hi=lo+p.height;}
-  else{lo=0;hi=p.height;}
+  const {y1:lo,y2:hi}=moduleYRange(m);
   const bodyH=p.height;
   const g=new THREE.Group(),OFF=150,ZF=oz+D/2+OFF,COL=0x18796e;
   const V=a=>new THREE.Vector3(a[0],a[1],a[2]);
