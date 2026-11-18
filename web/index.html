@@ -174,7 +174,7 @@ const I18N = {
     newP:'New', saveAs:'Save as', rename:'Rename', delP:'Delete', saveJson:'Save JSON', openJson:'Open JSON', clear:'Clear',
     placement:'Placement', rotation:'Rotation', pbr:'PBR tuning', roughness:'Roughness', metalness:'Metalness', clearcoat:'Clearcoat',
     delComp:'Delete component', openFronts:'Open fronts', closeFronts:'Close fronts', constraints:'constraints', constraint:'constraint',
-    fix:'Fix', overlap:'overlap — drag apart to fix', vanity:'VANITY', mirror:'MIRROR', shelf:'SHELF',
+    fix:'Fix', overlap:'overlap — drag apart to fix', vanity:'VANITY', mirror:'MIRROR', shelf:'SHELF', lens:'MIRROR SHEET',
     width:'Width', depth:'Depth', height:'Carcass height', drawers:'Drawers', doors:'Doors', handle:'Handle', basin:'Basin', basins:'Basins',
     mount:'Mount', topHeight:'Top above floor', bottomHeight:'Bottom above floor', material:'Finish', countertop:'Countertop',
     led:'LED light', shelves:'Shelves', openFront:'Open front' },
@@ -189,7 +189,7 @@ const I18N = {
     newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'导出方案', openJson:'导入方案', clear:'清空',
     placement:'位置', rotation:'旋转', pbr:'材质细节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
     delComp:'删除组件', openFronts:'打开门板', closeFronts:'关闭门板', constraints:'条约束', constraint:'条约束',
-    fix:'修复', overlap:'重叠 — 拖动分开', vanity:'浴室柜', mirror:'镜柜', shelf:'侧柜',
+    fix:'修复', overlap:'重叠 — 拖动分开', vanity:'浴室柜', mirror:'镜柜', shelf:'侧柜', lens:'镜片',
     width:'宽度', depth:'深度', height:'柜体高度', drawers:'抽屉数', doors:'门板数', handle:'拉手', basin:'盆型', basins:'盆数量',
     mount:'安装方式', topHeight:'台面离地高', bottomHeight:'柜底离地高', material:'饰面', countertop:'台面',
     led:'LED 灯', shelves:'层板数', openFront:'开放式' }
@@ -202,10 +202,12 @@ const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出
   'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
   'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
 const MAT_ZH={white:'哑光白',cream:'暖白',sage:'鼠尾草绿',navy:'海军蓝',graphite:'石墨灰',oak:'原木橡木',walnut:'胡桃木',black:'黑色',stone:'石材台面',marble:'大理石',brass:'拉丝黄铜',concrete:'混凝土',terrazzo:'水磨石'};
-const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',doorSplit:'左门占比',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
-const OPT_ZH={recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
-const GROUP_ZH={'Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
+const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',doorSplit:'左门占比',shape:'镜片形状',frame:'边框',lightStyle:'灯光样式',defog:'除雾',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
+const OPT_ZH={top:'顶灯条',back:'背光',ring:'环形跑道灯',sides:'双侧灯',front:'前发光',rect:'方形',circle:'圆形',ellipse:'椭圆形',capsule:'跑道形',arch:'异形拱门',graphite:'石墨灰',brass:'拉丝黄铜',recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
+const GROUP_ZH={'Lighting (on selection)':'灯光（作用于选中组件）','Lens':'镜片','Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
 const TILE_ZH={
+'No Light':'无灯','Top Light Bar':'顶部灯条','Backlit Glow':'背光','Round Track Light':'圆形跑道灯','Side Lights':'双侧灯','Front Light Bar':'前发光灯条',
+'Rect Smart Mirror':'方形智能镜','Round LED Mirror':'圆形 LED 镜','Oval Mirror':'椭圆形镜','Capsule Mirror':'跑道形镜','Arch Mirror':'异形拱门镜',
 'Single Basin 600':'单盆浴室柜 600','Single Basin 800':'单盆浴室柜 800','Single Basin 900':'单盆浴室柜 900','Single Basin 1000':'单盆浴室柜 1000',
 'Double Basin 1200':'双盆浴室柜 1200','Double Basin 1400':'双盆浴室柜 1400','Floor Standing 800':'落地浴室柜 800','Metal Frame 900':'铝合金浴室柜 900',
 'One Door Two Drawers':'一门双抽浴室柜','Left Side Cabinet':'左侧边柜','Right Side Cabinet':'右侧边柜',
@@ -214,6 +216,8 @@ const TILE_ZH={
 'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
 const PRESET_ZH=s=>lang==='zh'?s.replace(/double basin/g,'双盆').replace(/recessed grip/g,'隐形拉手').replace(/marble top/g,'大理石台面').replace(/stone top/g,'石材台面').replace(/floor standing/g,'落地').replace(/soft-close/g,'静音阻尼').replace(/soft rounded/g,'圆角').replace(/handleless/g,'无拉手').replace(/wall hung/g,'挂墙').replace(/open shelf combo/g,'开放格组合').replace(/thin top/g,'薄台面').replace(/narrow/g,'窄型').replace(/compact/g,'紧凑').replace(/wide/g,'宽型').replace(/minimal/g,'极简').replace(/cube/g,'立方体').replace(/integrated/g,'一体盆').replace(/oak/g,'橡木').replace(/walnut/g,'胡桃木').replace(/brushed brass/g,'拉丝黄铜').replace(/chrome/g,'镀铬').replace(/graphite/g,'石墨灰').replace(/ceramic/g,'陶瓷').replace(/classic/g,'经典').replace(/ultra/g,'极致').replace(/slim/g,'超薄').replace(/detail/g,'饰条').replace(/top/g,'台面').replace(/double/g,'双盆'):s;
 const TILE_DESC_ZH={
+'plain · none':'普通镜 · 无灯','top · sensor':'顶部 · 感应','behind · soft':'镜后 · 柔和','ring · 3-color':'环形 · 三色','dual · soft':'双侧 · 柔光','front · bright':'前置 · 高亮',
+'600 · frame':'600 · 边框款','Ø600 · round':'Φ600 · 圆形','500 · soft':'500 · 柔和椭圆','500 · trend':'500 · 流行跑道','600 · irregular':'600 · 异形拱门',
 '600 · compact':'600 · 小户型','800 · best seller':'800 · 主流款','900 · standard':'900 · 标准款','1000 · wide':'1000 · 宽型',
 '1200 · two basins':'1200 · 双盆','1400 · large':'1400 · 大尺寸','800 · floor':'800 · 落地','900 · alloy':'900 · 铝合金',
 '800 · 1 door + 2 drawers':'800 · 一门双抽','300 · left':'300 · 左侧','300 · right':'300 · 右侧',
@@ -252,8 +256,9 @@ const MATERIALS = {
 };
 const DEFAULTS = {
   vanity:{width:900,depth:520,height:600,drawerCount:2,doorCount:0,handle:'recessed',basin:'integrated',basinCount:1,mount:'wall',topHeight:850,rot:0,open:0,material:'white',countertop:'stone'},
-  mirror:{width:900,height:700,depth:150,doors:2,doorSplit:0.5,led:true,bottomHeight:1080,rot:0,open:0,material:'white'},
-  shelf:{width:400,height:1600,depth:350,shelves:4,open:true,rot:0,material:'oak'}
+  mirror:{width:900,height:700,depth:150,doors:2,doorSplit:0.5,led:true,lightStyle:'top',bottomHeight:1080,rot:0,open:0,material:'white'},
+  shelf:{width:400,height:1600,depth:350,shelves:4,open:true,rot:0,material:'oak'},
+  lens:{width:600,height:800,depth:30,shape:'rect',frame:'graphite',led:true,lightStyle:'top',defog:false,bottomHeight:1000,rot:0}
 };
 const SCHEMAS = {
   vanity:[
@@ -277,6 +282,7 @@ const SCHEMAS = {
     {k:'doors',l:'Doors',min:0,max:3,step:1,raw:true},
     {k:'doorSplit',l:'Left door share',min:0.35,max:0.75,step:0.01,raw:true},
     {k:'led',l:'LED light',t:'bool'},
+    {k:'lightStyle',l:'Light style',t:'select',o:['none','top','back','ring','sides','front']},
     {k:'bottomHeight',l:'Bottom above floor',min:800,max:1500,step:10},
     {k:'material',l:'Frame finish',t:'select',o:Object.keys(MATERIALS)}
   ],
@@ -287,42 +293,68 @@ const SCHEMAS = {
     {k:'shelves',l:'Shelves',min:0,max:6,step:1,raw:true},
     {k:'open',l:'Open front',t:'bool'},
     {k:'material',l:'Finish',t:'select',o:Object.keys(MATERIALS)}
+  ],
+  lens:[
+    {k:'shape',l:'Shape',t:'select',o:['rect','circle','ellipse','capsule','arch']},
+    {k:'width',l:'Width',min:300,max:1200,step:10},
+    {k:'height',l:'Height',min:300,max:1500,step:10},
+    {k:'depth',l:'Depth',min:20,max:80,step:5},
+    {k:'frame',l:'Frame',t:'select',o:['graphite','brass','white','black','oak']},
+    {k:'led',l:'LED light',t:'bool'},
+    {k:'lightStyle',l:'Light style',t:'select',o:['none','top','back','ring','sides','front']},
+    {k:'defog',l:'Defog',t:'bool'},
+    {k:'bottomHeight',l:'Bottom above floor',min:800,max:1600,step:10}
   ]
 };
 const TILES = [
   {g:'Cabinets',items:[
-    {l:'Single Basin 600',s:'600 · compact',t:'vanity',p:{width:600,depth:480,drawerCount:2}},
-    {l:'Single Basin 800',s:'800 · best seller',t:'vanity',p:{width:800,depth:520,drawerCount:2}},
-    {l:'Single Basin 900',s:'900 · standard',t:'vanity',p:{}},
-    {l:'Single Basin 1000',s:'1000 · wide',t:'vanity',p:{width:1000,depth:540,drawerCount:2}},
-    {l:'Double Basin 1200',s:'1200 · two basins',t:'vanity',p:{width:1200,depth:540,basinCount:2,drawerCount:4}},
-    {l:'Double Basin 1400',s:'1400 · large',t:'vanity',p:{width:1400,depth:560,basinCount:2,drawerCount:4}},
-    {l:'Floor Standing 800',s:'800 · floor',t:'vanity',p:{width:800,depth:520,mount:'floor',drawerCount:2}},
-    {l:'Narrow Vanity',s:'500 · small bath',t:'vanity',p:{width:500,depth:420,drawerCount:1}},
-    {l:'Metal Frame 900',s:'900 · alloy',t:'vanity',p:{width:900,depth:520,material:'graphite',handle:'bar'}},
-    {l:'One Door Two Drawers',s:'800 · 1 door + 2 drawers',t:'vanity',p:{width:800,drawerCount:2,doorCount:1,basin:'none'}}
+    {l:'Single Basin 600',ic:'cab1',s:'600 · compact',t:'vanity',p:{width:600,depth:480,drawerCount:2}},
+    {l:'Single Basin 800',ic:'cab1',s:'800 · best seller',t:'vanity',p:{width:800,depth:520,drawerCount:2}},
+    {l:'Single Basin 900',ic:'cab1',s:'900 · standard',t:'vanity',p:{}},
+    {l:'Single Basin 1000',ic:'cab1',s:'1000 · wide',t:'vanity',p:{width:1000,depth:540,drawerCount:2}},
+    {l:'Double Basin 1200',ic:'cab2',s:'1200 · two basins',t:'vanity',p:{width:1200,depth:540,basinCount:2,drawerCount:4}},
+    {l:'Double Basin 1400',ic:'cab2',s:'1400 · large',t:'vanity',p:{width:1400,depth:560,basinCount:2,drawerCount:4}},
+    {l:'Floor Standing 800',ic:'floor',s:'800 · floor',t:'vanity',p:{width:800,depth:520,mount:'floor',drawerCount:2}},
+    {l:'Narrow Vanity',ic:'narrow',s:'500 · small bath',t:'vanity',p:{width:500,depth:420,drawerCount:1}},
+    {l:'Metal Frame 900',ic:'alloy',s:'900 · alloy',t:'vanity',p:{width:900,depth:520,material:'graphite',handle:'bar'}},
+    {l:'One Door Two Drawers',ic:'oneTwo',s:'800 · 1 door + 2 drawers',t:'vanity',p:{width:800,drawerCount:2,doorCount:1,basin:'none'}}
   ]},
   {g:'Fronts & Storage',items:[
-    {l:'Drawer Bank',s:'3 drawers',t:'vanity',p:{width:700,drawerCount:3,doorCount:0,basin:'none'}},
-    {l:'Door Cabinet',s:'2 doors',t:'vanity',p:{width:800,drawerCount:0,doorCount:2,basin:'none'}},
-    {l:'Open Shelf Unit',s:'3 shelves',t:'shelf',p:{height:900,shelves:3}},
-    {l:'Tall Side Cabinet',s:'400 · 1600 h',t:'shelf',p:{}},
-    {l:'Left Side Cabinet',s:'300 · left',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}},
-    {l:'Right Side Cabinet',s:'300 · right',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}}
+    {l:'Drawer Bank',ic:'drawers',s:'3 drawers',t:'vanity',p:{width:700,drawerCount:3,doorCount:0,basin:'none'}},
+    {l:'Door Cabinet',ic:'doors',s:'2 doors',t:'vanity',p:{width:800,drawerCount:0,doorCount:2,basin:'none'}},
+    {l:'Open Shelf Unit',ic:'open',s:'3 shelves',t:'shelf',p:{height:900,shelves:3}},
+    {l:'Tall Side Cabinet',ic:'tall',s:'400 · 1600 h',t:'shelf',p:{}},
+    {l:'Left Side Cabinet',ic:'leftSide',s:'300 · left',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}},
+    {l:'Right Side Cabinet',ic:'rightSide',s:'300 · right',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}}
   ]},
   {g:'Mirror',items:[
-    {l:'Equal Double Door Mirror',s:'900 · 50:50',t:'mirror',p:{doors:2,doorSplit:0.5}},
-    {l:'Unequal Double Door Mirror',s:'900 · 65:35',t:'mirror',p:{doors:2,doorSplit:0.65}},
-    {l:'Single Door Mirror',s:'600 · single',t:'mirror',p:{width:600,height:600,depth:110,doors:1}},
-    {l:'Triple Door Beauty Mirror',s:'1200 · 3 zones',t:'mirror',p:{width:1200,height:700,doors:3,led:true}},
-    {l:'Open Mirror Cabinet',s:'900 · open shelf',t:'mirror',p:{doors:0,open:1}},
-    {l:'LED Mirror',s:'slim · lit',t:'mirror',p:{doors:1,depth:70}}
+    {l:'Equal Double Door Mirror',ic:'mir2eq',s:'900 · 50:50',t:'mirror',p:{doors:2,doorSplit:0.5}},
+    {l:'Unequal Double Door Mirror',ic:'mir2uneq',s:'900 · 65:35',t:'mirror',p:{doors:2,doorSplit:0.65}},
+    {l:'Single Door Mirror',ic:'mir1',s:'600 · single',t:'mirror',p:{width:600,height:600,depth:110,doors:1}},
+    {l:'Triple Door Beauty Mirror',ic:'mir3',s:'1200 · 3 zones',t:'mirror',p:{width:1200,height:700,doors:3,led:true}},
+    {l:'Open Mirror Cabinet',ic:'mirOpen',s:'900 · open shelf',t:'mirror',p:{doors:0,open:1}},
+    {l:'LED Mirror',ic:'mirLed',s:'slim · lit',t:'mirror',p:{doors:1,depth:70}}
+  ]},
+  {g:'Lens',items:[
+    {l:'Rect Smart Mirror',ic:'lensRect',s:'600 · frame',t:'lens',p:{shape:'rect',width:600,height:800}},
+    {l:'Round LED Mirror',ic:'lensCircle',s:'Ø600 · round',t:'lens',p:{shape:'circle',width:600,height:600,frame:'brass'}},
+    {l:'Oval Mirror',ic:'lensOval',s:'500 · soft',t:'lens',p:{shape:'ellipse',width:500,height:800}},
+    {l:'Capsule Mirror',ic:'lensCapsule',s:'500 · trend',t:'lens',p:{shape:'capsule',width:500,height:1000}},
+    {l:'Arch Mirror',ic:'lensArch',s:'600 · irregular',t:'lens',p:{shape:'arch',width:600,height:900}}
+  ]},
+  {g:'Lighting (on selection)',items:[
+    {l:'No Light',s:'plain · none',t:'lens',a:'light',v:'none',ic:'lightNone'},
+    {l:'Top Light Bar',s:'top · sensor',t:'lens',a:'light',v:'top',ic:'lightTop'},
+    {l:'Backlit Glow',s:'behind · soft',t:'lens',a:'light',v:'back',ic:'lightBack'},
+    {l:'Round Track Light',s:'ring · 3-color',t:'lens',a:'light',v:'ring',ic:'lightRing'},
+    {l:'Side Lights',s:'dual · soft',t:'lens',a:'light',v:'sides',ic:'lightSides'},
+    {l:'Front Light Bar',s:'front · bright',t:'lens',a:'light',v:'front',ic:'lightFront'}
   ]},
   {g:'Hardware (on selection)',items:[
-    {l:'Bar Handle',s:'metal bar',a:'handle',v:'bar'},
-    {l:'Recessed Grip',s:'45° groove',a:'handle',v:'recessed'},
-    {l:'Knob',s:'round',a:'handle',v:'knob'},
-    {l:'No Handle',s:'handleless',a:'handle',v:'none'}
+    {l:'Bar Handle',ic:'bar',s:'metal bar',a:'handle',v:'bar'},
+    {l:'Recessed Grip',ic:'recessed',s:'45° groove',a:'handle',v:'recessed'},
+    {l:'Knob',ic:'knob',s:'round',a:'handle',v:'knob'},
+    {l:'No Handle',ic:'none',s:'handleless',a:'handle',v:'none'}
   ]}
 ];
 
@@ -597,6 +629,45 @@ function buildVanity(p,g){
     for(const sx of [-1,1])for(const sz of [-1,1])mesh(rbox(24,M.feetH,24,2),mat('dark'),sx*(W/2-40),M.feetH/2,sz*(D/2-40),g);
   }
 }
+let _glowTex=null;
+function ledGlowTexture(){
+  if(_glowTex)return _glowTex;
+  const c=document.createElement('canvas');c.width=c.height=128;
+  const x=c.getContext('2d'),gr=x.createRadialGradient(64,64,2,64,64,64);
+  gr.addColorStop(0,'rgba(255,244,214,.85)');
+  gr.addColorStop(.35,'rgba(255,230,175,.34)');
+  gr.addColorStop(1,'rgba(255,220,150,0)');
+  x.fillStyle=gr;x.fillRect(0,0,128,128);
+  _glowTex=new THREE.CanvasTexture(c);return _glowTex;
+}
+// additive halo guarantees a visible difference even without physical lighting;
+// the point light adds real spill onto the wall and countertop below.
+// Lighting styles modeled on HEGII/JOMOO/ARROW/SSWW: top bar, backlit, ring
+// (round-track), dual side bars, front bar. All reuse the same glow rig.
+function addLightStyle(g,W,H,y,z,D,style,shape){
+  if(!style||style==='none')return;
+  const lamp=mat('led');
+  if(style==='top')mesh(rbox(W*.7,8,5,2),lamp,0,y+H/2-16,z+4,g);
+  else if(style==='front')mesh(rbox(W*.55,8,5,2),lamp,0,y-H/2+16,z+4,g);
+  else if(style==='sides'){
+    mesh(rbox(6,H*.7,5,2),lamp,-W/2+12,y,z+4,g);
+    mesh(rbox(6,H*.7,5,2),lamp,W/2-12,y,z+4,g);
+  }else if(style==='ring'){
+    const t=new THREE.Mesh(new THREE.TorusGeometry(Math.min(W,H)*.3,4,8,48),lamp);
+    t.position.set(0,y,z+10);g.add(t);
+  }else if(style==='back'){
+    const bg=new THREE.ExtrudeGeometry(lensShape(shape||'rect',W+26,H+26),{depth:4,bevelEnabled:false,curveSegments:36});
+    mesh(bg,lamp,0,y,-D/2-8,g);
+  }
+  addLedFx(g,W,H,y,z);
+}
+function addLedFx(g,W,H,y,z){
+  const ly=y-H/2+30;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ledGlowTexture(),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:.9}));
+  sp.position.set(0,ly,z+30);sp.scale.set(W*1.3,H*.8,1);g.add(sp);
+  const l=new THREE.PointLight(0xffedcc,260000,1600,2);
+  l.position.set(0,ly-30,z+200);g.add(l);
+}
 function buildMirror(p,g){
   const W=p.width,H=p.height,D=p.depth,y=(p.bottomHeight||1080)+H/2;
   mesh(rbox(W,H,D,5),mat(p.material,p.tint),0,y,-D/2,g);
@@ -619,7 +690,42 @@ function buildMirror(p,g){
     for(let i=0;i<3;i++)mesh(rbox(W-30,12,sd,2),mat(p.material),0,y-H/2+90+i*((H-150)/3),D/2-sd/2,g);
   }
   g.userData.fronts=fronts;
-  if(p.led)mesh(rbox(W-20,10,6,3),mat('led'),0,y-H/2+12,D/2+4,g);
+  if(p.led)addLightStyle(g,W,H,y,D/2,D,p.lightStyle||'top','rect');
+}
+function lensShape(kind,W,H){
+  const s=new THREE.Shape(),w=W/2,h=H/2;
+  if(kind==='circle'){
+    s.absarc(0,0,Math.min(w,h),0,Math.PI*2,false);
+  }else if(kind==='ellipse'){
+    s.absellipse(0,0,w,h,0,Math.PI*2,false,0);
+  }else if(kind==='capsule'){
+    const r=Math.min(w,h/2),st=h-r;
+    s.moveTo(-w,-st);s.lineTo(w,-st);
+    s.absarc(w,0,r,-Math.PI/2,Math.PI/2,false);
+    s.lineTo(-w,st);
+    s.absarc(-w,0,r,Math.PI/2,Math.PI*1.5,false);
+  }else if(kind==='arch'){
+    const r=w;
+    s.moveTo(-w,-h);s.lineTo(w,-h);s.lineTo(w,h-r);
+    s.absarc(0,h-r,r,0,Math.PI,false);
+    s.lineTo(-w,-h);
+  }else{
+    const r=Math.min(28,w*.25,h*.25);
+    s.moveTo(-w+r,-h);s.lineTo(w-r,-h);s.quadraticCurveTo(w,-h,w,-h+r);
+    s.lineTo(w,h-r);s.quadraticCurveTo(w,h,w-r,h);
+    s.lineTo(-w+r,h);s.quadraticCurveTo(-w,h,-w,h-r);
+    s.lineTo(-w,-h+r);s.quadraticCurveTo(-w,-h,-w+r,-h);
+  }
+  return s;
+}
+function buildLens(p,g){
+  const W=p.width,H=p.height,D=p.depth||30,y=(p.bottomHeight||1000)+H/2,kind=p.shape||'rect';
+  const geo=new THREE.ExtrudeGeometry(lensShape(kind,W,H),{depth:D,bevelEnabled:true,bevelThickness:1.5,bevelSize:1.5,bevelSegments:2,curveSegments:36});
+  mesh(geo,mat('mirrorG'),0,y,-D/2,g);
+  const fgeo=new THREE.ExtrudeGeometry(lensShape(kind,W+18,H+18),{depth:D*.55,bevelEnabled:false,curveSegments:36});
+  mesh(fgeo,mat(p.frame||'graphite'),0,y,-D/2-3,g);
+  if(p.led)addLightStyle(g,W,H,y,D/2,D,p.lightStyle||'top',kind);
+  g.userData.fronts=[];
 }
 function buildShelf(p,g){
   const W=p.width,H=p.height,D=p.depth,T=18,y=H/2;
@@ -643,6 +749,7 @@ function buildModule(m){
   _activeTune=m.params.tune||null;
   if(m.type==='vanity')buildVanity(m.params,g);
   else if(m.type==='mirror')buildMirror(m.params,g);
+  else if(m.type==='lens')buildLens(m.params,g);
   else buildShelf(m.params,g);
   _activeTune=null;
   g.position.set(m.pos.x,0,m.pos.z);
@@ -689,6 +796,10 @@ function moduleYRange(m){
   }
   if(m.type==='mirror'){
     const lo=p.bottomHeight||1080;
+    return {y1:lo,y2:lo+p.height};
+  }
+  if(m.type==='lens'){
+    const lo=p.bottomHeight||1000;
     return {y1:lo,y2:lo+p.height};
   }
   return {y1:0,y2:p.height};
@@ -783,6 +894,7 @@ function updateDimensions(){
     dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,hi,oz+D/2],[-1,0,0],fmtDim(p.height));
     dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
     if(p.shelves>0)leader([ox,lo+p.height/2,oz],[ox+120,lo+p.height/2+60,ZF],fmtDim(p.height/(p.shelves+1))+' 层距');
+    if(m.type==='lens')leader([ox,hi-20,oz],[ox+100,hi+60,ZF],OPT_ZH[p.shape]||p.shape);
   }
   dimGroup=g;scene.add(g);
 }
@@ -868,11 +980,47 @@ function setRot(v){
 }
 
 /* ---------- UI: library ---------- */
-const ICONS={cabinet:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 7h12M8 7v7"/></svg>',
- front:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12"/></svg>',
- mirror:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="2" width="10" height="12" rx="4"/><path d="M8 2v12"/></svg>',
- handle:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5" width="12" height="6" rx="3"/><path d="M5 8h6"/></svg>'};
-const iconFor=g=>g.startsWith('Cabinets')?ICONS.cabinet:g.startsWith('Fronts')?ICONS.front:g.startsWith('Mirror')?ICONS.mirror:ICONS.handle;
+const svgIcon=body=>'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">'+body+'</svg>';
+const ICONS={
+ cabinet:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 7h12M8 7v7"/>'),
+ front:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12"/>'),
+ mirror:svgIcon('<rect x="3" y="2" width="10" height="12" rx="4"/><path d="M8 2v12"/>'),
+ handle:svgIcon('<rect x="2" y="5" width="12" height="6" rx="3"/><path d="M5 8h6"/>'),
+ cab1:svgIcon('<rect x="2" y="6" width="12" height="8" rx="1"/><ellipse cx="8" cy="4.6" rx="4.4" ry="1.7"/><path d="M2 9.5h12"/>'),
+ cab2:svgIcon('<rect x="1.5" y="6" width="13" height="8" rx="1"/><ellipse cx="5" cy="4.6" rx="2.7" ry="1.5"/><ellipse cx="11" cy="4.6" rx="2.7" ry="1.5"/><path d="M1.5 9.5h13"/>'),
+ floor:svgIcon('<rect x="2" y="3" width="12" height="9" rx="1"/><path d="M4.5 12v2.5M11.5 12v2.5"/>'),
+ narrow:svgIcon('<rect x="5" y="4" width="6" height="10" rx="1"/><path d="M5 8h6"/>'),
+ alloy:svgIcon('<rect x="2" y="4" width="12" height="10" rx="1"/><path d="M2 8h12M5 4v10M11 4v10"/>'),
+ oneTwo:svgIcon('<rect x="2" y="3" width="12" height="11" rx="1"/><path d="M6.5 3v11M2 9h4.5"/>'),
+ drawers:svgIcon('<rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6h12M2 9.5h12"/>'),
+ doors:svgIcon('<rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M8 2.5v11"/>'),
+ open:svgIcon('<path d="M2.5 2.5h11v11h-11z"/><path d="M2.5 6.2h11M2.5 9.8h11"/>'),
+ tall:svgIcon('<rect x="4" y="1.5" width="8" height="13" rx="1"/><path d="M4 5h8M4 8.5h8M4 12h8"/>'),
+ leftSide:svgIcon('<rect x="1.5" y="2" width="6" height="12" rx="1"/><path d="M1.5 6h6M1.5 10h6"/><path d="M9.5 8h4M11.5 6l2 2-2 2"/>'),
+ rightSide:svgIcon('<rect x="8.5" y="2" width="6" height="12" rx="1"/><path d="M8.5 6h6M8.5 10h6"/><path d="M2.5 8h4M4.5 6l-2 2 2 2"/>'),
+ mir2eq:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M8 2v12"/>'),
+ mir2uneq:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M10.4 2v12"/>'),
+ mir1:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/>'),
+ mir3:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M6.7 2v12M10.3 2v12"/>'),
+ mirOpen:svgIcon('<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12"/>'),
+ mirLed:svgIcon('<rect x="3" y="2.5" width="10" height="9.5" rx="1"/><path d="M3 13.5h10"/>'),
+ lensRect:svgIcon('<rect x="2" y="3" width="12" height="10" rx="2"/>'),
+ lensCircle:svgIcon('<circle cx="8" cy="8" r="6"/>'),
+ lensOval:svgIcon('<ellipse cx="8" cy="8" rx="4.6" ry="6.4"/>'),
+ lensCapsule:svgIcon('<rect x="4.5" y="1.5" width="7" height="13" rx="3.5"/>'),
+ lensArch:svgIcon('<path d="M3 14V7.5a5 5 0 0 1 10 0V14z"/>'),
+ bar:svgIcon('<path d="M4 5.5v5M12 5.5v5M4 8h8"/>'),
+ recessed:svgIcon('<rect x="2" y="4" width="12" height="8" rx="1"/><path d="M6 6.5h4M6 9.5h4"/>'),
+ knob:svgIcon('<circle cx="8" cy="8" r="3.2"/>'),
+ none:svgIcon('<rect x="2" y="4" width="12" height="8" rx="1"/><path d="M4.5 4.5l7 7"/>'),
+ lightNone:svgIcon('<circle cx="8" cy="8" r="6"/><path d="M5 11L11 5"/>'),
+ lightTop:svgIcon('<rect x="3" y="4" width="10" height="8" rx="1"/><path d="M5 2.5h6"/>'),
+ lightBack:svgIcon('<rect x="3" y="3" width="10" height="10" rx="1"/><path d="M1.5 5v6M14.5 5v6"/>'),
+ lightRing:svgIcon('<circle cx="8" cy="8" r="5.2"/><circle cx="8" cy="8" r="3.4"/>'),
+ lightSides:svgIcon('<rect x="5" y="3" width="6" height="10" rx="1"/><path d="M3 5v6M13 5v6"/>'),
+ lightFront:svgIcon('<rect x="3" y="3" width="10" height="8" rx="1"/><path d="M5 13h6"/>')
+};
+const iconFor=g=>g.startsWith('Lighting')?ICONS.lightTop:g.startsWith('Cabinets')?ICONS.cabinet:g.startsWith('Fronts')?ICONS.front:g.startsWith('Mirror')?ICONS.mirror:g.startsWith('Lens')?ICONS.mirror:ICONS.handle;
 const it_g=g=>lang==='zh'?(GROUP_ZH[g.g]||g.g):g.g;
 function renderLibrary(){
   const q=($('#search').value||'').toLowerCase();let html='';
@@ -883,7 +1031,7 @@ function renderLibrary(){
     if(!items.length)continue;
     html+=`<details class="grp"${q?' open':''}><summary>${it_g(grp)}</summary>`;
     for(const it of items){
-      html+=`<div class="tile" draggable="true" data-g="${grp.g}" data-i="${grp.items.indexOf(it)}"><i>${iconFor(grp.g)}</i><div><b>${nameOf(it)}</b><small>${descOf(it)}</small></div></div>`;
+      html+=`<div class="tile" draggable="true" data-g="${grp.g}" data-i="${grp.items.indexOf(it)}"><i>${ICONS[it.ic]||iconFor(grp.g)}</i><div><b>${nameOf(it)}</b><small>${descOf(it)}</small></div></div>`;
     }
     html+='</details>';
   }
@@ -935,6 +1083,13 @@ function placeTileComponent(it,x,z){
   else{addModule(it.t,it.p);toast((TILE_ZH[it.l]||it.l)+' added');}
 }
 function applyTile(it){
+  if(it.a==='light'){
+    const m=state.modules.find(x=>x.id===state.selectedId);
+    if(!m||(m.type!=='lens'&&m.type!=='mirror')){toast('请先选择镜片或镜柜');return;}
+    m.params.lightStyle=it.v;
+    m.params.led=(it.v!=='none');
+    commit();toast((TILE_ZH[it.l]||it.l)+' 已应用');return;
+  }
   if(it.a==='handle'){
     const m=state.modules.find(x=>x.id===state.selectedId);
     if(m&&m.params.handle!==undefined){setParam('handle',it.v);toast('Handle updated');}
@@ -1079,6 +1234,8 @@ function compilePanels(){
     }else if(m.type==='mirror'){
       rows.push({part:'Mirror cabinet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
       rows.push({part:'Mirror doors',size:`${Math.round(p.width/p.doors)}×${p.height-16}×6`,qty:p.doors});
+    }else if(m.type==='lens'){
+      rows.push({part:'Mirror sheet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
     }else{
       rows.push({part:'Side panels',size:`18×${p.height}×${p.depth}`,qty:2});
       rows.push({part:'Shelves',size:`${p.width-36}×14×${p.depth-10}`,qty:p.shelves});
@@ -1089,7 +1246,7 @@ function compilePanels(){
 }
 function renderBOM(){
   const rows=compilePanels();
-  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
+  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Mirror sheet':'镜片','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
   $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td>${r.qty}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
   return rows.map(r=>[r.part,r.size,r.qty]);
 }
@@ -1137,10 +1294,11 @@ function init(){
 const D_WALL=300;
 // ponytail: installation constraints — wall is a real plane at z=-D_WALL, not empty space.
 // Each type's back face sits at a different local offset, so anchorZ is type-aware.
-function wallMounted(m){return m.type==='mirror'||(m.type==='vanity'&&m.params.mount==='wall');}
+function wallMounted(m){return m.type==='mirror'||m.type==='lens'||(m.type==='vanity'&&m.params.mount==='wall');}
 function backExtent(m){
   const d=footprint(m).d;
   if(m.type==='mirror')return d;              // mirror body centred at -d/2 -> back at -d
+  if(m.type==='lens')return d/2;               // extruded sheet centred on local z=0
   if(m.type==='vanity')return (d+20)/2;        // countertop overhang is the deepest part
   return d/2;                                  // shelf carcass centred
 }
