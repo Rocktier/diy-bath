@@ -202,12 +202,24 @@ const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出
   'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
   'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
 const MAT_ZH={white:'哑光白',cream:'暖白',sage:'鼠尾草绿',navy:'海军蓝',graphite:'石墨灰',oak:'原木橡木',walnut:'胡桃木',black:'黑色',stone:'石材台面',marble:'大理石',brass:'拉丝黄铜',concrete:'混凝土',terrazzo:'水磨石'};
-const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
+const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',doorSplit:'左门占比',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
 const OPT_ZH={recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
 const GROUP_ZH={'Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
-const TILE_ZH={'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
+const TILE_ZH={
+'Single Basin 600':'单盆浴室柜 600','Single Basin 800':'单盆浴室柜 800','Single Basin 900':'单盆浴室柜 900','Single Basin 1000':'单盆浴室柜 1000',
+'Double Basin 1200':'双盆浴室柜 1200','Double Basin 1400':'双盆浴室柜 1400','Floor Standing 800':'落地浴室柜 800','Metal Frame 900':'铝合金浴室柜 900',
+'One Door Two Drawers':'一门双抽浴室柜','Left Side Cabinet':'左侧边柜','Right Side Cabinet':'右侧边柜',
+'Equal Double Door Mirror':'等分双门镜柜','Unequal Double Door Mirror':'非等分双门镜柜','Single Door Mirror':'单门镜柜',
+'Triple Door Beauty Mirror':'三开门美妆镜柜','Open Mirror Cabinet':'全开放镜柜',
+'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
 const PRESET_ZH=s=>lang==='zh'?s.replace(/double basin/g,'双盆').replace(/recessed grip/g,'隐形拉手').replace(/marble top/g,'大理石台面').replace(/stone top/g,'石材台面').replace(/floor standing/g,'落地').replace(/soft-close/g,'静音阻尼').replace(/soft rounded/g,'圆角').replace(/handleless/g,'无拉手').replace(/wall hung/g,'挂墙').replace(/open shelf combo/g,'开放格组合').replace(/thin top/g,'薄台面').replace(/narrow/g,'窄型').replace(/compact/g,'紧凑').replace(/wide/g,'宽型').replace(/minimal/g,'极简').replace(/cube/g,'立方体').replace(/integrated/g,'一体盆').replace(/oak/g,'橡木').replace(/walnut/g,'胡桃木').replace(/brushed brass/g,'拉丝黄铜').replace(/chrome/g,'镀铬').replace(/graphite/g,'石墨灰').replace(/ceramic/g,'陶瓷').replace(/classic/g,'经典').replace(/ultra/g,'极致').replace(/slim/g,'超薄').replace(/detail/g,'饰条').replace(/top/g,'台面').replace(/double/g,'双盆'):s;
-const TILE_DESC_ZH={'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','2 doors':'双门','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
+const TILE_DESC_ZH={
+'600 · compact':'600 · 小户型','800 · best seller':'800 · 主流款','900 · standard':'900 · 标准款','1000 · wide':'1000 · 宽型',
+'1200 · two basins':'1200 · 双盆','1400 · large':'1400 · 大尺寸','800 · floor':'800 · 落地','900 · alloy':'900 · 铝合金',
+'800 · 1 door + 2 drawers':'800 · 一门双抽','300 · left':'300 · 左侧','300 · right':'300 · 右侧',
+'900 · 50:50':'900 · 等分 50:50','900 · 65:35':'900 · 一大一小 65:35','600 · single':'600 · 单门',
+'1200 · 3 zones':'1200 · 三分区','900 · open shelf':'900 · 开放格',
+'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','2 doors':'双门','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
 const L=(k,en)=>lang==='zh'?(LABEL_ZH[k]||en):en;
 const O=(v)=>lang==='zh'?(OPT_ZH[v]||v):v[0].toUpperCase()+v.slice(1);
 let lang='zh';localStorage.setItem('vanitylab-lang','zh'); // 全中文界面：保留英文语库，仅不显示
@@ -240,7 +252,7 @@ const MATERIALS = {
 };
 const DEFAULTS = {
   vanity:{width:900,depth:520,height:600,drawerCount:2,doorCount:0,handle:'recessed',basin:'integrated',basinCount:1,mount:'wall',topHeight:850,rot:0,open:0,material:'white',countertop:'stone'},
-  mirror:{width:900,height:700,depth:150,doors:2,led:true,bottomHeight:1080,rot:0,open:0,material:'white'},
+  mirror:{width:900,height:700,depth:150,doors:2,doorSplit:0.5,led:true,bottomHeight:1080,rot:0,open:0,material:'white'},
   shelf:{width:400,height:1600,depth:350,shelves:4,open:true,rot:0,material:'oak'}
 };
 const SCHEMAS = {
@@ -262,7 +274,8 @@ const SCHEMAS = {
     {k:'width',l:'Width',min:400,max:1400,step:10},
     {k:'height',l:'Height',min:400,max:900,step:10},
     {k:'depth',l:'Depth',min:80,max:220,step:10},
-    {k:'doors',l:'Doors',min:1,max:3,step:1,raw:true},
+    {k:'doors',l:'Doors',min:0,max:3,step:1,raw:true},
+    {k:'doorSplit',l:'Left door share',min:0.35,max:0.75,step:0.01,raw:true},
     {k:'led',l:'LED light',t:'bool'},
     {k:'bottomHeight',l:'Bottom above floor',min:800,max:1500,step:10},
     {k:'material',l:'Frame finish',t:'select',o:Object.keys(MATERIALS)}
@@ -278,18 +291,31 @@ const SCHEMAS = {
 };
 const TILES = [
   {g:'Cabinets',items:[
-    {l:'Single Basin Vanity',s:'900 · 2 drawers',t:'vanity',p:{}},
-    {l:'Double Basin Vanity',s:'1400 · wide',t:'vanity',p:{width:1400,drawerCount:4}},
+    {l:'Single Basin 600',s:'600 · compact',t:'vanity',p:{width:600,depth:480,drawerCount:2}},
+    {l:'Single Basin 800',s:'800 · best seller',t:'vanity',p:{width:800,depth:520,drawerCount:2}},
+    {l:'Single Basin 900',s:'900 · standard',t:'vanity',p:{}},
+    {l:'Single Basin 1000',s:'1000 · wide',t:'vanity',p:{width:1000,depth:540,drawerCount:2}},
+    {l:'Double Basin 1200',s:'1200 · two basins',t:'vanity',p:{width:1200,depth:540,basinCount:2,drawerCount:4}},
+    {l:'Double Basin 1400',s:'1400 · large',t:'vanity',p:{width:1400,depth:560,basinCount:2,drawerCount:4}},
+    {l:'Floor Standing 800',s:'800 · floor',t:'vanity',p:{width:800,depth:520,mount:'floor',drawerCount:2}},
     {l:'Narrow Vanity',s:'500 · small bath',t:'vanity',p:{width:500,depth:420,drawerCount:1}},
-    {l:'Tall Side Cabinet',s:'400 · 1600 h',t:'shelf',p:{}}
+    {l:'Metal Frame 900',s:'900 · alloy',t:'vanity',p:{width:900,depth:520,material:'graphite',handle:'bar'}},
+    {l:'One Door Two Drawers',s:'800 · 1 door + 2 drawers',t:'vanity',p:{width:800,drawerCount:2,doorCount:1,basin:'none'}}
   ]},
   {g:'Fronts & Storage',items:[
     {l:'Drawer Bank',s:'3 drawers',t:'vanity',p:{width:700,drawerCount:3,doorCount:0,basin:'none'}},
     {l:'Door Cabinet',s:'2 doors',t:'vanity',p:{width:800,drawerCount:0,doorCount:2,basin:'none'}},
-    {l:'Open Shelf Unit',s:'3 shelves',t:'shelf',p:{height:900,shelves:3}}
+    {l:'Open Shelf Unit',s:'3 shelves',t:'shelf',p:{height:900,shelves:3}},
+    {l:'Tall Side Cabinet',s:'400 · 1600 h',t:'shelf',p:{}},
+    {l:'Left Side Cabinet',s:'300 · left',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}},
+    {l:'Right Side Cabinet',s:'300 · right',t:'shelf',p:{width:300,height:1400,depth:350,shelves:4}}
   ]},
   {g:'Mirror',items:[
-    {l:'Mirror Cabinet',s:'2 doors',t:'mirror',p:{}},
+    {l:'Equal Double Door Mirror',s:'900 · 50:50',t:'mirror',p:{doors:2,doorSplit:0.5}},
+    {l:'Unequal Double Door Mirror',s:'900 · 65:35',t:'mirror',p:{doors:2,doorSplit:0.65}},
+    {l:'Single Door Mirror',s:'600 · single',t:'mirror',p:{width:600,height:600,depth:110,doors:1}},
+    {l:'Triple Door Beauty Mirror',s:'1200 · 3 zones',t:'mirror',p:{width:1200,height:700,doors:3,led:true}},
+    {l:'Open Mirror Cabinet',s:'900 · open shelf',t:'mirror',p:{doors:0,open:1}},
     {l:'LED Mirror',s:'slim · lit',t:'mirror',p:{doors:1,depth:70}}
   ]},
   {g:'Hardware (on selection)',items:[
@@ -574,14 +600,23 @@ function buildVanity(p,g){
 function buildMirror(p,g){
   const W=p.width,H=p.height,D=p.depth,y=(p.bottomHeight||1080)+H/2;
   mesh(rbox(W,H,D,5),mat(p.material,p.tint),0,y,-D/2,g);
-  const n=p.doors,gap=5,dw=(W-16-gap*(n+1))/n,fronts=[];
+  const n=p.doors,gap=5,inner=W-16-gap*(n+1),fronts=[];
+  // 参考恒洁/九牧：双门镜柜常非等分（一大一小）；doorSplit = 左门占比
+  const widths=[];
+  if(n===2){const r=Math.min(.75,Math.max(.25,p.doorSplit||.5));widths.push(inner*r,inner*(1-r));}
+  else for(let i=0;i<n;i++)widths.push(n?inner/n:0);
+  let cursor=-(W-16)/2+gap;
   for(let i=0;i<n;i++){
-    const x=-(W-16)/2+gap+dw/2+i*(dw+gap);
+    const dw=widths[i],x=cursor+dw/2;cursor+=dw+gap;
     const hinge=i%2?-1:1,hx=x+hinge*dw/2,angle=-hinge*1.1;
     const pv=new THREE.Group();pv.position.set(hx,y,D/2+2);g.add(pv);
     mesh(rbox(dw,H-16,6,3),mat('mirrorG'),x-hx,0,0,pv);
     pv.rotation.y=p.open?angle:0;
     fronts.push({pv,type:'door',angle});
+  }
+  if(p.open&&!n){ // 全开放镜柜：露出开放格
+    const sd=Math.min(D*.6,60);
+    for(let i=0;i<3;i++)mesh(rbox(W-30,12,sd,2),mat(p.material),0,y-H/2+90+i*((H-150)/3),D/2-sd/2,g);
   }
   g.userData.fronts=fronts;
   if(p.led)mesh(rbox(W-20,10,6,3),mat('led'),0,y-H/2+12,D/2+4,g);
@@ -730,7 +765,7 @@ function updateDimensions(){
     dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,lo+bodyH,oz+D/2],[-1,0,0],fmtDim(bodyH));
     dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
     dim([ox-W/2-2*OFF,0,oz+D/2],[ox-W/2-2*OFF,hi,oz+D/2],[-1,0,0],fmtDim(hi));
-    if(p.drawerCount>0){const dw=Math.round(W-2*M.T);dim([ox-dw/2,lo-70,ZF],[ox+dw/2,lo-70,ZF],[0,1,0],fmtDim(dw)+' / drawer');}
+    if(p.drawerCount>0){const dw=Math.round(W-2*M.T);dim([ox-dw/2,lo-70,ZF],[ox+dw/2,lo-70,ZF],[0,1,0],fmtDim(dw)+' / 抽屉');}
     if(p.basin!=='none'){
       const r=Math.round(M.basinR),bn=p.basinCount||1;
       for(let i=0;i<bn;i++){
@@ -742,12 +777,12 @@ function updateDimensions(){
     dim([ox-W/2,hi+OFF,ZF],[ox+W/2,hi+OFF,ZF],[0,1,0],fmtDim(W));
     dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,hi,oz+D/2],[-1,0,0],fmtDim(p.height));
     dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
-    leader([ox,hi-20,oz],[ox+100,hi+60,ZF],p.doors+'-door');
+    leader([ox,hi-20,oz],[ox+100,hi+60,ZF],p.doors+' 门');
   }else{
     dim([ox-W/2,hi+OFF,ZF],[ox+W/2,hi+OFF,ZF],[0,1,0],fmtDim(W));
     dim([ox-W/2-OFF,lo,oz+D/2],[ox-W/2-OFF,hi,oz+D/2],[-1,0,0],fmtDim(p.height));
     dim([ox+W/2+OFF,lo+20,oz-D/2],[ox+W/2+OFF,lo+20,oz+D/2],[0,1,0],fmtDim(D));
-    if(p.shelves>0)leader([ox,lo+p.height/2,oz],[ox+120,lo+p.height/2+60,ZF],fmtDim(p.height/(p.shelves+1))+' pitch');
+    if(p.shelves>0)leader([ox,lo+p.height/2,oz],[ox+120,lo+p.height/2+60,ZF],fmtDim(p.height/(p.shelves+1))+' 层距');
   }
   dimGroup=g;scene.add(g);
 }
