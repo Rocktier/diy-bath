@@ -9,13 +9,11 @@ A 阶段门店实测出图报价流程（真机/真实客户验证）。B 阶段
 工作规范：每次改完功能先记台账，再关旧标签页只留最新一个。
 
 ## 当前阶段（Current Phase）
-阶段 18：标注系统对标 SketchUp（已完成）
+阶段 19：全面中文化界面（已完成）
 
-参考桌面 R-C.jpg：箭头端点、文字直接贴线无方块、标注更详细。
+界面 0 英文残留，I18N.en 语库保留。强制 zh、隐藏切换按钮、补全所有中文映射。
 
 仓库：https://github.com/Rocktier/diy-bath 。A 阶段网页功能基本齐备：参数化柜体、真实开孔、PBR 贴图、无极选色、图价一致 BOM、贴墙/居中吸附、本地化依赖（零外网）。
-
-仓库：https://github.com/Rocktier/diy-bath （旧内容已 force-push 清空）
 结构：根目录放三本台账 + README；`web/` 放网页应用；`android/`、`ios/`、`macos/`、`windows/` 各留 `.gitkeep` 占位。
 
 ## 阶段（Phases）

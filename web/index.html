@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VanityLab — Parametric Bathroom Cabinet Designer</title>
+<title>VanityLab — 参数化浴室柜设计工具</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
@@ -98,58 +98,58 @@ th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{col
 <body>
 <div class="topbar">
   <div class="brand">Vanity<span>Lab</span></div>
-  <div class="tagline" data-i18n="tagline">Parametric Bathroom Cabinet Designer</div>
+  <div class="tagline" data-i18n="tagline">参数化浴室柜设计工具</div>
   <div class="spacer"></div>
-  <div class="seg" id="langSeg"><button data-l="en" class="on">EN</button><button data-l="zh">中文</button></div>
-  <button class="btn" id="mToggle" data-i18n="panels">Panels</button>
-  <div class="seg" id="views"><button data-v="persp" class="on">3D</button><button data-v="front">Front</button><button data-v="side">Side</button><button data-v="top">Top</button></div>
-  <button class="btn" id="fit" data-i18n="fit">Fit</button>
-  <div class="seg" id="units"><button data-u="mm" class="on">mm</button><button data-u="in">inch</button></div>
-  <button class="btn on" id="dims" data-i18n="dims">Dims</button>
-  <button class="btn" id="undo" data-i18n="undo">Undo</button>
-  <button class="btn" id="redo" data-i18n="redo">Redo</button>
-  <details class="menu"><summary data-i18n="export">Export</summary><div class="menuBox">
+  <div class="seg" id="langSeg" style="display:none"><button data-l="en">EN</button><button data-l="zh" class="on">中文</button></div>
+  <button class="btn" id="mToggle" data-i18n="panels">面板</button>
+  <div class="seg" id="views"><button data-v="persp" class="on">3D</button><button data-v="front">正面</button><button data-v="side">侧面</button><button data-v="top">俯视</button></div>
+  <button class="btn" id="fit" data-i18n="fit">适应视图</button>
+  <div class="seg" id="units"><button data-u="mm" class="on">mm</button><button data-u="in">英寸</button></div>
+  <button class="btn on" id="dims" data-i18n="dims">标注</button>
+  <button class="btn" id="undo" data-i18n="undo">撤销</button>
+  <button class="btn" id="redo" data-i18n="redo">重做</button>
+  <details class="menu"><summary data-i18n="export">导出</summary><div class="menuBox">
     <button class="btn" id="png">PNG</button>
     <button class="btn" id="glb">GLB</button>
-    <button class="btn primary" id="bom" data-i18n="bomBtn">BOM / CSV</button>
+    <button class="btn primary" id="bom" data-i18n="bomBtn">物料清单 / CSV</button>
   </div></details>
 </div>
 <div class="main">
   <aside class="sidebar left" id="left">
     <input class="search" id="search">
-    <details class="grp"><summary data-i18n="brands">Brand library</summary>
+    <details class="grp"><summary data-i18n="brands">品牌模型库</summary>
     <div class="chips" id="brandTabs"></div>
     <div id="brandPresets"></div>
     <div class="legal" data-i18n="disclaimer"></div></details>
-    <div class="sect" data-i18n="components">Components</div>
+    <div class="sect" data-i18n="components">组件</div>
     <div id="library"></div>
   </aside>
   <div class="viewport" id="viewport">
-    <div id="loading">Loading 3D engine…</div>
+    <div id="loading">正在加载 3D 引擎…</div>
     <div id="warn" style="display:none"></div>
     <div id="issues" style="display:none"></div>
-    <div class="badge" id="badge">No selection</div>
-    <div class="hint" data-i18n="hint">Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select</div>
+    <div class="badge" id="badge">未选择组件</div>
+    <div class="hint" data-i18n="hint">拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择</div>
     <div class="scrim" id="scrim"></div>
   </div>
   <aside class="sidebar right" id="right">
-    <h2 class="h" data-i18n="properties">Properties</h2>
-    <div class="sub" id="propsHint">Select a component or click one in the library.</div>
+    <h2 class="h" data-i18n="properties">属性</h2>
+    <div class="sub" id="propsHint">选择组件，或点击组件库中的项目。</div>
     <div id="props"></div>
-    <details class="grp"><summary data-i18n="bom">Bill of materials</summary>
-    <table id="bomTable"><thead><tr><th data-i18n="part">Part</th><th data-i18n="size">Size</th><th data-i18n="qty">Qty</th></tr></thead><tbody></tbody></table></details>
-    <details class="grp"><summary data-i18n="project">Project</summary>
+    <details class="grp"><summary data-i18n="bom">物料清单</summary>
+    <table id="bomTable"><thead><tr><th data-i18n="part">部件</th><th data-i18n="size">尺寸</th><th data-i18n="qty">数量</th></tr></thead><tbody></tbody></table></details>
+    <details class="grp"><summary data-i18n="project">方案</summary>
     <select id="projectSel" style="margin-bottom:6px"></select>
     <div class="row" style="flex-wrap:wrap">
-      <button class="btn" id="newProj" data-i18n="newP">New</button>
-      <button class="btn" id="saveAs" data-i18n="saveAs">Save as</button>
-      <button class="btn" id="renameProj" data-i18n="rename">Rename</button>
-      <button class="btn" id="delProj" data-i18n="delP">Delete</button>
+      <button class="btn" id="newProj" data-i18n="newP">新建</button>
+      <button class="btn" id="saveAs" data-i18n="saveAs">另存为</button>
+      <button class="btn" id="renameProj" data-i18n="rename">重命名</button>
+      <button class="btn" id="delProj" data-i18n="delP">删除</button>
     </div>
     <div class="row" style="flex-wrap:wrap;margin-top:6px">
-      <button class="btn" id="saveJson" data-i18n="saveJson">Save JSON</button>
-      <button class="btn" id="loadJson" data-i18n="openJson">Open JSON</button>
-      <button class="btn" id="clearAll" data-i18n="clear">Clear</button>
+      <button class="btn" id="saveJson" data-i18n="saveJson">保存 JSON</button>
+      <button class="btn" id="loadJson" data-i18n="openJson">打开 JSON</button>
+      <button class="btn" id="clearAll" data-i18n="clear">清空</button>
     </div>
     <input type="file" id="fileIn" accept="application/json" hidden></details>
   </aside>
@@ -180,39 +180,42 @@ const I18N = {
     led:'LED light', shelves:'Shelves', openFront:'Open front' },
   zh:{ tagline:'参数化浴室柜设计工具', panels:'面板', fit:'适应视图', dims:'标注',
     undo:'撤销', redo:'重做', export:'导出', bomBtn:'物料清单 / CSV', search:'搜索组件…',
-    disclaimer:'独立设计工具。品牌名称仅作风格参考，不含 Logo、产品图片或官方型号数据，与任何制造商无关联或背书关系。',
+    disclaimer:'独立设计工具。品牌名称仅作风格参考，不含商标、产品图片或官方型号数据，与任何制造商无关联或背书关系。',
     customColor:'自定义颜色', reset:'重置', brands:'品牌模型库',
     components:'组件', mine:'我的模板', noTpl:'暂无保存的模板', saveTpl:'将当前设计保存为模板',
     hint:'拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择', noSel:'未选择组件',
     properties:'属性', propsHint:'选择组件，或点击组件库中的项目。',
     bom:'物料清单', part:'部件', size:'尺寸', qty:'数量', project:'方案',
-    newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'保存 JSON', openJson:'打开 JSON', clear:'清空',
-    placement:'位置', rotation:'旋转', pbr:'PBR 调节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
+    newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'导出方案', openJson:'导入方案', clear:'清空',
+    placement:'位置', rotation:'旋转', pbr:'材质细节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
     delComp:'删除组件', openFronts:'打开门板', closeFronts:'关闭门板', constraints:'条约束', constraint:'条约束',
     fix:'修复', overlap:'重叠 — 拖动分开', vanity:'浴室柜', mirror:'镜柜', shelf:'侧柜',
     width:'宽度', depth:'深度', height:'柜体高度', drawers:'抽屉数', doors:'门板数', handle:'拉手', basin:'盆型', basins:'盆数量',
     mount:'安装方式', topHeight:'台面离地高', bottomHeight:'柜底离地高', material:'饰面', countertop:'台面',
     led:'LED 灯', shelves:'层板数', openFront:'开放式' }
 };
+// 全中文界面：品牌与预设的中文显示名（英文字段保留在数据中，不显示）
+const BRAND_ZH={kohler:'科勒',toto:'东陶',roca:'乐家',hansgrohe:'汉斯格雅',grohe:'高仪',dornbracht:'当代',villeroy:'唯宝'};
+const PRESET_NAME_ZH={'Modern 900':'现代 900','Classic Double 1400':'经典双盆 1400','Narrow 600':'窄型 600','Minimal 900':'极简 900','Double 1200':'双盆 1200','Compact 500':'紧凑 500','Warm Oak 900':'暖橡木 900','Walnut Double 1400':'胡桃木双盆 1400','Open Shelf 600':'开放格 600','Cube 1000':'立方 1000','Cube Double 1375':'立方双盆 1375','Cube Compact 450':'立方紧凑 450','Slim 900':'超薄 900','Double 1300':'双盆 1300','Lux Minimal 1000':'奢享极简 1000','Lux Double 1400':'奢享双盆 1400','Slim 500':'超薄 500','Ceramic 900':'陶瓷 900','Ceramic Double 1400':'陶瓷双盆 1400','Compact 600':'紧凑 600'};
 const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'BOM CSV 已导出','GLB exported':'GLB 已导出',
   'Project saved':'方案已保存','Project loaded':'方案已载入','Project deleted':'方案已删除','New project created':'已新建方案',
   'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
   'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
 const MAT_ZH={white:'哑光白',cream:'暖白',sage:'鼠尾草绿',navy:'海军蓝',graphite:'石墨灰',oak:'原木橡木',walnut:'胡桃木',black:'黑色',stone:'石材台面',marble:'大理石',brass:'拉丝黄铜',concrete:'混凝土',terrazzo:'水磨石'};
 const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
-const OPT_ZH={recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无拉手',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
+const OPT_ZH={recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
 const GROUP_ZH={'Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
 const TILE_ZH={'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
-const PRESET_ZH=s=>lang==='zh'?s.replace(/double basin/g,'双盆').replace(/recessed grip/g,'隐形拉手').replace(/marble top/g,'大理石台面').replace(/stone top/g,'石材台面').replace(/floor standing/g,'落地').replace(/soft-close/g,'静音阻尼').replace(/soft rounded/g,'圆角').replace(/handleless/g,'无拉手').replace(/wall hung/g,'挂墙').replace(/open shelf combo/g,'开放格组合').replace(/thin top/g,'薄台面').replace(/narrow/g,'窄型').replace(/compact/g,'紧凑').replace(/wide/g,'宽型').replace(/minimal/g,'极简').replace(/cube/g,'立方体').replace(/integrated/g,'一体盆').replace(/oak/g,'橡木').replace(/walnut/g,'胡桃木'):s;
+const PRESET_ZH=s=>lang==='zh'?s.replace(/double basin/g,'双盆').replace(/recessed grip/g,'隐形拉手').replace(/marble top/g,'大理石台面').replace(/stone top/g,'石材台面').replace(/floor standing/g,'落地').replace(/soft-close/g,'静音阻尼').replace(/soft rounded/g,'圆角').replace(/handleless/g,'无拉手').replace(/wall hung/g,'挂墙').replace(/open shelf combo/g,'开放格组合').replace(/thin top/g,'薄台面').replace(/narrow/g,'窄型').replace(/compact/g,'紧凑').replace(/wide/g,'宽型').replace(/minimal/g,'极简').replace(/cube/g,'立方体').replace(/integrated/g,'一体盆').replace(/oak/g,'橡木').replace(/walnut/g,'胡桃木').replace(/brushed brass/g,'拉丝黄铜').replace(/chrome/g,'镀铬').replace(/graphite/g,'石墨灰').replace(/ceramic/g,'陶瓷').replace(/classic/g,'经典').replace(/ultra/g,'极致').replace(/slim/g,'超薄').replace(/detail/g,'饰条').replace(/top/g,'台面').replace(/double/g,'双盆'):s;
 const TILE_DESC_ZH={'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','2 doors':'双门','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
 const L=(k,en)=>lang==='zh'?(LABEL_ZH[k]||en):en;
 const O=(v)=>lang==='zh'?(OPT_ZH[v]||v):v[0].toUpperCase()+v.slice(1);
-let lang=localStorage.getItem('vanitylab-lang')||'en';
-const T=k=>(I18N[lang]||I18N.en)[k]??k;
+let lang='zh';localStorage.setItem('vanitylab-lang','zh'); // 全中文界面：保留英文语库，仅不显示
+const T=k=>(I18N[lang]||I18N.zh)[k]??(I18N.zh[k]??k);
 function trMsg(s){
   if(lang==='en')return s;
   if(TOAST_ZH[s])return TOAST_ZH[s];
-  return s.replace(/ added$/,' 已添加').replace(/ placed · snapped to grid$/,' 已放置 · 已吸附网格')
+  return s.replace(/^Saved as /,'另存为：').replace(/^GLB export failed: /,'GLB 导出失败：').replace(/ added$/,' 已添加').replace(/ placed · snapped to grid$/,' 已放置 · 已吸附网格')
     .replace(/ saved$/,' 已保存').replace(/ loaded$/,' 已载入').replace(/ exported$/,' 已导出')
     .replace(/^Invalid project file: /,'无效的方案文件：');
 }
@@ -744,6 +747,13 @@ const newPid=()=>'p'+Date.now().toString(36)+(pidSeq++);
 function saveProjects(){localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));}
 function loadProjects(){
   try{projects=JSON.parse(localStorage.getItem(PROJECTS_KEY))||[];}catch(e){projects=[];}
+  // 全中文界面：迁移旧版英文项目名
+  let renamed=false;
+  projects.forEach(p=>{
+    if(p.name==='My Design'){p.name='我的设计';renamed=true;}
+    else if(typeof p.name==='string'&&p.name.startsWith('Untitled ')){p.name=p.name.replace('Untitled ','未命名方案 ');renamed=true;}
+  });
+  if(renamed)saveProjects();
   if(!projects.length){
     const raw=localStorage.getItem('vanitylab');let d={modules:[],selectedId:null,dims:true};
     if(raw){try{const s=JSON.parse(raw);d={modules:s.modules||[],selectedId:s.selectedId||null,dims:s.dims!==false};}catch(e){}}
@@ -837,7 +847,7 @@ function renderLibrary(){
 }
 function loadTemplates(){try{return JSON.parse(localStorage.getItem('vanitylab-templates'))||[];}catch(e){return [];}}
 function renderBrandTabs(){
-  const tabs=[...BRANDS.map(b=>({id:b.id,n:b.n})),{id:'mine',n:T('mine')}];
+  const tabs=[...BRANDS.map(b=>({id:b.id,n:BRAND_ZH[b.id]||b.n})),{id:'mine',n:T('mine')}];
   const box=$('#brandTabs');
   box.innerHTML=tabs.map(t=>`<button data-b="${t.id}" class="${activeBrand===t.id?'on':''}">${t.n}</button>`).join('');
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeBrand=b.dataset.b;renderBrandTabs();renderBrandPresets();});
@@ -845,13 +855,13 @@ function renderBrandTabs(){
 function renderBrandPresets(){
   const list=activeBrand==='mine'?loadTemplates():BRANDS.find(b=>b.id===activeBrand).presets;
   const box=$('#brandPresets');
-  box.innerHTML=list.map((p,i)=>`<div class="bcard" data-p="${i}"><b>${p.n.replace(/</g,'&lt;')}</b><small>${PRESET_ZH(p.d||p.items.map(x=>x.t).join(' + ')).replace(/</g,'&lt;')}</small></div>`).join('')||`<div class="empty">${T('noTpl')}</div>`;
+  box.innerHTML=list.map((p,i)=>`<div class="bcard" data-p="${i}"><b>${(PRESET_NAME_ZH[p.n]||PRESET_ZH(p.n)).replace(/</g,'&lt;')}</b><small>${PRESET_ZH(p.d||p.items.map(x=>x.t).join(' + ')).replace(/</g,'&lt;')}</small></div>`).join('')||`<div class="empty">${T('noTpl')}</div>`;
   box.querySelectorAll('.bcard').forEach(c=>c.onclick=()=>applyPreset(list[+c.dataset.p]));
   if(activeBrand==='mine'){
     const b=document.createElement('button');b.className='btn';b.id='saveTpl';b.style.width='100%';b.style.marginTop='4px';b.textContent=T('saveTpl');
     b.onclick=()=>{
       const n=prompt(lang==='zh'?'模板名称：':'Template name:',lang==='zh'?'我的模板':'My Template');if(!n)return;
-      const arr=loadTemplates();arr.push({n,d:state.modules.length+' modules',items:state.modules.map(m=>({t:m.type,x:m.pos.x,z:m.pos.z,p:clone(m.params)}))});
+      const arr=loadTemplates();arr.push({n,d:state.modules.length+' 个组件',items:state.modules.map(m=>({t:m.type,x:m.pos.x,z:m.pos.z,p:clone(m.params)}))});
       localStorage.setItem('vanitylab-templates',JSON.stringify(arr));renderBrandPresets();toast('Template saved');
     };
     box.appendChild(b);
@@ -861,7 +871,7 @@ function applyPreset(p){
   state.modules=[];
   for(const it of p.items){const mm={id:uid++,type:it.t,params:{...clone(DEFAULTS[it.t]),...it.p},pos:{x:it.x||0,z:0}};mm.pos.z=clampZ(mm,it.z||0);state.modules.push(mm);}
   state.selectedId=state.modules[0]?.id||null;
-  commit();setView(currentView);toast(p.n+' loaded');
+  commit();setView(currentView);toast((PRESET_NAME_ZH[p.n]||p.n)+' loaded');
 }
 function applyTile(it){
   if(it.a==='handle'){
@@ -869,7 +879,7 @@ function applyTile(it){
     if(m&&m.params.handle!==undefined){setParam('handle',it.v);toast('Handle updated');}
     else toast('Select a vanity first');return;
   }
-  addModule(it.t,it.p);toast(it.l+' added');
+  addModule(it.t,it.p);toast((TILE_ZH[it.l]||it.l)+' added');
 }
 let toastT;
 function toast(msg){const b=$('#badge');b.textContent=trMsg(msg);clearTimeout(toastT);toastT=setTimeout(updateBadge,1400);}
@@ -1003,7 +1013,7 @@ function compilePanels(){
       const bn=p.basinCount||1,r=Math.round(M.basinR);
       if(p.basin==='integrated')rows.push({part:'Integrated basin',size:`Ø${r*2}×22`,qty:bn});
       else if(p.basin==='vessel')rows.push({part:'Vessel basin',size:'Ø350×120',qty:bn});
-      if(p.basin!=='none')rows.push({part:'Countertop cut-outs',size:`Ø${r*2} × ${bn} + faucet Ø28`,qty:1});
+      if(p.basin!=='none')rows.push({part:'Countertop cut-outs',size:`Ø${r*2} × ${bn} + 龙头孔 Ø28`,qty:1});
       if(p.mount==='floor')rows.push({part:'Support feet',size:`24×${M.feetH}×24`,qty:4});
     }else if(m.type==='mirror'){
       rows.push({part:'Mirror cabinet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
@@ -1183,7 +1193,7 @@ function onDrop(e){
     const W=(it.p&&it.p.width)||DEFAULTS[it.t].width;
     const D=(it.p&&it.p.depth)||DEFAULTS[it.t].depth;
     const s=snapDrop(pt.x,pt.z,W,D);
-    addModule(it.t,it.p,s.x,s.z);toast(it.l+' placed · snapped to grid');
+    addModule(it.t,it.p,s.x,s.z);toast((TILE_ZH[it.l]||it.l)+' placed · snapped to grid');
   }
   else if(it.a)applyTile(it);
 }
@@ -1247,7 +1257,7 @@ try{
   history=[clone(state)];hi=0;
   $('#dims').classList.toggle('on',state.dims!==false);init();rebuildAll();setView('persp');renderLibrary();renderBrandTabs();renderBrandPresets();renderProjectUI();renderProps();renderBOM();updateHistoryBtns();updateBadge();setLang(lang);
   if(!state.modules.length){addModule('vanity');history=[clone(state)];hi=0;updateHistoryBtns();}
-}catch(err){loading.classList.add('err');loading.textContent='Failed to load: '+err.message;console.error(err);}
+}catch(err){loading.classList.add('err');loading.textContent='加载失败：'+err.message;console.error(err);}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
