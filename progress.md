@@ -226,6 +226,15 @@
 - 图标：新增 6 个灯光专属 SVG；ICONFor 对 Lighting 分组给默认灯图标
 - 验证：6 分组（含灯光 6 项）、6 样式切换正确、镜片描述无灯光字样、光影 hook 通过、0 英文、控制台 0 错误
 
+### 阶段 27：报价单能力 — complete
+- 缺口定位：A 阶段"出图报价"中出图已具备（PNG/GLB），"报价"零实现（全代码 0 处价格概念）
+- BOM 表 3 列 → 5 列：部件/尺寸/数量/单价¥/小计¥，tfoot 加合计行
+- 单价列内嵌可编辑输入框：change 即写入 localStorage（`vanitylab-prices`，门店级独立键，不随方案切换）；只重算合计单元格、不重建 tbody，不打断编辑
+- PRICE_DEFAULTS 14 项示例价，覆盖 compilePanels 全部 part 键（防新增部件漏价）
+- CSV → 报价单：Part,Size,Qty,UnitPrice(CNY),Subtotal(CNY) + Total 行；文件名 vanitylab-quote.csv；加 \ufeff BOM 防 Excel 乱码；按钮文案改「报价单 / CSV」，toast「报价单已导出」
+- 验证：node --check 语法通过；compilePanels 干跑典型套装（1400 主柜+镜柜+400 侧柜）10 行全部有价、合计 ¥3700 正确；renderBOM 返回 5 元组，唯一消费者 CSV 已同步；setLang 链路（data-i18n 表头 + renderBOM 重渲）确认完整
+- 浏览器截图验收留给用户
+
 ## 工作规范（用户要求，2026-11-18）
 - **每次改完功能/做完修改后：先记录台账，再关闭所有旧版本浏览器标签页，只留最新一个**
 - 旧标签页不保留，避免混淆

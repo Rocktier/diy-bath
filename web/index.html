@@ -72,6 +72,9 @@ input[type=range]{width:100%;accent-color:var(--accent);height:18px}
 .empty{color:var(--muted);font-size:12px;line-height:1.6;padding:12px;border:1px dashed var(--line);border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:11px}
 th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase}
+#bomTable .priceIn{width:56px;padding:3px 4px;font-size:11px;text-align:right}
+#bomTable .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#bomTable tfoot td{font-weight:700;border-bottom:none;border-top:1px solid var(--line);color:var(--text)}
 .btn-del{color:var(--danger);border-color:#f0c9c4;width:100%;margin-top:6px}
 #loading{position:absolute;inset:0;display:grid;place-items:center;background:#f8fafb;color:var(--muted);font-size:13px;z-index:5}
 #loading.err{color:var(--danger)}
@@ -111,7 +114,7 @@ th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{col
   <details class="menu"><summary data-i18n="export">导出</summary><div class="menuBox">
     <button class="btn" id="png">PNG</button>
     <button class="btn" id="glb">GLB</button>
-    <button class="btn primary" id="bom" data-i18n="bomBtn">物料清单 / CSV</button>
+    <button class="btn primary" id="bom" data-i18n="bomBtn">报价单 / CSV</button>
   </div></details>
 </div>
 <div class="main">
@@ -137,7 +140,7 @@ th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{col
     <div class="sub" id="propsHint">选择组件，或点击组件库中的项目。</div>
     <div id="props"></div>
     <details class="grp"><summary data-i18n="bom">物料清单</summary>
-    <table id="bomTable"><thead><tr><th data-i18n="part">部件</th><th data-i18n="size">尺寸</th><th data-i18n="qty">数量</th></tr></thead><tbody></tbody></table></details>
+    <table id="bomTable"><thead><tr><th data-i18n="part">部件</th><th data-i18n="size">尺寸</th><th data-i18n="qty">数量</th><th data-i18n="unitPrice">单价¥</th><th data-i18n="subtotal">小计¥</th></tr></thead><tbody></tbody><tfoot></tfoot></table></details>
     <details class="grp"><summary data-i18n="project">方案</summary>
     <select id="projectSel" style="margin-bottom:6px"></select>
     <div class="row" style="flex-wrap:wrap">
@@ -164,13 +167,14 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 const $ = s => document.querySelector(s);
 const I18N = {
   en:{ tagline:'Parametric Bathroom Cabinet Designer', panels:'Panels', fit:'Fit', dims:'Dims',
-    undo:'Undo', redo:'Redo', export:'Export', bomBtn:'BOM / CSV', search:'Search components…',
+    undo:'Undo', redo:'Redo', export:'Export', bomBtn:'Quote / CSV', search:'Search components…',
     disclaimer:'Independent design tool. Brand names are style references only. No logos, product photos or official model data. Not affiliated with or endorsed by any manufacturer.',
     customColor:'Custom', reset:'Reset', brands:'Brand library',
     components:'Components', mine:'My Templates', noTpl:'No saved templates yet.', saveTpl:'Save current design as template',
     hint:'Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select', noSel:'No selection',
     properties:'Properties', propsHint:'Select a component or click one in the library.',
     bom:'Bill of materials', part:'Part', size:'Size', qty:'Qty', project:'Project',
+    unitPrice:'Unit ¥', subtotal:'Subtotal', total:'Total',
     newP:'New', saveAs:'Save as', rename:'Rename', delP:'Delete', saveJson:'Save JSON', openJson:'Open JSON', clear:'Clear',
     placement:'Placement', rotation:'Rotation', pbr:'PBR tuning', roughness:'Roughness', metalness:'Metalness', clearcoat:'Clearcoat',
     delComp:'Delete component', openFronts:'Open fronts', closeFronts:'Close fronts', constraints:'constraints', constraint:'constraint',
@@ -179,13 +183,14 @@ const I18N = {
     mount:'Mount', topHeight:'Top above floor', bottomHeight:'Bottom above floor', material:'Finish', countertop:'Countertop',
     led:'LED light', shelves:'Shelves', openFront:'Open front' },
   zh:{ tagline:'参数化浴室柜设计工具', panels:'面板', fit:'适应视图', dims:'标注',
-    undo:'撤销', redo:'重做', export:'导出', bomBtn:'物料清单 / CSV', search:'搜索组件…',
+    undo:'撤销', redo:'重做', export:'导出', bomBtn:'报价单 / CSV', search:'搜索组件…',
     disclaimer:'独立设计工具。品牌名称仅作风格参考，不含商标、产品图片或官方型号数据，与任何制造商无关联或背书关系。',
     customColor:'自定义颜色', reset:'重置', brands:'品牌模型库',
     components:'组件', mine:'我的模板', noTpl:'暂无保存的模板', saveTpl:'将当前设计保存为模板',
     hint:'拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择', noSel:'未选择组件',
     properties:'属性', propsHint:'选择组件，或点击组件库中的项目。',
     bom:'物料清单', part:'部件', size:'尺寸', qty:'数量', project:'方案',
+    unitPrice:'单价¥', subtotal:'小计¥', total:'合计',
     newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'导出方案', openJson:'导入方案', clear:'清空',
     placement:'位置', rotation:'旋转', pbr:'材质细节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
     delComp:'删除组件', openFronts:'打开门板', closeFronts:'关闭门板', constraints:'条约束', constraint:'条约束',
@@ -197,7 +202,7 @@ const I18N = {
 // 全中文界面：品牌与预设的中文显示名（英文字段保留在数据中，不显示）
 const BRAND_ZH={kohler:'科勒',toto:'东陶',roca:'乐家',hansgrohe:'汉斯格雅',grohe:'高仪',dornbracht:'当代',villeroy:'唯宝'};
 const PRESET_NAME_ZH={'Modern 900':'现代 900','Classic Double 1400':'经典双盆 1400','Narrow 600':'窄型 600','Minimal 900':'极简 900','Double 1200':'双盆 1200','Compact 500':'紧凑 500','Warm Oak 900':'暖橡木 900','Walnut Double 1400':'胡桃木双盆 1400','Open Shelf 600':'开放格 600','Cube 1000':'立方 1000','Cube Double 1375':'立方双盆 1375','Cube Compact 450':'立方紧凑 450','Slim 900':'超薄 900','Double 1300':'双盆 1300','Lux Minimal 1000':'奢享极简 1000','Lux Double 1400':'奢享双盆 1400','Slim 500':'超薄 500','Ceramic 900':'陶瓷 900','Ceramic Double 1400':'陶瓷双盆 1400','Compact 600':'紧凑 600'};
-const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'BOM CSV 已导出','GLB exported':'GLB 已导出',
+const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'报价单已导出','GLB exported':'GLB 已导出',
   'Project saved':'方案已保存','Project loaded':'方案已载入','Project deleted':'方案已删除','New project created':'已新建方案',
   'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
   'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
@@ -1244,11 +1249,33 @@ function compilePanels(){
   }
   return rows;
 }
+// ---- 报价：门店价格表（localStorage 独立键，门店级配置，不随方案切换） ----
+const PRICE_DEFAULTS={'Carcass':850,'Drawer fronts':180,'Door fronts':150,'Countertop':600,'Integrated basin':400,'Vessel basin':300,'Countertop cut-outs':80,'Support feet':15,'Mirror cabinet':700,'Mirror doors':120,'Mirror sheet':150,'Side panels':100,'Shelves':45,'Top / bottom':45};
+let prices=(()=>{try{return Object.assign({},PRICE_DEFAULTS,JSON.parse(localStorage.getItem('vanitylab-prices'))||{});}catch(e){return {...PRICE_DEFAULTS};}})();
+function savePrices(){localStorage.setItem('vanitylab-prices',JSON.stringify(prices));}
+const fmtMoney=n=>'¥'+Math.round(n).toLocaleString('zh-CN');
 function renderBOM(){
   const rows=compilePanels();
   const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Mirror sheet':'镜片','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
-  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td>${r.qty}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
-  return rows.map(r=>[r.part,r.size,r.qty]);
+  let total=0;
+  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>{
+    const price=Number(prices[r.part])||0,sub=price*r.qty;total+=sub;
+    return `<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td class="num">${r.qty}</td><td><input type="number" min="0" step="1" class="priceIn" data-part="${r.part}" value="${price}"></td><td class="num">${fmtMoney(sub)}</td></tr>`;
+  }).join(''):`<tr><td colspan="5" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
+  $('#bomTable tfoot').innerHTML=rows.length?`<tr><td colspan="4" style="text-align:right">${T('total')}</td><td class="num">${fmtMoney(total)}</td></tr>`:'';
+  document.querySelectorAll('#bomTable .priceIn').forEach(inp=>{
+    inp.onchange=()=>{const p=inp.dataset.part;prices[p]=Math.max(0,parseFloat(inp.value)||0);inp.value=prices[p];savePrices();renderBOMTotals();};
+  });
+  return rows.map(r=>{const price=Number(prices[r.part])||0;return [r.part,r.size,r.qty,price,price*r.qty];});
+}
+function renderBOMTotals(){ // 只更新合计单元格，不重建 tbody，避免打断正在编辑的单价框
+  let total=0;
+  document.querySelectorAll('#bomTable tbody tr').forEach(tr=>{
+    const inp=tr.querySelector('.priceIn');if(!inp)return;
+    total+=(Number(inp.value)||0)*(Number(tr.children[2].textContent)||0);
+  });
+  const tf=$('#bomTable tfoot');
+  if(tf&&tf.firstElementChild)tf.firstElementChild.lastElementChild.textContent=fmtMoney(total);
 }
 
 /* ---------- camera / scene ---------- */
@@ -1444,7 +1471,7 @@ $('#clearAll').onclick=()=>{if(!confirm(lang==='zh'?'清空当前设计的所有
 $('#undo').onclick=undo;$('#redo').onclick=redo;
 $('#png').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download='vanitylab.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('PNG exported');};
 $('#glb').onclick=()=>{new GLTFExporter().parse(root,buf=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'model/gltf-binary'}));a.download='vanitylab.glb';a.click();toast('GLB exported');},err=>toast('GLB export failed: '+err.message),{binary:true});};
-$('#bom').onclick=()=>{const rows=renderBOM();let csv='Part,Size(mm),Qty\n'+rows.map(r=>`"${r[0]}","${r[1]}",${r[2]}`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='vanitylab-bom.csv';a.click();toast('BOM CSV exported');};
+$('#bom').onclick=()=>{const rows=renderBOM();let csv='Part,Size(mm),Qty,UnitPrice(CNY),Subtotal(CNY)\n'+rows.map(r=>`"${r[0]}","${r[1]}",${r[2]},${r[3]},${r[4]}`).join('\n');if(rows.length)csv+='\nTotal,,,,'+rows.reduce((s,r)=>s+r[4],0);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='vanitylab-quote.csv';a.click();toast('BOM CSV exported');};
 let panelState=0; // 0 none · 1 library · 2 properties
 function setPanels(s){
   panelState=s;
