@@ -72,9 +72,6 @@ input[type=range]{width:100%;accent-color:var(--accent);height:18px}
 .empty{color:var(--muted);font-size:12px;line-height:1.6;padding:12px;border:1px dashed var(--line);border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:11px}
 th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase}
-#bomTable .priceIn{width:56px;padding:3px 4px;font-size:11px;text-align:right}
-#bomTable .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-#bomTable tfoot td{font-weight:700;border-bottom:none;border-top:1px solid var(--line);color:var(--text)}
 .btn-del{color:var(--danger);border-color:#f0c9c4;width:100%;margin-top:6px}
 #loading{position:absolute;inset:0;display:grid;place-items:center;background:#f8fafb;color:var(--muted);font-size:13px;z-index:5}
 #loading.err{color:var(--danger)}
@@ -114,7 +111,7 @@ th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{col
   <details class="menu"><summary data-i18n="export">导出</summary><div class="menuBox">
     <button class="btn" id="png">PNG</button>
     <button class="btn" id="glb">GLB</button>
-    <button class="btn primary" id="bom" data-i18n="bomBtn">报价单 / CSV</button>
+    <button class="btn primary" id="bom" data-i18n="bomBtn">物料清单 / CSV</button>
   </div></details>
 </div>
 <div class="main">
@@ -140,7 +137,7 @@ th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}th{col
     <div class="sub" id="propsHint">选择组件，或点击组件库中的项目。</div>
     <div id="props"></div>
     <details class="grp"><summary data-i18n="bom">物料清单</summary>
-    <table id="bomTable"><thead><tr><th data-i18n="part">部件</th><th data-i18n="size">尺寸</th><th data-i18n="qty">数量</th><th data-i18n="unitPrice">单价¥</th><th data-i18n="subtotal">小计¥</th></tr></thead><tbody></tbody><tfoot></tfoot></table></details>
+    <table id="bomTable"><thead><tr><th data-i18n="part">部件</th><th data-i18n="size">尺寸</th><th data-i18n="qty">数量</th></tr></thead><tbody></tbody></table></details>
     <details class="grp"><summary data-i18n="project">方案</summary>
     <select id="projectSel" style="margin-bottom:6px"></select>
     <div class="row" style="flex-wrap:wrap">
@@ -167,14 +164,13 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 const $ = s => document.querySelector(s);
 const I18N = {
   en:{ tagline:'Parametric Bathroom Cabinet Designer', panels:'Panels', fit:'Fit', dims:'Dims',
-    undo:'Undo', redo:'Redo', export:'Export', bomBtn:'Quote / CSV', search:'Search components…',
+    undo:'Undo', redo:'Redo', export:'Export', bomBtn:'BOM / CSV', search:'Search components…',
     disclaimer:'Independent design tool. Brand names are style references only. No logos, product photos or official model data. Not affiliated with or endorsed by any manufacturer.',
     customColor:'Custom', reset:'Reset', brands:'Brand library',
     components:'Components', mine:'My Templates', noTpl:'No saved templates yet.', saveTpl:'Save current design as template',
     hint:'Drag to orbit · Scroll to zoom · Right-drag to pan · Click to select', noSel:'No selection',
     properties:'Properties', propsHint:'Select a component or click one in the library.',
     bom:'Bill of materials', part:'Part', size:'Size', qty:'Qty', project:'Project',
-    unitPrice:'Unit ¥', subtotal:'Subtotal', total:'Total',
     newP:'New', saveAs:'Save as', rename:'Rename', delP:'Delete', saveJson:'Save JSON', openJson:'Open JSON', clear:'Clear',
     placement:'Placement', rotation:'Rotation', pbr:'PBR tuning', roughness:'Roughness', metalness:'Metalness', clearcoat:'Clearcoat',
     delComp:'Delete component', openFronts:'Open fronts', closeFronts:'Close fronts', constraints:'constraints', constraint:'constraint',
@@ -183,14 +179,13 @@ const I18N = {
     mount:'Mount', topHeight:'Top above floor', bottomHeight:'Bottom above floor', material:'Finish', countertop:'Countertop',
     led:'LED light', shelves:'Shelves', openFront:'Open front' },
   zh:{ tagline:'参数化浴室柜设计工具', panels:'面板', fit:'适应视图', dims:'标注',
-    undo:'撤销', redo:'重做', export:'导出', bomBtn:'报价单 / CSV', search:'搜索组件…',
+    undo:'撤销', redo:'重做', export:'导出', bomBtn:'物料清单 / CSV', search:'搜索组件…',
     disclaimer:'独立设计工具。品牌名称仅作风格参考，不含商标、产品图片或官方型号数据，与任何制造商无关联或背书关系。',
     customColor:'自定义颜色', reset:'重置', brands:'品牌模型库',
     components:'组件', mine:'我的模板', noTpl:'暂无保存的模板', saveTpl:'将当前设计保存为模板',
     hint:'拖拽旋转 · 滚轮缩放 · 右键平移 · 点击选择', noSel:'未选择组件',
     properties:'属性', propsHint:'选择组件，或点击组件库中的项目。',
     bom:'物料清单', part:'部件', size:'尺寸', qty:'数量', project:'方案',
-    unitPrice:'单价¥', subtotal:'小计¥', total:'合计',
     newP:'新建', saveAs:'另存为', rename:'重命名', delP:'删除', saveJson:'导出方案', openJson:'导入方案', clear:'清空',
     placement:'位置', rotation:'旋转', pbr:'材质细节', roughness:'粗糙度', metalness:'金属度', clearcoat:'清漆层',
     delComp:'删除组件', openFronts:'打开门板', closeFronts:'关闭门板', constraints:'条约束', constraint:'条约束',
@@ -202,20 +197,20 @@ const I18N = {
 // 全中文界面：品牌与预设的中文显示名（英文字段保留在数据中，不显示）
 const BRAND_ZH={kohler:'科勒',toto:'东陶',roca:'乐家',hansgrohe:'汉斯格雅',grohe:'高仪',dornbracht:'当代',villeroy:'唯宝'};
 const PRESET_NAME_ZH={'Modern 900':'现代 900','Classic Double 1400':'经典双盆 1400','Narrow 600':'窄型 600','Minimal 900':'极简 900','Double 1200':'双盆 1200','Compact 500':'紧凑 500','Warm Oak 900':'暖橡木 900','Walnut Double 1400':'胡桃木双盆 1400','Open Shelf 600':'开放格 600','Cube 1000':'立方 1000','Cube Double 1375':'立方双盆 1375','Cube Compact 450':'立方紧凑 450','Slim 900':'超薄 900','Double 1300':'双盆 1300','Lux Minimal 1000':'奢享极简 1000','Lux Double 1400':'奢享双盆 1400','Slim 500':'超薄 500','Ceramic 900':'陶瓷 900','Ceramic Double 1400':'陶瓷双盆 1400','Compact 600':'紧凑 600'};
-const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'报价单已导出','GLB exported':'GLB 已导出',
+const TOAST_ZH={'Handle updated':'拉手已更新','PNG exported':'PNG 已导出','BOM CSV exported':'BOM CSV 已导出','GLB exported':'GLB 已导出',
   'Project saved':'方案已保存','Project loaded':'方案已载入','Project deleted':'方案已删除','New project created':'已新建方案',
   'Design cleared':'设计已清空','Template saved':'模板已保存','Auto-fixed':'已自动修复','Fronts opened':'门板已打开',
   'Fronts closed':'门板已关闭','Cannot delete the only project':'不能删除唯一的方案','Select a vanity first':'请先选择柜体'};
 const MAT_ZH={white:'哑光白',cream:'暖白',sage:'鼠尾草绿',navy:'海军蓝',graphite:'石墨灰',oak:'原木橡木',walnut:'胡桃木',black:'黑色',stone:'石材台面',marble:'大理石',brass:'拉丝黄铜',concrete:'混凝土',terrazzo:'水磨石'};
-const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',handle:'拉手',basin:'盆型',basinCount:'盆数量',doorSplit:'左门占比',shape:'镜片形状',frame:'边框',lightStyle:'灯光样式',defog:'除雾',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
-const OPT_ZH={top:'顶灯条',back:'背光',ring:'环形跑道灯',sides:'双侧灯',front:'前发光',rect:'方形',circle:'圆形',ellipse:'椭圆形',capsule:'跑道形',arch:'异形拱门',graphite:'石墨灰',brass:'拉丝黄铜',recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
+const LABEL_ZH={width:'宽度',depth:'深度',height:'柜体高度',drawerCount:'抽屉数',doorCount:'门板数',drawerSplit:'上抽占比',frontLayout:'门抽布局',doorSide:'开门方向',doorShare:'门区占比',handle:'拉手',basin:'盆型',basinCount:'盆数量',doorSplit:'左门占比',shape:'镜片形状',frame:'边框',lightStyle:'灯光样式',defog:'除雾',mount:'安装方式',topHeight:'台面离地高',bottomHeight:'柜底离地高',material:'饰面',countertop:'台面',doors:'门板数',led:'LED 灯',shelves:'层板数',open:'开放式'};
+const OPT_ZH={stack:'上下叠',split:'左右分区',left:'左开',right:'右开',top:'顶灯条',back:'背光',ring:'环形跑道灯',sides:'双侧灯',front:'前发光',rect:'方形',circle:'圆形',ellipse:'椭圆形',capsule:'跑道形',arch:'异形拱门',graphite:'石墨灰',brass:'拉丝黄铜',recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手',none:'无',integrated:'一体盆',vessel:'台上盆',wall:'挂墙',floor:'落地',stone:'石材',marble:'大理石',white:'哑光白',black:'黑色',oak:'橡木'};
 const GROUP_ZH={'Lighting (on selection)':'灯光（作用于选中组件）','Lens':'镜片','Cabinets':'柜体','Fronts & Storage':'门板与收纳','Mirror':'镜柜','Hardware (on selection)':'五金（作用于选中组件）'};
 const TILE_ZH={
 'No Light':'无灯','Top Light Bar':'顶部灯条','Backlit Glow':'背光','Round Track Light':'圆形跑道灯','Side Lights':'双侧灯','Front Light Bar':'前发光灯条',
 'Rect Smart Mirror':'方形智能镜','Round LED Mirror':'圆形 LED 镜','Oval Mirror':'椭圆形镜','Capsule Mirror':'跑道形镜','Arch Mirror':'异形拱门镜',
 'Single Basin 600':'单盆浴室柜 600','Single Basin 800':'单盆浴室柜 800','Single Basin 900':'单盆浴室柜 900','Single Basin 1000':'单盆浴室柜 1000',
 'Double Basin 1200':'双盆浴室柜 1200','Double Basin 1400':'双盆浴室柜 1400','Floor Standing 800':'落地浴室柜 800','Metal Frame 900':'铝合金浴室柜 900',
-'One Door Two Drawers':'一门双抽浴室柜','Left Side Cabinet':'左侧边柜','Right Side Cabinet':'右侧边柜',
+'One Door Two Drawers':'一门双抽浴室柜','Sub Mother Drawers':'子母抽浴室柜','Left Single Door':'左单开门浴室柜','Right Single Door':'右单开门浴室柜','Left Side Cabinet':'左侧边柜','Right Side Cabinet':'右侧边柜',
 'Equal Double Door Mirror':'等分双门镜柜','Unequal Double Door Mirror':'非等分双门镜柜','Single Door Mirror':'单门镜柜',
 'Triple Door Beauty Mirror':'三开门美妆镜柜','Open Mirror Cabinet':'全开放镜柜',
 'Single Basin Vanity':'单盆浴室柜','Double Basin Vanity':'双盆浴室柜','Narrow Vanity':'窄型浴室柜','Tall Side Cabinet':'高侧柜','Drawer Bank':'抽屉柜','Door Cabinet':'门板柜','Open Shelf Unit':'开放层架','Mirror Cabinet':'镜柜','LED Mirror':'LED 镜柜','Bar Handle':'长拉手','Recessed Grip':'隐形拉手','Knob':'圆形拉手','No Handle':'无拉手'};
@@ -225,10 +220,10 @@ const TILE_DESC_ZH={
 '600 · frame':'600 · 边框款','Ø600 · round':'Φ600 · 圆形','500 · soft':'500 · 柔和椭圆','500 · trend':'500 · 流行跑道','600 · irregular':'600 · 异形拱门',
 '600 · compact':'600 · 小户型','800 · best seller':'800 · 主流款','900 · standard':'900 · 标准款','1000 · wide':'1000 · 宽型',
 '1200 · two basins':'1200 · 双盆','1400 · large':'1400 · 大尺寸','800 · floor':'800 · 落地','900 · alloy':'900 · 铝合金',
-'800 · 1 door + 2 drawers':'800 · 一门双抽','300 · left':'300 · 左侧','300 · right':'300 · 右侧',
+'800 · 1 door + 2 drawers':'800 · 一门双抽','900 · unequal drawers':'900 · 子母抽','800 · left hinge':'800 · 左开门','800 · right hinge':'800 · 右开门','300 · left':'300 · 左侧','300 · right':'300 · 右侧',
 '900 · 50:50':'900 · 等分 50:50','900 · 65:35':'900 · 一大一小 65:35','600 · single':'600 · 单门',
 '1200 · 3 zones':'1200 · 三分区','900 · open shelf':'900 · 开放格',
-'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','2 doors':'双门','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
+'900 · 2 drawers':'900 · 双抽屉','1400 · wide':'1400 · 双盆','500 · small bath':'500 · 小户型','400 · 1600 h':'400 · 高 1600','3 drawers':'三抽屉','2 doors':'双门','3 shelves':'三层板','slim · lit':'超薄 · 带灯','metal bar':'金属长条','45° groove':'45° 斜切','round':'圆形','handleless':'无拉手'};
 const L=(k,en)=>lang==='zh'?(LABEL_ZH[k]||en):en;
 const O=(v)=>lang==='zh'?(OPT_ZH[v]||v):v[0].toUpperCase()+v.slice(1);
 let lang='zh';localStorage.setItem('vanitylab-lang','zh'); // 全中文界面：保留英文语库，仅不显示
@@ -260,7 +255,7 @@ const MATERIALS = {
   terrazzo:{n:'Terrazzo',c:0xd8d5cc,r:.4,m:0,cc:.3}
 };
 const DEFAULTS = {
-  vanity:{width:900,depth:520,height:600,drawerCount:2,doorCount:0,handle:'recessed',basin:'integrated',basinCount:1,mount:'wall',topHeight:850,rot:0,open:0,material:'white',countertop:'stone'},
+  vanity:{width:900,depth:520,height:600,drawerCount:2,doorCount:0,drawerSplit:0.5,frontLayout:'stack',doorSide:'left',doorShare:0.45,handle:'recessed',basin:'integrated',basinCount:1,mount:'wall',topHeight:850,rot:0,open:0,material:'white',countertop:'stone'},
   mirror:{width:900,height:700,depth:150,doors:2,doorSplit:0.5,led:true,lightStyle:'top',bottomHeight:1080,rot:0,open:0,material:'white'},
   shelf:{width:400,height:1600,depth:350,shelves:4,open:true,rot:0,material:'oak'},
   lens:{width:600,height:800,depth:30,shape:'rect',frame:'graphite',led:true,lightStyle:'top',defog:false,bottomHeight:1000,rot:0}
@@ -272,6 +267,10 @@ const SCHEMAS = {
     {k:'height',l:'Carcass height',min:400,max:800,step:10},
     {k:'drawerCount',l:'Drawers',min:0,max:4,step:1,raw:true},
     {k:'doorCount',l:'Doors',min:0,max:3,step:1,raw:true},
+    {k:'drawerSplit',l:'Drawer split',min:0.3,max:0.7,step:0.01,raw:true},
+    {k:'frontLayout',l:'Front layout',t:'select',o:['stack','split']},
+    {k:'doorSide',l:'Hinge side',t:'select',o:['left','right']},
+    {k:'doorShare',l:'Door share',min:0.3,max:0.7,step:0.01,raw:true},
     {k:'handle',l:'Handle',t:'select',o:['recessed','bar','knob','none']},
     {k:'basin',l:'Basin',t:'select',o:['integrated','vessel','none']},
     {k:'basinCount',l:'Basins',min:1,max:2,step:1,raw:true},
@@ -322,7 +321,10 @@ const TILES = [
     {l:'Floor Standing 800',ic:'floor',s:'800 · floor',t:'vanity',p:{width:800,depth:520,mount:'floor',drawerCount:2}},
     {l:'Narrow Vanity',ic:'narrow',s:'500 · small bath',t:'vanity',p:{width:500,depth:420,drawerCount:1}},
     {l:'Metal Frame 900',ic:'alloy',s:'900 · alloy',t:'vanity',p:{width:900,depth:520,material:'graphite',handle:'bar'}},
-    {l:'One Door Two Drawers',ic:'oneTwo',s:'800 · 1 door + 2 drawers',t:'vanity',p:{width:800,drawerCount:2,doorCount:1,basin:'none'}}
+    {l:'One Door Two Drawers',ic:'oneTwo',s:'800 · 1 door + 2 drawers',t:'vanity',p:{width:800,drawerCount:2,doorCount:1,frontLayout:'split',basin:'none'}},
+    {l:'Sub Mother Drawers',ic:'drawers',s:'900 · unequal drawers',t:'vanity',p:{width:900,drawerCount:2,drawerSplit:0.35}},
+    {l:'Left Single Door',ic:'doors',s:'800 · left hinge',t:'vanity',p:{width:800,drawerCount:0,doorCount:1,doorSide:'left',basin:'none'}},
+    {l:'Right Single Door',ic:'doors',s:'800 · right hinge',t:'vanity',p:{width:800,drawerCount:0,doorCount:1,doorSide:'right',basin:'none'}}
   ]},
   {g:'Fronts & Storage',items:[
     {l:'Drawer Bank',ic:'drawers',s:'3 drawers',t:'vanity',p:{width:700,drawerCount:3,doorCount:0,basin:'none'}},
@@ -573,7 +575,23 @@ const PANEL_T=18;
 // single source of truth: geometry and BOM both derive from these params
 function cabinetMetrics(p){
   const T=PANEL_T,gD=8,gDoor=6,n=Math.max(1,p.drawerCount||0),nd=Math.max(1,p.doorCount||0);
-  return {T,gD,gDoor,drawerH:(p.height-gD*(n+1))/n,doorW:(p.width-2*T-gDoor*(nd+1))/nd,
+  const faceW=p.width-2*T;
+  // split front: door on the left, drawers on the right (avoids z-fighting of stacked door+drawer)
+  const split=p.frontLayout==='split'&&p.doorCount>0&&p.drawerCount>0;
+  const doorShare=split?Math.min(.7,Math.max(.3,p.doorShare||.45)):1;
+  const doorZone=faceW*doorShare,drawerZone=faceW-doorZone;
+  const doorW=split?doorZone-gDoor*2:(faceW-gDoor*(nd+1))/nd;
+  const drawerW=split?drawerZone-gD*2:faceW;
+  const drawerX=split?doorZone+(drawerZone-drawerW)/2:0;
+  const doorX=split?-(faceW-doorZone)/2+(doorZone-doorW)/2:null;
+  // sub-mother drawers: two drawers of unequal height (top = drawerSplit share)
+  const drawerHs=[];
+  if(p.drawerCount===2&&p.drawerSplit&&Math.abs(p.drawerSplit-.5)>.01){
+    const total=p.height-gD*3,upper=total*Math.min(.75,Math.max(.25,p.drawerSplit));
+    drawerHs.push(upper,total-upper);
+  }else{const dh=(p.height-gD*(n+1))/n;for(let i=0;i<n;i++)drawerHs.push(dh);}
+  return {T,gD,gDoor,drawerH:drawerHs[0],drawerHs,drawerW,drawerX,doorW,doorX,doorShare,split,
+    doorSide:p.doorSide||'left',
     counterW:p.width+40,counterD:p.depth+20,
     basinR:p.basin==='vessel'?175:Math.min(p.width*.26,p.depth*.31),feetH:20};
 }
@@ -583,13 +601,14 @@ function buildVanity(p,g){
   mesh(rbox(W,H,D,5),mat(p.material,p.tint),0,fy+H/2,0,g);
   const fz=D/2+7,fronts=[];
   if(p.drawerCount>0){
-    const n=p.drawerCount,gap=M.gD,dh=M.drawerH;
+    const n=p.drawerCount,gap=M.gD,travel=Math.min(D*.55,300);
+    let cursor=fy+gap;
     for(let i=0;i<n;i++){
-      const y=fy+gap+dh/2+i*(dh+gap),travel=Math.min(D*.55,300);
-      const pv=new THREE.Group();pv.position.set(0,y,fz);g.add(pv);
-      mesh(rbox(W-2*T,dh,14,4),mat(p.material,p.tint),0,0,0,pv);
-      if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(W*.35,180),12),mat('chrome'),0,0,13,pv).rotation.z=Math.PI/2;
-      else if(p.handle==='recessed')mesh(rbox(Math.min(W*.45,200),14,3,2),mat('dark'),0,dh/2-10,8,pv);
+      const dh=M.drawerHs[i]||M.drawerH,y=cursor+dh/2;cursor+=dh+gap;
+      const pv=new THREE.Group();pv.position.set(M.drawerX,y,fz);g.add(pv);
+      mesh(rbox(M.drawerW,dh,14,4),mat(p.material,p.tint),0,0,0,pv);
+      if(p.handle==='bar')mesh(new THREE.CylinderGeometry(5,5,Math.min(M.drawerW*.35,180),12),mat('chrome'),0,0,13,pv).rotation.z=Math.PI/2;
+      else if(p.handle==='recessed')mesh(rbox(Math.min(M.drawerW*.45,200),14,3,2),mat('dark'),0,dh/2-10,8,pv);
       else if(p.handle==='knob'){const k=mesh(new THREE.CylinderGeometry(12,12,16,16),mat('chrome'),0,0,14,pv);k.rotation.x=Math.PI/2;}
       pv.position.z=fz+(p.open?travel:0);
       fronts.push({pv,type:'drawer',base:fz,travel});
@@ -597,9 +616,10 @@ function buildVanity(p,g){
   }
   if(p.doorCount>0){
     const n=p.doorCount,gap=M.gDoor,dw=M.doorW;
+    const baseX=M.split?M.doorX:-(W-2*T)/2+gap;
     for(let i=0;i<n;i++){
-      const x=-(W-2*T)/2+gap+dw/2+i*(dw+gap),y=fy+H/2;
-      const hinge=i%2?-1:1,hx=x+hinge*dw/2,angle=-hinge*1.1;
+      const x=baseX+dw/2+i*(dw+gap),y=fy+H/2;
+      const hinge=n===1?(M.doorSide==='right'?1:-1):(i%2?-1:1),hx=x+hinge*dw/2,angle=-hinge*1.1;
       const pv=new THREE.Group();pv.position.set(hx,y,fz);g.add(pv);
       mesh(rbox(dw,H-2*T,14,4),mat(p.material,p.tint),x-hx,0,0,pv);
       const hxr=x-hx+hinge*-dw*.32;
@@ -627,9 +647,11 @@ function buildVanity(p,g){
       mesh(new THREE.CylinderGeometry(9,9,4,16),mat('chrome'),bx(i),ctY+132,0,g);
     }
   }
-  const fzF=-(D*.31+60);
-  mesh(new THREE.CylinderGeometry(16,16,150,16),mat('chrome'),0,ctY+95,fzF,g);
-  const sp=mesh(rbox(20,18,110,8),mat('chrome'),0,ctY+165,fzF+45,g);
+  if(p.basin!=='none'){ // faucet only when there is a basin hole to mount it in
+    const fzF=-(D*.31+60);
+    mesh(new THREE.CylinderGeometry(16,16,150,16),mat('chrome'),0,ctY+95,fzF,g);
+    mesh(rbox(20,18,110,8),mat('chrome'),0,ctY+165,fzF+45,g);
+  }
   if(p.mount==='floor'){
     for(const sx of [-1,1])for(const sz of [-1,1])mesh(rbox(24,M.feetH,24,2),mat('dark'),sx*(W/2-40),M.feetH/2,sz*(D/2-40),g);
   }
@@ -730,6 +752,12 @@ function buildLens(p,g){
   const fgeo=new THREE.ExtrudeGeometry(lensShape(kind,W+18,H+18),{depth:D*.55,bevelEnabled:false,curveSegments:36});
   mesh(fgeo,mat(p.frame||'graphite'),0,y,-D/2-3,g);
   if(p.led)addLightStyle(g,W,H,y,D/2,D,p.lightStyle||'top',kind);
+  if(p.defog){
+    // PTC heating film: faint warm sheen across the glass + small indicator
+    const fg=new THREE.ExtrudeGeometry(lensShape(kind,W-8,H-8),{depth:1,bevelEnabled:false,curveSegments:36});
+    mesh(fg,new THREE.MeshBasicMaterial({color:0xffe9c4,transparent:true,opacity:.06,depthWrite:false}),0,y,D/2+1.5,g);
+    mesh(new THREE.SphereGeometry(4,10,10),mat('led'),W/2-22,y-H/2+22,D/2+6,g);
+  }
   g.userData.fronts=[];
 }
 function buildShelf(p,g){
@@ -908,11 +936,22 @@ function updateDimensions(){
 const PROJECTS_KEY='vanitylab-projects';
 let projects=[],currentPid=null,pidSeq=1;
 const newPid=()=>'p'+Date.now().toString(36)+(pidSeq++);
-function saveProjects(){localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));}
+// ponytail: never let a quota error or corrupt blob take down the whole app
+function safeSet(key,value){try{localStorage.setItem(key,value);}catch(e){console.warn('storage write failed',e);}}
+function normalizeModule(m){
+  if(!m||!DEFAULTS[m.type]||!Array.isArray(m.params?Object.keys(m.params):[]))return null;
+  const out={id:Number.isFinite(m.id)?m.id:uid++,type:m.type,params:{...clone(DEFAULTS[m.type]),...m.params},pos:{x:Number(m.pos?.x)||0,z:Number(m.pos?.z)||0}};
+  out.pos.z=clampZ(out,out.pos.z);
+  return out;
+}
+function sanitizeModules(arr){return (Array.isArray(arr)?arr:[]).map(normalizeModule).filter(Boolean);}
+function saveProjects(){safeSet(PROJECTS_KEY,JSON.stringify(projects));}
 function loadProjects(){
-  try{projects=JSON.parse(localStorage.getItem(PROJECTS_KEY))||[];}catch(e){projects=[];}
-  // 全中文界面：迁移旧版英文项目名
-  let renamed=false;
+  try{const raw=JSON.parse(localStorage.getItem(PROJECTS_KEY));projects=Array.isArray(raw)?raw:[];}catch(e){projects=[];}
+  // 全中文界面：迁移旧版英文项目名 + 结构校验，丢掉损坏方案
+  const before=projects.length;
+  projects=projects.filter(p=>p&&typeof p==='object'&&Array.isArray(p.data?.modules)).map(p=>({...p,data:{...p.data,modules:sanitizeModules(p.data.modules)}}));
+  let renamed=projects.length!==before;
   projects.forEach(p=>{
     if(p.name==='My Design'){p.name='我的设计';renamed=true;}
     else if(typeof p.name==='string'&&p.name.startsWith('Untitled ')){p.name=p.name.replace('Untitled ','未命名方案 ');renamed=true;}
@@ -926,7 +965,7 @@ function loadProjects(){
 }
 function save(){
   const p=projects.find(x=>x.id===currentPid);if(p)p.data=clone(state);
-  saveProjects();localStorage.setItem('vanitylab',JSON.stringify(state));
+  saveProjects();safeSet('vanitylab',JSON.stringify(state));
 }
 function renderProjectUI(){
   const sel=$('#projectSel');if(!sel)return;
@@ -1046,7 +1085,7 @@ function renderLibrary(){
     t.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({g:t.dataset.g,i:+t.dataset.i}));});
   });
 }
-function loadTemplates(){try{return JSON.parse(localStorage.getItem('vanitylab-templates'))||[];}catch(e){return [];}}
+function loadTemplates(){try{const a=JSON.parse(localStorage.getItem('vanitylab-templates'));return Array.isArray(a)?a:[];}catch(e){return [];}}
 function renderBrandTabs(){
   const tabs=[...BRANDS.map(b=>({id:b.id,n:BRAND_ZH[b.id]||b.n})),{id:'mine',n:T('mine')}];
   const box=$('#brandTabs');
@@ -1104,13 +1143,14 @@ function applyTile(it){
 }
 let toastT;
 function toast(msg){const b=$('#badge');b.textContent=trMsg(msg);clearTimeout(toastT);toastT=setTimeout(updateBadge,1400);}
-function updateBadge(){const m=state.modules.find(x=>x.id===state.selectedId);$('#badge').textContent=m?`${T(m.type)} · ${m.params.width}×${m.params.depth}×${m.params.height} mm`:T('noSel');updateIssues();}
+function updateBadge(){const m=state.modules.find(x=>x.id===state.selectedId);const u=unit==='in'?' in':' mm',f=v=>unit==='in'?(v/25.4).toFixed(1):Math.round(v);$('#badge').textContent=m?`${T(m.type)} · ${f(m.params.width)}×${f(m.params.depth)}×${f(m.params.height)}${u}`:T('noSel');updateIssues();}
 function validate(m){
   const p=m.params,out=[];
   if(m.type==='vanity'){
-    const T=18,gD=8,gDoor=6;
-    if(p.drawerCount>0){const w=(p.width-2*T-gD*(p.drawerCount+1))/p.drawerCount;if(w<120)out.push({msg:`Drawer face ${Math.round(w)} mm < 120 mm minimum`,z:`抽屉面板 ${Math.round(w)} mm 小于最小 120 mm`,fix:{drawerCount:Math.max(0,Math.floor((p.width-2*T)/(120+gD))-1)}});}
-    if(p.doorCount>0){const w=(p.width-2*T-gDoor*(p.doorCount+1))/p.doorCount;if(w<180)out.push({msg:`Door leaf ${Math.round(w)} mm < 180 mm minimum`,z:`门板宽 ${Math.round(w)} mm 小于最小 180 mm`,fix:{doorCount:Math.max(0,Math.floor((p.width-2*T)/(180+gDoor))-1)}});}
+    const M=cabinetMetrics(p),T=M.T,gD=M.gD;
+    if(p.drawerCount>0){const w=M.drawerW;if(w<120)out.push({msg:`Drawer face ${Math.round(w)} mm < 120 mm minimum`,z:`抽屉面板 ${Math.round(w)} mm 小于最小 120 mm`,fix:{frontLayout:'stack',drawerCount:Math.max(0,Math.floor((p.width-2*T)/(120+gD))-1)}});}
+    if(p.doorCount>0){const w=M.doorW;if(w<180)out.push({msg:`Door leaf ${Math.round(w)} mm < 180 mm minimum`,z:`门板宽 ${Math.round(w)} mm 小于最小 180 mm`,fix:{frontLayout:'stack',doorCount:Math.max(0,Math.floor((p.width-2*T)/(180+M.gDoor))-1)}});}
+    if(p.drawerCount===2&&p.drawerSplit&&Math.abs(p.drawerSplit-.5)>.01&&Math.min(...M.drawerHs)<80)out.push({msg:'Sub-mother drawer too short',z:'子母抽有一格高度不足 80 mm',fix:{drawerSplit:0.5}});
     if(p.basin!=='none'){
       const r=p.basin==='vessel'?175:Math.min(p.width*.26,p.depth*.31),n=p.basinCount||1;
       if(2*r>p.width-40)out.push({msg:'Basin exceeds countertop width',z:'盆体超出台面宽度',fix:{basin:'none'}});
@@ -1120,7 +1160,9 @@ function validate(m){
     }
     if(p.mount==='wall'&&p.topHeight-p.height<100)out.push({msg:'Carcass bottom below 100 mm',z:'柜体底部离地不足 100 mm',fix:{topHeight:p.height+100}});
   }
-  if(m.type==='mirror'&&p.bottomHeight<800)out.push({msg:'Mirror cabinet mounted too low',z:'镜柜安装高度过低',fix:{bottomHeight:800}});
+  if(m.type==='mirror'&&p.bottomHeight<800)out.push({msg:'Mirror cabinet mounted too low',z:'镜柜安装高度过低',fix:{bottomHeight:820}});
+  if((m.type==='mirror'||m.type==='lens')&&p.doors>0&&p.width/p.doors<180)out.push({msg:'Mirror door too narrow',z:'镜门过窄',fix:{doors:Math.max(1,Math.floor(p.width/180))}});
+  if(m.type==='lens'&&p.height<p.width*.5)out.push({msg:'Lens too flat',z:'镜片高度过矮',fix:{height:Math.round(p.width*.6)}});
   if(m.type==='shelf'&&p.height/(p.shelves+1)<150)out.push({msg:'Shelf spacing < 150 mm',z:'层板间距小于 150 mm',fix:{shelves:Math.max(0,Math.floor(p.height/150)-1)}});
   return out;
 }
@@ -1153,7 +1195,8 @@ function renderProps(){
     else if(f.t==='select')h+=`<div class="field"><label>${lab}</label><select data-k="${f.k}">${f.o.map(o=>`<option value="${o}" ${o===v?'selected':''}>${O(o)}</option>`).join('')}</select></div>`;
     else if(f.t==='bool')h+=`<div class="field"><label class="chk"><input type="checkbox" data-k="${f.k}" ${v?'checked':''}> ${lab}</label></div>`;
     else{const dv=f.raw?v:disp(v),suf=f.raw?'':unit;
-      h+=`<div class="field"><label>${lab}<b>${dv} ${suf}</b></label><div class="row"><input type="range" data-k="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}"><input type="number" data-num="${f.k}" value="${dv}" step="${f.step}"></div></div>`;}
+      const nStep=f.raw?f.step:(unit==='in'?+(f.step/25.4).toFixed(3):f.step);
+      h+=`<div class="field"><label>${lab}<b>${dv} ${suf}</b></label><div class="row"><input type="range" data-k="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}"><input type="number" data-num="${f.k}" value="${dv}" step="${nStep}"></div></div>`;}
   }
   const tune=m.params.tune||{},def=MATERIALS[m.params.material]||MATERIALS.white;
   const tuneSlider=(k,l,v)=>`<div class="field"><label>${l}<b>${(+v).toFixed(2)}</b></label><div class="row"><input type="range" data-k="${k}" min="0" max="1" step="0.05" value="${v}"><input type="number" data-num="${k}" value="${(+v).toFixed(2)}" step="0.05"></div></div>`;
@@ -1228,7 +1271,12 @@ function compilePanels(){
     const p=m.params,M=cabinetMetrics(p);
     if(m.type==='vanity'){
       rows.push({part:'Carcass',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
-      if(p.drawerCount>0)rows.push({part:'Drawer fronts',size:`${Math.round(p.width-2*M.T)}×${Math.round(M.drawerH)}×18`,qty:p.drawerCount});
+      if(p.drawerCount>0){
+        // sub-mother drawers: one row per distinct height so the BOM reflects the model
+        const groups={};
+        for(let i=0;i<p.drawerCount;i++){const h=Math.round(M.drawerHs[i]||M.drawerH);groups[h]=(groups[h]||0)+1;}
+        for(const h in groups)rows.push({part:'Drawer fronts',size:`${Math.round(M.drawerW)}×${h}×18`,qty:groups[h]});
+      }
       if(p.doorCount>0)rows.push({part:'Door fronts',size:`${Math.round(M.doorW)}×${p.height-2*M.T}×18`,qty:p.doorCount});
       rows.push({part:'Countertop',size:`${M.counterW}×26×${M.counterD}`,qty:1});
       const bn=p.basinCount||1,r=Math.round(M.basinR);
@@ -1236,46 +1284,34 @@ function compilePanels(){
       else if(p.basin==='vessel')rows.push({part:'Vessel basin',size:'Ø350×120',qty:bn});
       if(p.basin!=='none')rows.push({part:'Countertop cut-outs',size:`Ø${r*2} × ${bn} + 龙头孔 Ø28`,qty:1});
       if(p.mount==='floor')rows.push({part:'Support feet',size:`24×${M.feetH}×24`,qty:4});
+      if(p.handle&&p.handle!=='none')rows.push({part:'Handles',size:({recessed:'隐形拉手',bar:'明装长拉手',knob:'圆形拉手'})[p.handle]||p.handle,qty:p.drawerCount+p.doorCount});
     }else if(m.type==='mirror'){
       rows.push({part:'Mirror cabinet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
-      rows.push({part:'Mirror doors',size:`${Math.round(p.width/p.doors)}×${p.height-16}×6`,qty:p.doors});
+      // same widths as buildMirror (doorSplit for 2 doors), and never emit a qty=0 / Infinity row
+      const n=p.doors||0,gap=5,inner=p.width-16-gap*(n+1),widths=[];
+      if(n===2){const r=Math.min(.75,Math.max(.25,p.doorSplit||.5));widths.push(inner*r,inner*(1-r));}
+      else for(let i=0;i<n;i++)widths.push(n?inner/n:0);
+      for(const w of widths)if(w>0)rows.push({part:'Mirror doors',size:`${Math.round(w)}×${p.height-16}×6`,qty:1});
+      if(p.led&&p.lightStyle&&p.lightStyle!=='none')rows.push({part:'LED lighting',size:({top:'顶灯条',back:'背光',ring:'环形跑道灯',sides:'双侧灯',front:'前发光'})[p.lightStyle]||p.lightStyle,qty:1});
     }else if(m.type==='lens'){
-      rows.push({part:'Mirror sheet',size:`${p.width}×${p.height}×${p.depth}`,qty:1});
+      rows.push({part:'Mirror sheet',size:`${p.width}×${p.height}×${p.depth} · ${({rect:'方形',circle:'圆形',ellipse:'椭圆形',capsule:'跑道形',arch:'异形拱门'})[p.shape]||p.shape}`,qty:1});
+      rows.push({part:'Mirror frame',size:`${p.width+18}×${p.height+18}`,qty:1});
+      if(p.led&&p.lightStyle&&p.lightStyle!=='none')rows.push({part:'LED lighting',size:({top:'顶灯条',back:'背光',ring:'环形跑道灯',sides:'双侧灯',front:'前发光'})[p.lightStyle]||p.lightStyle,qty:1});
+      if(p.defog)rows.push({part:'Defog film',size:'除雾膜',qty:1});
     }else{
       rows.push({part:'Side panels',size:`18×${p.height}×${p.depth}`,qty:2});
-      rows.push({part:'Shelves',size:`${p.width-36}×14×${p.depth-10}`,qty:p.shelves});
+      if(p.shelves>0)rows.push({part:'Shelves',size:`${p.width-36}×14×${p.depth-10}`,qty:p.shelves});
       rows.push({part:'Top / bottom',size:`${p.width}×18×${p.depth}`,qty:2});
+      if(!p.open)rows.push({part:'Back panel',size:`${p.width-36}×${p.height-36}×10`,qty:1});
     }
   }
   return rows;
 }
-// ---- 报价：门店价格表（localStorage 独立键，门店级配置，不随方案切换） ----
-const PRICE_DEFAULTS={'Carcass':850,'Drawer fronts':180,'Door fronts':150,'Countertop':600,'Integrated basin':400,'Vessel basin':300,'Countertop cut-outs':80,'Support feet':15,'Mirror cabinet':700,'Mirror doors':120,'Mirror sheet':150,'Side panels':100,'Shelves':45,'Top / bottom':45};
-let prices=(()=>{try{return Object.assign({},PRICE_DEFAULTS,JSON.parse(localStorage.getItem('vanitylab-prices'))||{});}catch(e){return {...PRICE_DEFAULTS};}})();
-function savePrices(){localStorage.setItem('vanitylab-prices',JSON.stringify(prices));}
-const fmtMoney=n=>'¥'+Math.round(n).toLocaleString('zh-CN');
 function renderBOM(){
   const rows=compilePanels();
-  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Mirror sheet':'镜片','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
-  let total=0;
-  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>{
-    const price=Number(prices[r.part])||0,sub=price*r.qty;total+=sub;
-    return `<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td class="num">${r.qty}</td><td><input type="number" min="0" step="1" class="priceIn" data-part="${r.part}" value="${price}"></td><td class="num">${fmtMoney(sub)}</td></tr>`;
-  }).join(''):`<tr><td colspan="5" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
-  $('#bomTable tfoot').innerHTML=rows.length?`<tr><td colspan="4" style="text-align:right">${T('total')}</td><td class="num">${fmtMoney(total)}</td></tr>`:'';
-  document.querySelectorAll('#bomTable .priceIn').forEach(inp=>{
-    inp.onchange=()=>{const p=inp.dataset.part;prices[p]=Math.max(0,parseFloat(inp.value)||0);inp.value=prices[p];savePrices();renderBOMTotals();};
-  });
-  return rows.map(r=>{const price=Number(prices[r.part])||0;return [r.part,r.size,r.qty,price,price*r.qty];});
-}
-function renderBOMTotals(){ // 只更新合计单元格，不重建 tbody，避免打断正在编辑的单价框
-  let total=0;
-  document.querySelectorAll('#bomTable tbody tr').forEach(tr=>{
-    const inp=tr.querySelector('.priceIn');if(!inp)return;
-    total+=(Number(inp.value)||0)*(Number(tr.children[2].textContent)||0);
-  });
-  const tf=$('#bomTable tfoot');
-  if(tf&&tf.firstElementChild)tf.firstElementChild.lastElementChild.textContent=fmtMoney(total);
+  const bz={'Carcass':'柜体','Drawer fronts':'抽屉面板','Door fronts':'门板','Countertop':'台面','Integrated basin':'一体盆','Vessel basin':'台上盆','Countertop cut-outs':'台面开孔','Support feet':'支撑脚','Mirror cabinet':'镜柜','Mirror doors':'镜门','Mirror sheet':'镜片','Mirror frame':'镜片边框','LED lighting':'灯光','Defog film':'除雾膜','Handles':'拉手','Back panel':'背板','Side panels':'侧板','Shelves':'层板','Top / bottom':'顶板 / 底板'};
+  $('#bomTable tbody').innerHTML=rows.length?rows.map(r=>`<tr><td>${lang==='zh'?(bz[r.part]||r.part):r.part}</td><td>${r.size}</td><td>${r.qty}</td></tr>`).join(''):`<tr><td colspan="3" style="color:var(--muted)">${lang==='zh'?'暂无组件':'No components'}</td></tr>`;
+  return rows.map(r=>[r.part,r.size,r.qty]);
 }
 
 /* ---------- camera / scene ---------- */
@@ -1455,7 +1491,7 @@ function setLang(l){
 }
 $('#langSeg').onclick=e=>{const b=e.target.closest('button');if(b)setLang(b.dataset.l);};
 $('#search').oninput=renderLibrary;
-$('#units').onclick=e=>{const b=e.target.closest('button');if(!b)return;unit=b.dataset.u;document.querySelectorAll('#units button').forEach(x=>x.classList.toggle('on',x===b));renderProps();updateDimensions();};
+$('#units').onclick=e=>{const b=e.target.closest('button');if(!b)return;unit=b.dataset.u;document.querySelectorAll('#units button').forEach(x=>x.classList.toggle('on',x===b));renderProps();updateDimensions();updateBadge();};
 $('#dims').onclick=()=>{state.dims=state.dims===false;save();$('#dims').classList.toggle('on',state.dims!==false);updateDimensions();};
 $('#views').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.v);};
 $('#fit').onclick=()=>setView(currentView);
@@ -1464,14 +1500,23 @@ $('#newProj').onclick=()=>{const p={id:newPid(),name:(lang==='zh'?'未命名方�
 $('#saveAs').onclick=()=>{const n=prompt(lang==='zh'?'另存为：':'Save current design as:',(projects.find(x=>x.id===currentPid)?.name||(lang==='zh'?'设计':'Design'))+(lang==='zh'?' 副本':' copy'));if(!n)return;const p={id:newPid(),name:n,data:clone(state)};projects.push(p);saveProjects();activateProject(p.id);toast('Saved as "'+n+'"');};
 $('#renameProj').onclick=()=>{const p=projects.find(x=>x.id===currentPid);if(!p)return;const n=prompt(lang==='zh'?'重命名方案：':'Rename project:',p.name);if(!n)return;p.name=n;saveProjects();renderProjectUI();};
 $('#delProj').onclick=()=>{if(projects.length<2){toast('Cannot delete the only project');return;}const p=projects.find(x=>x.id===currentPid);if(!confirm(lang==='zh'?`删除方案“${p.name}”？`:`Delete "${p.name}"?`))return;projects=projects.filter(x=>x.id!==currentPid);saveProjects();activateProject(projects[0].id);toast('Project deleted');};
-$('#saveJson').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'.json';a.click();toast('Project saved');};
+$('#saveJson').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('方案已保存');};
 $('#loadJson').onclick=()=>$('#fileIn').click();
-$('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!Array.isArray(s.modules))throw new Error('invalid project');state.modules=s.modules;state.selectedId=null;if(typeof s.dims==='boolean')state.dims=s.dims;uid=Math.max(1,...s.modules.map(m=>m.id+1));commit();setView(currentView);toast('Project loaded');}catch(err){toast('Invalid project file: '+err.message);}};r.readAsText(f);e.target.value='';};
+$('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onerror=()=>toast('文件读取失败');
+r.onload=()=>{try{const s=JSON.parse(r.result);if(!Array.isArray(s.modules))throw new Error('invalid project');const mods=sanitizeModules(s.modules);if(!mods.length)throw new Error('no valid modules');state.modules=mods;state.selectedId=null;if(typeof s.dims==='boolean')state.dims=s.dims;uid=Math.max(1,...mods.map(m=>m.id+1));commit();setView(currentView);toast('方案已载入');}catch(err){toast('无效的方案文件：'+err.message);}};r.readAsText(f);e.target.value='';};
 $('#clearAll').onclick=()=>{if(!confirm(lang==='zh'?'清空当前设计的所有组件？（Ctrl+Z 可撤销）':'Clear all components in this design? (Ctrl+Z to undo)'))return;state.modules=[];state.selectedId=null;commit();toast('Design cleared');};
 $('#undo').onclick=undo;$('#redo').onclick=redo;
-$('#png').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download='vanitylab.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('PNG exported');};
-$('#glb').onclick=()=>{new GLTFExporter().parse(root,buf=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'model/gltf-binary'}));a.download='vanitylab.glb';a.click();toast('GLB exported');},err=>toast('GLB export failed: '+err.message),{binary:true});};
-$('#bom').onclick=()=>{const rows=renderBOM();let csv='Part,Size(mm),Qty,UnitPrice(CNY),Subtotal(CNY)\n'+rows.map(r=>`"${r[0]}","${r[1]}",${r[2]},${r[3]},${r[4]}`).join('\n');if(rows.length)csv+='\nTotal,,,,'+rows.reduce((s,r)=>s+r[4],0);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='vanitylab-quote.csv';a.click();toast('BOM CSV exported');};
+$('#png').onclick=()=>{
+  const scale=2,W=viewport.clientWidth,H=viewport.clientHeight;
+  const oldS=renderer.getSize(new THREE.Vector2()),oldPR=renderer.getPixelRatio();
+  renderer.setPixelRatio(Math.min(devicePixelRatio*scale,3));renderer.setSize(W,H,false);
+  renderer.render(scene,camera);
+  const a=document.createElement('a');a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();
+  renderer.setPixelRatio(oldPR);renderer.setSize(oldS.x,oldS.y,false);renderer.render(scene,camera);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('PNG 已导出');
+};
+$('#glb').onclick=()=>{new GLTFExporter().parse(root,buf=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'model/gltf-binary'}));a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('GLB 已导出');},err=>toast('GLB export failed: '+err.message),{binary:true});};
+$('#bom').onclick=()=>{const rows=renderBOM();const head=unit==='in'?'部件,尺寸(inch),数量\n':'部件,尺寸(mm),数量\n';const csv='\uFEFF'+head+rows.map(r=>`"${r[0]}","${r[1]}",${r[2]}`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=(projects.find(x=>x.id===currentPid)?.name||'vanitylab')+'-BOM.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('BOM CSV 已导出');};
 let panelState=0; // 0 none · 1 library · 2 properties
 function setPanels(s){
   panelState=s;

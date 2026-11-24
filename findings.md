@@ -6,7 +6,7 @@
 - 组件：抽屉、拉手、镜柜、开放格、镜片等（可增补）。
 - 主要用 Three.js；跨网页/桌面/移动；精巧、低门槛。
 - 交互：拖入组件、输入数值、360°旋转查看。
-- 单位双制（mm/inch）；中英双语。（早期设定「面向海外」，后经 grill-me 修正为国内市场优先，见战略决策。）
+- 单位双制（mm/inch）。（早期设定「面向海外 + 中英双语 UI」，后经 grill-me 修正为国内市场优先；阶段 19 起 UI 强制全中文，英文字库仅保留在代码中，见战略决策与 progress.md。）
 
 ## 调研发现（Research Findings）
 - **andrejvysny/HomeStudio**：Vite+TS+Three.js，无框架/无后端/无外部 3D 资产，所有 mesh 由参数程序化生成；面板清单(panel list IR)同时驱动 3D 与 BOM/切割清单导出；localStorage 自动保存。
